@@ -46,8 +46,14 @@ async function bootstrap() {
     )
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-
+  // const document = SwaggerModule.createDocument(app, config);
+const document = SwaggerModule.createDocument(
+  app,
+  config,
+  {
+    deepScanRoutes: true,
+  },
+);
   SwaggerModule.setup('docs', app, document, {
     swaggerOptions: {
       persistAuthorization: true,

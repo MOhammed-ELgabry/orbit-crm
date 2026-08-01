@@ -10,9 +10,11 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+
 import {
   ApiBadRequestResponse,
   ApiCreatedResponse,
+  ApiExtraModels,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -31,6 +33,7 @@ import { CompanyEntity } from './entities/company.entity';
 import { CompanyService } from './company.service';
 
 @ApiTags('Company')
+@ApiExtraModels(PaginationQueryDto)
 @Controller('companies')
 export class CompanyController {
   constructor(
@@ -66,11 +69,32 @@ export class CompanyController {
     name: 'page',
     required: false,
     example: 1,
+    description: 'Page number',
   })
   @ApiQuery({
     name: 'limit',
     required: false,
     example: 20,
+    description: 'Number of items per page',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    example: 'Orbit',
+    description: 'Search by company name or email',
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    example: 'createdAt',
+    description: 'Field used for sorting',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    enum: ['asc', 'desc'],
+    example: 'desc',
+    description: 'Sorting direction',
   })
   @ApiOkResponse({
     description: 'Companies retrieved successfully.',

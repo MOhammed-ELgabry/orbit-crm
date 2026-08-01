@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { PrismaExceptionMapper } from '../../../common/exceptions/prisma-exception.mapper';
 import { PaginationResult } from '../../../common/interfaces/pagination-result.interface';
 import { PaginationUtil } from '../../../common/utils/pagination.util';
+import { PrismaQueryBuilder } from '../../../common/utils/prisma-query-builder.util';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 
 import { CreateCompanyDto } from '../dto/create-company.dto';
@@ -12,14 +14,21 @@ import { CompanyEntity } from '../entities/company.entity';
 import { ICompanyRepository } from './company.repository.interface';
 
 @Injectable()
-export class CompanyRepository implements ICompanyRepository {
-  constructor(private readonly prisma: PrismaService) {}
+export class CompanyRepository
+  implements ICompanyRepository
+{
+  constructor(
+    private readonly prisma: PrismaService,
+  ) {}
 
-  async create(data: CreateCompanyDto): Promise<CompanyEntity> {
+  async create(
+    data: CreateCompanyDto,
+  ): Promise<CompanyEntity> {
     try {
-      const company = await this.prisma.company.create({
-        data,
-      });
+      const company =
+        await this.prisma.company.create({
+          data,
+        });
 
       return new CompanyEntity(company);
     } catch (error) {
@@ -30,28 +39,83 @@ export class CompanyRepository implements ICompanyRepository {
   async findAll(
     query: PaginationQueryDto,
   ): Promise<PaginationResult<CompanyEntity>> {
-    const { page, limit, skip, take } =
+    const { page, limit } =
       PaginationUtil.getPagination(query);
 
-    const where = {
-      deletedAt: null,
-    };
+    const prismaQuery =
+      PrismaQueryBuilder.build(
+        query,
+        {
+          searchableFields: [
+            'name',
+            'email',
+          ],
 
-    const [companies, total] = await Promise.all([
-      this.prisma.company.findMany({
-        where,
-        skip,
-        take,
-      }),
+          sortableFields: [
+            'name',
+            'email',
+            'createdAt',
+            'updatedAt',
+            'isActive',
+          ],
 
-      this.prisma.company.count({
-        where,
-      }),
-    ]);
+          selectableFields: [
+            'id',
+            'name',
+            'email',
+            'phone',
+            'address',
+            'logo',
+            'website',
+            'taxNumber',
+            'description',
+            'isActive',
+            'createdAt',
+            'updatedAt',
+            'deletedAt',
+          ] as const,
+
+          filters: [
+            {
+              field: 'isActive',
+              queryKey: 'isActive',
+            },
+          ],
+        },
+        {
+          deletedAt: null,
+        },
+      );
+
+    const [companies, total] =
+      await Promise.all([
+        this.prisma.company.findMany({
+          where:
+            prismaQuery.where as Prisma.CompanyWhereInput,
+
+          orderBy:
+            prismaQuery.orderBy,
+
+          select:
+            prismaQuery.select,
+
+          skip:
+            prismaQuery.skip,
+
+          take:
+            prismaQuery.take,
+        }),
+
+        this.prisma.company.count({
+          where:
+            prismaQuery.where as Prisma.CompanyWhereInput,
+        }),
+      ]);
 
     return {
       data: companies.map(
-        (company) => new CompanyEntity(company),
+        (company) =>
+          new CompanyEntity(company),
       ),
 
       meta: PaginationUtil.buildMeta(
@@ -61,14 +125,16 @@ export class CompanyRepository implements ICompanyRepository {
       ),
     };
   }
-
-  async findById(id: string): Promise<CompanyEntity | null> {
-    const company = await this.prisma.company.findFirst({
-      where: {
-        id,
-        deletedAt: null,
-      },
-    });
+    async findById(
+    id: string,
+  ): Promise<CompanyEntity | null> {
+    const company =
+      await this.prisma.company.findFirst({
+        where: {
+          id,
+          deletedAt: null,
+        },
+      });
 
     if (!company) {
       return null;
@@ -82,10 +148,11 @@ export class CompanyRepository implements ICompanyRepository {
     data: UpdateCompanyDto,
   ): Promise<CompanyEntity> {
     try {
-      const company = await this.prisma.company.update({
-        where: { id },
-        data,
-      });
+      const company =
+        await this.prisma.company.update({
+          where: { id },
+          data,
+        });
 
       return new CompanyEntity(company);
     } catch (error) {
@@ -93,7 +160,9 @@ export class CompanyRepository implements ICompanyRepository {
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(
+    id: string,
+  ): Promise<void> {
     try {
       await this.prisma.company.update({
         where: { id },
