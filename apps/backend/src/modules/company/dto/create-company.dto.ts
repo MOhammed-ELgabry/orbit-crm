@@ -27,13 +27,13 @@ export class CreateCompanyDto {
 
   @ApiPropertyOptional({
     example: 'info@orbitcrm.com',
-    description: 'Company email address',
+    description: 'Company contact email address',
   })
   @Transform(({ value }) => value?.trim()?.toLowerCase())
   @IsOptional()
   @IsEmail()
   @MaxLength(255)
-  email?: string;
+  contactEmail?: string;
 
   @ApiPropertyOptional({
     example: '+201001234567',

@@ -1,7 +1,7 @@
 export interface ICompany {
   id: string;
   name: string;
-  email: string | null;
+  contactEmail: string | null;
   phone: string | null;
   address: string | null;
   logo: string | null;
@@ -11,4 +11,5 @@ export interface ICompany {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  deletedAt: Date | null;
 }

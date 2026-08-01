@@ -10,18 +10,62 @@ datasource db {
 model Company {
   id String @id @default(cuid())
 
-  name        String
-  email       String? @unique
-  phone       String?
-  address     String?
-  logo        String?
-  website     String?
-  taxNumber   String?
-  description String?
+  // Company Information
+  name         String
+  contactEmail String?
+  phone        String?
+  address      String?
+  logo         String?
+  website      String?
+  taxNumber    String?
+  description  String?
 
+  // Status
   isActive Boolean @default(true)
 
+  // Relations
+  users User[]
+
+  // Audit
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
+
+  @@index([isActive])
+  @@index([deletedAt])
+}
+
+model User {
+  id String @id @default(cuid())
+
+  // Personal Information
+  firstName String
+  lastName  String
+
+  // Authentication
+  email        String @unique
+  passwordHash String
+
+  // Profile
+  phone  String?
+  avatar String?
+
+  // Status
+  isActive Boolean @default(true)
+  isOwner  Boolean @default(false)
+
+  // Tracking
+  lastLoginAt DateTime?
+
+  // Relations
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([companyId])
+  @@index([deletedAt])
 }

@@ -48,12 +48,12 @@ export class CompanyRepository
         {
           searchableFields: [
             'name',
-            'email',
+            'contactEmail',
           ],
 
           sortableFields: [
             'name',
-            'email',
+            'contactEmail',
             'createdAt',
             'updatedAt',
             'isActive',
@@ -62,7 +62,7 @@ export class CompanyRepository
           selectableFields: [
             'id',
             'name',
-            'email',
+            'contactEmail',
             'phone',
             'address',
             'logo',

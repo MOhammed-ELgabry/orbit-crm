@@ -20,10 +20,10 @@ export class CompanyEntity implements ICompany {
 
   @ApiPropertyOptional({
     example: 'info@orbitcrm.com',
-    description: 'Company email address',
+    description: 'Company contact email address',
     nullable: true,
   })
-  email: string | null;
+  contactEmail: string | null;
 
   @ApiPropertyOptional({
     example: '+201001234567',
@@ -86,6 +86,13 @@ export class CompanyEntity implements ICompany {
     format: 'date-time',
   })
   updatedAt: Date;
+
+  @ApiPropertyOptional({
+    example: null,
+    description: 'Soft delete date',
+    nullable: true,
+  })
+  deletedAt: Date | null;
 
   constructor(data: ICompany) {
     Object.assign(this, data);
