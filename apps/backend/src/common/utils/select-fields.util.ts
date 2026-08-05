@@ -15,8 +15,7 @@ export class SelectFieldsUtil {
       .filter(Boolean);
 
     const invalidFields = requestedFields.filter(
-      (field) =>
-        !allowedFields.includes(field as T),
+      (field) => !allowedFields.includes(field as T),
     );
 
     if (invalidFields.length > 0) {

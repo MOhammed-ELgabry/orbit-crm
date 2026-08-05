@@ -1,8 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 
 import { PaginationResult } from '../../common/interfaces/pagination-result.interface';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
@@ -20,9 +16,7 @@ export class CompanyService {
     private readonly companyRepository: ICompanyRepository,
   ) {}
 
-  async create(
-    createCompanyDto: CreateCompanyDto,
-  ): Promise<CompanyEntity> {
+  async create(createCompanyDto: CreateCompanyDto): Promise<CompanyEntity> {
     return this.companyRepository.create(createCompanyDto);
   }
 
@@ -52,10 +46,7 @@ export class CompanyService {
       throw new NotFoundException('Company not found');
     }
 
-    return this.companyRepository.update(
-      id,
-      updateCompanyDto,
-    );
+    return this.companyRepository.update(id, updateCompanyDto);
   }
 
   async delete(id: string): Promise<void> {

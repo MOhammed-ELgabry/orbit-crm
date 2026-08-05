@@ -36,15 +36,12 @@ import { CompanyService } from './company.service';
 @ApiExtraModels(PaginationQueryDto)
 @Controller('companies')
 export class CompanyController {
-  constructor(
-    private readonly companyService: CompanyService,
-  ) {}
+  constructor(private readonly companyService: CompanyService) {}
 
   @Post()
   @ApiOperation({
     summary: 'Create a new company',
-    description:
-      'Creates a new company and returns the created company.',
+    description: 'Creates a new company and returns the created company.',
   })
   @ApiCreatedResponse({
     description: 'Company created successfully.',
@@ -62,8 +59,7 @@ export class CompanyController {
   @Get()
   @ApiOperation({
     summary: 'Get all companies',
-    description:
-      'Returns a paginated list of companies.',
+    description: 'Returns a paginated list of companies.',
   })
   @ApiQuery({
     name: 'page',
@@ -129,10 +125,7 @@ export class CompanyController {
     @Param('id') id: string,
     @Body() updateCompanyDto: UpdateCompanyDto,
   ): Promise<CompanyEntity> {
-    return this.companyService.update(
-      id,
-      updateCompanyDto,
-    );
+    return this.companyService.update(id, updateCompanyDto);
   }
 
   @Delete(':id')
@@ -152,17 +145,14 @@ export class CompanyController {
   @ApiNotFoundResponse({
     description: 'Company not found.',
   })
-  async delete(
-    @Param('id') id: string,
-  ): Promise<void> {
+  async delete(@Param('id') id: string): Promise<void> {
     return this.companyService.delete(id);
   }
 
   @Get(':id')
   @ApiOperation({
     summary: 'Get company by ID',
-    description:
-      'Returns a single company using its unique identifier.',
+    description: 'Returns a single company using its unique identifier.',
   })
   @ApiParam({
     name: 'id',
@@ -176,9 +166,7 @@ export class CompanyController {
   @ApiNotFoundResponse({
     description: 'Company not found.',
   })
-  async findById(
-    @Param('id') id: string,
-  ): Promise<CompanyEntity> {
+  async findById(@Param('id') id: string): Promise<CompanyEntity> {
     return this.companyService.findById(id);
   }
 }

@@ -11,10 +11,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Global Exception Filters
-  app.useGlobalFilters(
-    new PrismaExceptionFilter(),
-    new HttpExceptionFilter(),
-  );
+  app.useGlobalFilters(new PrismaExceptionFilter(), new HttpExceptionFilter());
 
   // Global Response Interceptor
   app.useGlobalInterceptors(new ResponseInterceptor());
@@ -31,9 +28,7 @@ async function bootstrap() {
   // Swagger Configuration
   const config = new DocumentBuilder()
     .setTitle('Orbit CRM API')
-    .setDescription(
-      'Professional REST API documentation for Orbit CRM',
-    )
+    .setDescription('Professional REST API documentation for Orbit CRM')
     .setVersion('1.0.0')
     .addBearerAuth(
       {
@@ -47,13 +42,9 @@ async function bootstrap() {
     .build();
 
   // const document = SwaggerModule.createDocument(app, config);
-const document = SwaggerModule.createDocument(
-  app,
-  config,
-  {
+  const document = SwaggerModule.createDocument(app, config, {
     deepScanRoutes: true,
-  },
-);
+  });
   SwaggerModule.setup('docs', app, document, {
     swaggerOptions: {
       persistAuthorization: true,

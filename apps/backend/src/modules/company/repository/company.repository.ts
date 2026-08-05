@@ -14,21 +14,14 @@ import { CompanyEntity } from '../entities/company.entity';
 import { ICompanyRepository } from './company.repository.interface';
 
 @Injectable()
-export class CompanyRepository
-  implements ICompanyRepository
-{
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+export class CompanyRepository implements ICompanyRepository {
+  constructor(private readonly prisma: PrismaService) {}
 
-  async create(
-    data: CreateCompanyDto,
-  ): Promise<CompanyEntity> {
+  async create(data: CreateCompanyDto): Promise<CompanyEntity> {
     try {
-      const company =
-        await this.prisma.company.create({
-          data,
-        });
+      const company = await this.prisma.company.create({
+        data,
+      });
 
       return new CompanyEntity(company);
     } catch (error) {
@@ -39,102 +32,80 @@ export class CompanyRepository
   async findAll(
     query: PaginationQueryDto,
   ): Promise<PaginationResult<CompanyEntity>> {
-    const { page, limit } =
-      PaginationUtil.getPagination(query);
+    const { page, limit } = PaginationUtil.getPagination(query);
 
-    const prismaQuery =
-      PrismaQueryBuilder.build(
-        query,
-        {
-          searchableFields: [
-            'name',
-            'contactEmail',
-          ],
+    const prismaQuery = PrismaQueryBuilder.build(
+      query,
+      {
+        searchableFields: ['name', 'contactEmail'],
 
-          sortableFields: [
-            'name',
-            'contactEmail',
-            'createdAt',
-            'updatedAt',
-            'isActive',
-          ],
+        sortableFields: [
+          'name',
+          'contactEmail',
+          'createdAt',
+          'updatedAt',
+          'isActive',
+        ],
 
-          selectableFields: [
-            'id',
-            'name',
-            'contactEmail',
-            'phone',
-            'address',
-            'logo',
-            'website',
-            'taxNumber',
-            'description',
-            'isActive',
-            'createdAt',
-            'updatedAt',
-            'deletedAt',
-          ] as const,
+        selectableFields: [
+          'id',
+          'name',
+          'contactEmail',
+          'phone',
+          'address',
+          'logo',
+          'website',
+          'taxNumber',
+          'description',
+          'isActive',
+          'createdAt',
+          'updatedAt',
+          'deletedAt',
+        ] as const,
 
-          filters: [
-            {
-              field: 'isActive',
-              queryKey: 'isActive',
-            },
-          ],
-        },
-        {
-          deletedAt: null,
-        },
-      );
+        filters: [
+          {
+            field: 'isActive',
+            queryKey: 'isActive',
+          },
+        ],
+      },
+      {
+        deletedAt: null,
+      },
+    );
 
-    const [companies, total] =
-      await Promise.all([
-        this.prisma.company.findMany({
-          where:
-            prismaQuery.where as Prisma.CompanyWhereInput,
+    const [companies, total] = await Promise.all([
+      this.prisma.company.findMany({
+        where: prismaQuery.where as Prisma.CompanyWhereInput,
 
-          orderBy:
-            prismaQuery.orderBy,
+        orderBy: prismaQuery.orderBy,
 
-          select:
-            prismaQuery.select,
+        select: prismaQuery.select,
 
-          skip:
-            prismaQuery.skip,
+        skip: prismaQuery.skip,
 
-          take:
-            prismaQuery.take,
-        }),
+        take: prismaQuery.take,
+      }),
 
-        this.prisma.company.count({
-          where:
-            prismaQuery.where as Prisma.CompanyWhereInput,
-        }),
-      ]);
+      this.prisma.company.count({
+        where: prismaQuery.where as Prisma.CompanyWhereInput,
+      }),
+    ]);
 
     return {
-      data: companies.map(
-        (company) =>
-          new CompanyEntity(company),
-      ),
+      data: companies.map((company) => new CompanyEntity(company)),
 
-      meta: PaginationUtil.buildMeta(
-        page,
-        limit,
-        total,
-      ),
+      meta: PaginationUtil.buildMeta(page, limit, total),
     };
   }
-    async findById(
-    id: string,
-  ): Promise<CompanyEntity | null> {
-    const company =
-      await this.prisma.company.findFirst({
-        where: {
-          id,
-          deletedAt: null,
-        },
-      });
+  async findById(id: string): Promise<CompanyEntity | null> {
+    const company = await this.prisma.company.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
+    });
 
     if (!company) {
       return null;
@@ -143,16 +114,12 @@ export class CompanyRepository
     return new CompanyEntity(company);
   }
 
-  async update(
-    id: string,
-    data: UpdateCompanyDto,
-  ): Promise<CompanyEntity> {
+  async update(id: string, data: UpdateCompanyDto): Promise<CompanyEntity> {
     try {
-      const company =
-        await this.prisma.company.update({
-          where: { id },
-          data,
-        });
+      const company = await this.prisma.company.update({
+        where: { id },
+        data,
+      });
 
       return new CompanyEntity(company);
     } catch (error) {
@@ -160,9 +127,7 @@ export class CompanyRepository
     }
   }
 
-  async delete(
-    id: string,
-  ): Promise<void> {
+  async delete(id: string): Promise<void> {
     try {
       await this.prisma.company.update({
         where: { id },

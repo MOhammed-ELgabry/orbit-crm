@@ -17,9 +17,7 @@ export class PrismaExceptionFilter implements ExceptionFilter {
       case 'P2002': {
         const target = (exception.meta?.target as string[])?.join(', ');
 
-        throw new ConflictException(
-          `${target ?? 'Record'} already exists.`,
-        );
+        throw new ConflictException(`${target ?? 'Record'} already exists.`);
       }
 
       case 'P2025':

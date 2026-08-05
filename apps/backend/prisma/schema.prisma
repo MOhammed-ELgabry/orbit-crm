@@ -44,7 +44,23 @@ model User {
 
   // Authentication
   email        String @unique
-  passwordHash String
+  passwordHash String?
+
+  // Authentication Provider
+  provider   String @default("local")
+  providerId String?
+
+  // Email Verification
+  isEmailVerified          Boolean   @default(false)
+  emailVerificationCode    String?
+  emailVerificationExpires DateTime?
+
+  // Password Reset
+  passwordResetCode    String?
+  passwordResetExpires DateTime?
+
+  // Refresh Token
+  refreshTokenHash String?
 
   // Profile
   phone  String?
@@ -60,7 +76,7 @@ model User {
   // Relations
   companyId String
   company   Company @relation(fields: [companyId], references: [id])
-
+authSessions AuthSession[]
   // Audit
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -68,4 +84,40 @@ model User {
 
   @@index([companyId])
   @@index([deletedAt])
+  @@index([isEmailVerified])
+  @@index([provider])
+  @@index([providerId])
+}
+
+model AuthSession {
+  id String @id @default(cuid())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tokenHash String
+
+  expiresAt DateTime
+  revokedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+}
+model EmailVerification {
+  id String @id @default(cuid())
+
+  email String @unique
+  code  String
+
+  expiresAt DateTime
+  verifiedAt DateTime?
+
+  attempts Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

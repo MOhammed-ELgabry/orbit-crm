@@ -9,16 +9,11 @@ import { CompanyEntity } from '../entities/company.entity';
 export interface ICompanyRepository {
   create(data: CreateCompanyDto): Promise<CompanyEntity>;
 
-  findAll(
-    query: PaginationQueryDto,
-  ): Promise<PaginationResult<CompanyEntity>>;
+  findAll(query: PaginationQueryDto): Promise<PaginationResult<CompanyEntity>>;
 
   findById(id: string): Promise<CompanyEntity | null>;
 
-  update(
-    id: string,
-    data: UpdateCompanyDto,
-  ): Promise<CompanyEntity>;
+  update(id: string, data: UpdateCompanyDto): Promise<CompanyEntity>;
 
   delete(id: string): Promise<void>;
 }

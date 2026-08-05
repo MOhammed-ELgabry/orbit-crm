@@ -36,8 +36,7 @@ export class PaginationQueryDto {
 
   @ApiPropertyOptional({
     example: 'Orbit',
-    description:
-      'Search by company name or contact email',
+    description: 'Search by company name or contact email',
   })
   @IsOptional()
   @IsString()
@@ -76,8 +75,7 @@ export class PaginationQueryDto {
 
   @ApiPropertyOptional({
     example: 'id,name,contactEmail',
-    description:
-      'Comma-separated list of fields to return',
+    description: 'Comma-separated list of fields to return',
   })
   @IsOptional()
   @IsString()

@@ -14,10 +14,7 @@ export class PaginationResponseDto<T> {
   })
   meta: PaginationMetaDto;
 
-  constructor(
-    items: T[],
-    meta: PaginationMetaDto,
-  ) {
+  constructor(items: T[], meta: PaginationMetaDto) {
     this.items = items;
     this.meta = meta;
   }

@@ -19,40 +19,27 @@ export class PrismaQueryBuilder {
     options: QueryBuilderOptions,
     baseWhere: Record<string, unknown> = {},
   ) {
-    const { skip, take } =
-      PaginationUtil.getPagination(query);
+    const { skip, take } = PaginationUtil.getPagination(query);
 
     const where: Record<string, unknown> = {
       ...baseWhere,
     };
 
     if (options.filters?.length) {
-      Object.assign(
-        where,
-        PrismaFilterBuilder.build(
-          query,
-          options.filters,
-        ),
-      );
+      Object.assign(where, PrismaFilterBuilder.build(query, options.filters));
     }
 
-    if (
-      query.search &&
-      options.searchableFields.length > 0
-    ) {
-      where.OR = options.searchableFields.map(
-        (field) => ({
-          [field]: {
-            contains: query.search,
-            mode: 'insensitive',
-          },
-        }),
-      );
+    if (query.search && options.searchableFields.length > 0) {
+      where.OR = options.searchableFields.map((field) => ({
+        [field]: {
+          contains: query.search,
+          mode: 'insensitive',
+        },
+      }));
     }
 
     const sortBy =
-      query.sortBy &&
-      options.sortableFields.includes(query.sortBy)
+      query.sortBy && options.sortableFields.includes(query.sortBy)
         ? query.sortBy
         : 'createdAt';
 

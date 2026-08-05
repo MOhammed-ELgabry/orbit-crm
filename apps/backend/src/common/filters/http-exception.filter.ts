@@ -31,18 +31,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
     const exceptionResponse =
-      exception instanceof HttpException
-        ? exception.getResponse()
-        : null;
+      exception instanceof HttpException ? exception.getResponse() : null;
 
     let message = 'Internal server error';
 
     if (typeof exceptionResponse === 'string') {
       message = exceptionResponse;
-    } else if (
-      exceptionResponse &&
-      typeof exceptionResponse === 'object'
-    ) {
+    } else if (exceptionResponse && typeof exceptionResponse === 'object') {
       const error = exceptionResponse as {
         message?: string | string[];
       };

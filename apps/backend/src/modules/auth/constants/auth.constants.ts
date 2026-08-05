@@ -1,0 +1,3 @@
+export const AUTH_REPOSITORY = Symbol('AUTH_REPOSITORY');
+
+export const AUTH_SESSION_REPOSITORY = Symbol('AUTH_SESSION_REPOSITORY');

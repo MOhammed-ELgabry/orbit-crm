@@ -14,11 +14,7 @@ export class PaginationUtil {
     };
   }
 
-  static buildMeta(
-    page: number,
-    limit: number,
-    total: number,
-  ): PaginationMeta {
+  static buildMeta(page: number, limit: number, total: number): PaginationMeta {
     return {
       page,
       limit,
