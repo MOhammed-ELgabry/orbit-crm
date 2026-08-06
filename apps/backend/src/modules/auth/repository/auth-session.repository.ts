@@ -40,6 +40,18 @@ export class AuthSessionRepository implements IAuthSessionRepository {
       },
     });
   }
+
+  async revokeAllByUserId(userId: string): Promise<void> {
+    await this.prisma.authSession.updateMany({
+      where: {
+        userId,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
+      },
+    });
+  }
   async rotate(
     oldSessionId: string,
     data: {

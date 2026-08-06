@@ -15,6 +15,8 @@ import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { LogoutDto } from './dto/logout.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -75,6 +77,20 @@ export class AuthController {
   }
 
   @ApiOperation({
+    summary: 'Request password reset',
+    description:
+      'Sends a password reset link if an account exists with the provided email.',
+  })
+  @ApiOkResponse({
+    description: 'Password reset request processed successfully.',
+  })
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto);
+  }
+
+  @ApiOperation({
     summary: 'Refresh access token',
     description: 'Generates a new access token using a valid refresh token.',
   })
@@ -86,6 +102,7 @@ export class AuthController {
   async refresh(@Body() dto: RefreshTokenDto) {
     return this.authService.refresh(dto);
   }
+
   @ApiOperation({
     summary: 'Logout from account',
     description:
@@ -98,5 +115,18 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async logout(@Body() dto: LogoutDto) {
     return this.authService.logout(dto);
+  }
+  @ApiOperation({
+    summary: 'Reset account password',
+    description:
+      'Resets the account password using a valid password reset token.',
+  })
+  @ApiOkResponse({
+    description: 'Password reset successfully.',
+  })
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto);
   }
 }

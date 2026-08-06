@@ -27,5 +27,7 @@ export interface IUserRepository {
 
   update(id: string, data: UpdateUserRepositoryDto): Promise<UserEntity>;
 
+  updatePassword(id: string, passwordHash: string): Promise<void>;
+
   delete(id: string): Promise<void>;
 }

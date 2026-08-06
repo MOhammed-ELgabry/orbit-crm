@@ -14,6 +14,8 @@ export interface IAuthSessionRepository {
 
   revoke(id: string): Promise<void>;
 
+  revokeAllByUserId(userId: string): Promise<void>;
+
   rotate(
     oldSessionId: string,
     data: {

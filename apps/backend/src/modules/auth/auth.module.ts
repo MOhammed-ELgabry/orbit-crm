@@ -9,6 +9,7 @@ import { MailModule } from '../mail/mail.module';
 import {
   AUTH_REPOSITORY,
   AUTH_SESSION_REPOSITORY,
+  PASSWORD_RESET_REPOSITORY,
 } from './constants/auth.constants';
 
 import { AuthController } from './auth.controller';
@@ -16,6 +17,7 @@ import { AuthService } from './auth.service';
 
 import { AuthRepository } from './repository/auth.repository';
 import { AuthSessionRepository } from './repository/auth-session.repository';
+import { PasswordResetRepository } from './repository/password-reset.repository';
 import { TokenHashService } from './services/token-hash.service';
 
 import { JwtModule } from '@nestjs/jwt';
@@ -58,6 +60,11 @@ import { JwtModule } from '@nestjs/jwt';
     {
       provide: AUTH_SESSION_REPOSITORY,
       useClass: AuthSessionRepository,
+    },
+
+    {
+      provide: PASSWORD_RESET_REPOSITORY,
+      useClass: PasswordResetRepository,
     },
   ],
 

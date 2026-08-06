@@ -185,7 +185,16 @@ export class UserRepository implements IUserRepository {
       PrismaExceptionMapper.map(error);
     }
   }
-
+  async updatePassword(id: string, passwordHash: string): Promise<void> {
+    await this.prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        passwordHash,
+      },
+    });
+  }
   async delete(id: string): Promise<void> {
     try {
       await this.prisma.user.update({

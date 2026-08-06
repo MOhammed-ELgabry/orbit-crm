@@ -55,4 +55,66 @@ export class MailService {
       `,
     });
   }
+
+  async sendPasswordResetEmail(
+    email: string,
+    resetToken: string,
+  ): Promise<void> {
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') ?? 'http://localhost:5173';
+
+    const resetUrl = `${frontendUrl}/reset-password?token=${encodeURIComponent(
+      resetToken,
+    )}`;
+
+    await this.transporter.sendMail({
+      from: this.configService.get<string>('MAIL_FROM'),
+
+      to: email,
+
+      subject: 'Orbit CRM - Reset Your Password',
+
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px;">
+          <h2>Reset Your Orbit CRM Password</h2>
+
+          <p>
+            We received a request to reset your password.
+          </p>
+
+          <p>
+            Click the button below to create a new password:
+          </p>
+
+          <div style="margin: 30px 0;">
+            <a
+              href="${resetUrl}"
+              style="
+                display: inline-block;
+                padding: 12px 24px;
+                background-color: #2563eb;
+                color: #ffffff;
+                text-decoration: none;
+                border-radius: 6px;
+              "
+            >
+              Reset Password
+            </a>
+          </div>
+
+          <p>
+            This link will expire according to the password
+            reset token expiration configured by the application.
+          </p>
+
+          <hr />
+
+          <small>
+            If you didn't request a password reset,
+            please ignore this email.
+          </small>
+        </div>
+      `,
+    });
+  }
 }

@@ -55,10 +55,6 @@ model User {
   emailVerificationCode    String?
   emailVerificationExpires DateTime?
 
-  // Password Reset
-  passwordResetCode    String?
-  passwordResetExpires DateTime?
-
   // Refresh Token
   refreshTokenHash String?
 
@@ -76,7 +72,10 @@ model User {
   // Relations
   companyId String
   company   Company @relation(fields: [companyId], references: [id])
-authSessions AuthSession[]
+
+  authSessions        AuthSession[]
+  passwordResetTokens PasswordResetToken[]
+
   // Audit
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -107,6 +106,7 @@ model AuthSession {
   @@index([expiresAt])
   @@index([revokedAt])
 }
+
 model EmailVerification {
   id String @id @default(cuid())
 
@@ -120,4 +120,19 @@ model EmailVerification {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }

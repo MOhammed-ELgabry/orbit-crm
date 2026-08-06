@@ -12,10 +12,11 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import type { IRefreshTokenPayload } from './interfaces/refresh-token-payload.interface';
 import { USER_REPOSITORY } from '../user/constants/user.constants';
 import { EMAIL_VERIFICATION_REPOSITORY } from '../email-verification/constants/email-verification.constants';
-import { randomUUID } from 'crypto';
+import { randomBytes, randomUUID } from 'crypto';
+
 import type { IUserRepository } from '../user/repository/user.repository.interface';
 import type { IEmailVerificationRepository } from '../email-verification/repository/email-verification.repository.interface';
-
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { PasswordService } from '../user/services/password.service';
 import { MailService } from '../mail/mail.service';
 import { TokenHashService } from './services/token-hash.service';
@@ -25,13 +26,16 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { LogoutDto } from './dto/logout.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import {
   AUTH_REPOSITORY,
   AUTH_SESSION_REPOSITORY,
+  PASSWORD_RESET_REPOSITORY,
 } from './constants/auth.constants';
 
 import type { IAuthRepository } from './repository/auth.repository.interface';
 import type { IAuthSessionRepository } from './repository/auth-session.repository.interface';
+import type { IPasswordResetRepository } from './repository/password-reset.repository.interface';
 
 import { LoginDto } from './dto/login.dto';
 import { IJwtPayload } from './interfaces/jwt-payload.interface';
@@ -58,6 +62,9 @@ export class AuthService {
 
     @Inject(AUTH_SESSION_REPOSITORY)
     private readonly authSessionRepository: IAuthSessionRepository,
+
+    @Inject(PASSWORD_RESET_REPOSITORY)
+    private readonly passwordResetRepository: IPasswordResetRepository,
 
     private readonly configService: ConfigService,
 
@@ -323,6 +330,94 @@ export class AuthService {
       refreshToken,
     };
   }
+
+  async forgotPassword(dto: ForgotPasswordDto) {
+    const email = dto.email.trim().toLowerCase();
+
+    const user = await this.authRepository.findUserForLogin(email);
+
+    if (!user) {
+      return {
+        success: true,
+        message:
+          'If an account with this email exists, a password reset link has been sent.',
+      };
+    }
+
+    if (!user.isActive) {
+      return {
+        success: true,
+        message:
+          'If an account with this email exists, a password reset link has been sent.',
+      };
+    }
+
+    const resetToken = randomBytes(32).toString('hex');
+
+    const tokenHash = this.tokenHashService.hash(resetToken);
+
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    await this.passwordResetRepository.deleteByUserId(user.id);
+
+    await this.passwordResetRepository.create({
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+    });
+
+    await this.mailService.sendPasswordResetEmail(user.email, resetToken);
+
+    return {
+      success: true,
+      message:
+        'If an account with this email exists, a password reset link has been sent.',
+    };
+  }
+  async resetPassword(dto: ResetPasswordDto) {
+    const tokenHash = this.tokenHashService.hash(dto.token);
+
+    const resetToken =
+      await this.passwordResetRepository.findByTokenHash(tokenHash);
+
+    if (!resetToken) {
+      throw new BadRequestException('Invalid or expired password reset token.');
+    }
+
+    if (resetToken.usedAt) {
+      throw new BadRequestException(
+        'Password reset token has already been used.',
+      );
+    }
+
+    if (resetToken.expiresAt <= new Date()) {
+      throw new BadRequestException('Password reset token has expired.');
+    }
+
+    const user = await this.userRepository.findById(resetToken.userId);
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired password reset token.');
+    }
+
+    if (!user.isActive) {
+      throw new BadRequestException('User account is inactive.');
+    }
+
+    const passwordHash = await this.passwordService.hash(dto.newPassword);
+
+    await this.userRepository.updatePassword(user.id, passwordHash);
+
+    await this.authSessionRepository.revokeAllByUserId(user.id);
+
+    await this.passwordResetRepository.markAsUsed(resetToken.id);
+
+    return {
+      success: true,
+      message: 'Password has been reset successfully.',
+    };
+  }
+
   async refresh(dto: RefreshTokenDto) {
     const { refreshToken } = dto;
 
