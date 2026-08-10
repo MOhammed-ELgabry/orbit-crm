@@ -24,5 +24,5 @@ export interface IAuthSessionRepository {
       tokenHash: string;
       expiresAt: Date;
     },
-  ): Promise<AuthSession>;
+  ): Promise<AuthSession | null>;
 }

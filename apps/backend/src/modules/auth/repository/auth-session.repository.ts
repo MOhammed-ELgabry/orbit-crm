@@ -2,13 +2,18 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 
-import { IAuthSessionRepository } from './auth-session.repository.interface';
+import type { IAuthSessionRepository } from './auth-session.repository.interface';
 
 @Injectable()
 export class AuthSessionRepository implements IAuthSessionRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: { userId: string; tokenHash: string; expiresAt: Date }) {
+  async create(data: {
+    id: string;
+    userId: string;
+    tokenHash: string;
+    expiresAt: Date;
+  }) {
     return this.prisma.authSession.create({
       data,
     });
@@ -52,6 +57,7 @@ export class AuthSessionRepository implements IAuthSessionRepository {
       },
     });
   }
+
   async rotate(
     oldSessionId: string,
     data: {
@@ -62,14 +68,19 @@ export class AuthSessionRepository implements IAuthSessionRepository {
     },
   ) {
     return this.prisma.$transaction(async (tx) => {
-      await tx.authSession.update({
+      const revokedSession = await tx.authSession.updateMany({
         where: {
           id: oldSessionId,
+          revokedAt: null,
         },
         data: {
           revokedAt: new Date(),
         },
       });
+
+      if (revokedSession.count !== 1) {
+        return null;
+      }
 
       return tx.authSession.create({
         data,

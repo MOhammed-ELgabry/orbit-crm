@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -9,12 +10,16 @@ import {
   Patch,
   Post,
   Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiExtraModels,
+  ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -24,6 +29,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
+import type { Request } from 'express';
+
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { PaginationResult } from '../../common/interfaces/pagination-result.interface';
 
@@ -32,8 +39,17 @@ import { UpdateCompanyDto } from './dto/update-company.dto';
 import { CompanyEntity } from './entities/company.entity';
 import { CompanyService } from './company.service';
 
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { IJwtPayload } from '../auth/interfaces/jwt-payload.interface';
+
+type AuthenticatedRequest = Request & {
+  user: IJwtPayload;
+};
+
 @ApiTags('Company')
 @ApiExtraModels(PaginationQueryDto)
+@ApiBearerAuth('JWT')
+@UseGuards(JwtAuthGuard)
 @Controller('companies')
 export class CompanyController {
   constructor(private readonly companyService: CompanyService) {}
@@ -41,7 +57,8 @@ export class CompanyController {
   @Post()
   @ApiOperation({
     summary: 'Create a new company',
-    description: 'Creates a new company and returns the created company.',
+    description:
+      'Creates a new company. This endpoint is currently restricted until Platform-level authorization is implemented.',
   })
   @ApiCreatedResponse({
     description: 'Company created successfully.',
@@ -50,16 +67,30 @@ export class CompanyController {
   @ApiBadRequestResponse({
     description: 'Validation failed.',
   })
+  @ApiForbiddenResponse({
+    description:
+      'Company creation is not available to tenant users.',
+  })
   async create(
     @Body() createCompanyDto: CreateCompanyDto,
   ): Promise<CompanyEntity> {
-    return this.companyService.create(createCompanyDto);
+    /*
+     * Company creation is a Platform-level operation.
+     *
+     * Tenant users must not be able to create new companies.
+     * Platform Admin / onboarding authorization will be added
+     * when the RBAC phase is implemented.
+     */
+    throw new ForbiddenException(
+      'Company creation is not available to tenant users.',
+    );
   }
 
   @Get()
   @ApiOperation({
-    summary: 'Get all companies',
-    description: 'Returns a paginated list of companies.',
+    summary: 'Get current company',
+    description:
+      'Returns companies visible to the authenticated tenant.',
   })
   @ApiQuery({
     name: 'page',
@@ -96,9 +127,13 @@ export class CompanyController {
     description: 'Companies retrieved successfully.',
   })
   async findAll(
+    @Req() request: AuthenticatedRequest,
     @Query() query: PaginationQueryDto,
   ): Promise<PaginationResult<CompanyEntity>> {
-    return this.companyService.findAll(query);
+    return this.companyService.findAll(
+      query,
+      request.user.companyId,
+    );
   }
 
   @Patch(':id')
@@ -124,8 +159,13 @@ export class CompanyController {
   async update(
     @Param('id') id: string,
     @Body() updateCompanyDto: UpdateCompanyDto,
+    @Req() request: AuthenticatedRequest,
   ): Promise<CompanyEntity> {
-    return this.companyService.update(id, updateCompanyDto);
+    return this.companyService.update(
+      id,
+      updateCompanyDto,
+      request.user.companyId,
+    );
   }
 
   @Delete(':id')
@@ -145,8 +185,14 @@ export class CompanyController {
   @ApiNotFoundResponse({
     description: 'Company not found.',
   })
-  async delete(@Param('id') id: string): Promise<void> {
-    return this.companyService.delete(id);
+  async delete(
+    @Param('id') id: string,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<void> {
+    return this.companyService.delete(
+      id,
+      request.user.companyId,
+    );
   }
 
   @Get(':id')
@@ -166,7 +212,13 @@ export class CompanyController {
   @ApiNotFoundResponse({
     description: 'Company not found.',
   })
-  async findById(@Param('id') id: string): Promise<CompanyEntity> {
-    return this.companyService.findById(id);
+  async findById(
+    @Param('id') id: string,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<CompanyEntity> {
+    return this.companyService.findById(
+      id,
+      request.user.companyId,
+    );
   }
 }

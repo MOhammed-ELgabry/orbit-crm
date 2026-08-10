@@ -253,6 +253,7 @@ export class AuthService {
   private generateAccessToken(payload: IJwtPayload): string {
     return this.jwtService.sign(payload);
   }
+
   private generateRefreshToken(payload: IRefreshTokenPayload): string {
     return this.jwtService.sign(payload, {
       secret: this.configService.getOrThrow<string>('jwt.refreshSecret'),
@@ -261,6 +262,7 @@ export class AuthService {
       ) as StringValue,
     });
   }
+
   async login(dto: LoginDto) {
     const email = dto.email.trim().toLowerCase();
 
@@ -317,12 +319,14 @@ export class AuthService {
     const refreshTokenExpiresAt = new Date(
       Date.now() + ms(refreshTokenExpiresIn),
     );
+
     await this.authSessionRepository.create({
       id: sessionId,
       userId: user.id,
       tokenHash: refreshTokenHash,
       expiresAt: refreshTokenExpiresAt,
     });
+
     return {
       success: true,
       message: 'Login successful.',
@@ -374,6 +378,7 @@ export class AuthService {
         'If an account with this email exists, a password reset link has been sent.',
     };
   }
+
   async resetPassword(dto: ResetPasswordDto) {
     const tokenHash = this.tokenHashService.hash(dto.token);
 
@@ -430,6 +435,7 @@ export class AuthService {
     } catch {
       throw new BadRequestException('Invalid refresh token.');
     }
+
     const session = await this.authSessionRepository.findById(
       payload.sessionId,
     );
@@ -437,34 +443,44 @@ export class AuthService {
     if (!session) {
       throw new BadRequestException('Invalid refresh token.');
     }
+
     if (session.revokedAt) {
       throw new BadRequestException('Refresh token has been revoked.');
     }
+
     if (session.expiresAt <= new Date()) {
       throw new BadRequestException('Refresh token has expired.');
     }
+
     const refreshTokenHash = this.tokenHashService.hash(refreshToken);
 
     if (refreshTokenHash !== session.tokenHash) {
       throw new BadRequestException('Invalid refresh token.');
     }
+
     const user = await this.userRepository.findById(session.userId);
+
     if (!user) {
       throw new BadRequestException('Invalid refresh token.');
     }
+
     if (!user.isActive) {
       throw new BadRequestException('User account is inactive.');
     }
+
     if (!user.isEmailVerified) {
       throw new BadRequestException('Email is not verified.');
     }
+
     const accessTokenPayload: IJwtPayload = {
       sub: user.id,
       companyId: user.companyId,
       email: user.email,
       isOwner: user.isOwner,
     };
+
     const accessToken = this.generateAccessToken(accessTokenPayload);
+
     const newSessionId = randomUUID();
 
     const newRefreshTokenPayload: IRefreshTokenPayload = {
@@ -472,19 +488,30 @@ export class AuthService {
       sessionId: newSessionId,
     };
 
-    const newRefreshToken = this.generateRefreshToken(newRefreshTokenPayload);
+    const newRefreshToken = this.generateRefreshToken(
+      newRefreshTokenPayload,
+    );
 
     const newRefreshTokenHash = this.tokenHashService.hash(newRefreshToken);
 
     const newRefreshTokenExpiresAt = new Date(
       Date.now() + 7 * 24 * 60 * 60 * 1000,
     );
-    await this.authSessionRepository.rotate(payload.sessionId, {
-      id: newSessionId,
-      userId: user.id,
-      tokenHash: newRefreshTokenHash,
-      expiresAt: newRefreshTokenExpiresAt,
-    });
+
+    const rotatedSession = await this.authSessionRepository.rotate(
+      payload.sessionId,
+      {
+        id: newSessionId,
+        userId: user.id,
+        tokenHash: newRefreshTokenHash,
+        expiresAt: newRefreshTokenExpiresAt,
+      },
+    );
+
+    if (!rotatedSession) {
+      throw new BadRequestException('Invalid refresh token.');
+    }
+
     return {
       success: true,
       message: 'Access token refreshed successfully.',
@@ -492,6 +519,7 @@ export class AuthService {
       refreshToken: newRefreshToken,
     };
   }
+
   async logout(dto: LogoutDto) {
     const { refreshToken } = dto;
 

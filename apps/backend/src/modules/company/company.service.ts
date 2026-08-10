@@ -22,11 +22,19 @@ export class CompanyService {
 
   async findAll(
     query: PaginationQueryDto,
+    companyId: string,
   ): Promise<PaginationResult<CompanyEntity>> {
-    return this.companyRepository.findAll(query);
+    return this.companyRepository.findAll(query, companyId);
   }
 
-  async findById(id: string): Promise<CompanyEntity> {
+  async findById(
+    id: string,
+    companyId: string,
+  ): Promise<CompanyEntity> {
+    if (id !== companyId) {
+      throw new NotFoundException('Company not found');
+    }
+
     const company = await this.companyRepository.findById(id);
 
     if (!company) {
@@ -39,7 +47,12 @@ export class CompanyService {
   async update(
     id: string,
     updateCompanyDto: UpdateCompanyDto,
+    companyId: string,
   ): Promise<CompanyEntity> {
+    if (id !== companyId) {
+      throw new NotFoundException('Company not found');
+    }
+
     const company = await this.companyRepository.findById(id);
 
     if (!company) {
@@ -49,7 +62,14 @@ export class CompanyService {
     return this.companyRepository.update(id, updateCompanyDto);
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(
+    id: string,
+    companyId: string,
+  ): Promise<void> {
+    if (id !== companyId) {
+      throw new NotFoundException('Company not found');
+    }
+
     const company = await this.companyRepository.findById(id);
 
     if (!company) {

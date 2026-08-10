@@ -31,6 +31,7 @@ export class CompanyRepository implements ICompanyRepository {
 
   async findAll(
     query: PaginationQueryDto,
+    companyId: string,
   ): Promise<PaginationResult<CompanyEntity>> {
     const { page, limit } = PaginationUtil.getPagination(query);
 
@@ -71,6 +72,7 @@ export class CompanyRepository implements ICompanyRepository {
         ],
       },
       {
+        id: companyId,
         deletedAt: null,
       },
     );
@@ -99,6 +101,7 @@ export class CompanyRepository implements ICompanyRepository {
       meta: PaginationUtil.buildMeta(page, limit, total),
     };
   }
+
   async findById(id: string): Promise<CompanyEntity | null> {
     const company = await this.prisma.company.findFirst({
       where: {
@@ -114,7 +117,10 @@ export class CompanyRepository implements ICompanyRepository {
     return new CompanyEntity(company);
   }
 
-  async update(id: string, data: UpdateCompanyDto): Promise<CompanyEntity> {
+  async update(
+    id: string,
+    data: UpdateCompanyDto,
+  ): Promise<CompanyEntity> {
     try {
       const company = await this.prisma.company.update({
         where: { id },
