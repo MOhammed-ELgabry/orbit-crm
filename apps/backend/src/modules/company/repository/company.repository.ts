@@ -117,10 +117,7 @@ export class CompanyRepository implements ICompanyRepository {
     return new CompanyEntity(company);
   }
 
-  async update(
-    id: string,
-    data: UpdateCompanyDto,
-  ): Promise<CompanyEntity> {
+  async update(id: string, data: UpdateCompanyDto): Promise<CompanyEntity> {
     try {
       const company = await this.prisma.company.update({
         where: { id },

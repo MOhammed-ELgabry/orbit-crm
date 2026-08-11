@@ -40,6 +40,7 @@ import { CompanyEntity } from './entities/company.entity';
 import { CompanyService } from './company.service';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OwnerGuard } from '../auth/guards/owner.guard';
 import type { IJwtPayload } from '../auth/interfaces/jwt-payload.interface';
 
 type AuthenticatedRequest = Request & {
@@ -68,8 +69,7 @@ export class CompanyController {
     description: 'Validation failed.',
   })
   @ApiForbiddenResponse({
-    description:
-      'Company creation is not available to tenant users.',
+    description: 'Company creation is not available to tenant users.',
   })
   async create(
     @Body() createCompanyDto: CreateCompanyDto,
@@ -89,8 +89,7 @@ export class CompanyController {
   @Get()
   @ApiOperation({
     summary: 'Get current company',
-    description:
-      'Returns companies visible to the authenticated tenant.',
+    description: 'Returns companies visible to the authenticated tenant.',
   })
   @ApiQuery({
     name: 'page',
@@ -130,13 +129,11 @@ export class CompanyController {
     @Req() request: AuthenticatedRequest,
     @Query() query: PaginationQueryDto,
   ): Promise<PaginationResult<CompanyEntity>> {
-    return this.companyService.findAll(
-      query,
-      request.user.companyId,
-    );
+    return this.companyService.findAll(query, request.user.companyId);
   }
 
   @Patch(':id')
+  @UseGuards(OwnerGuard)
   @ApiOperation({
     summary: 'Update company',
     description: 'Updates an existing company.',
@@ -156,6 +153,9 @@ export class CompanyController {
   @ApiNotFoundResponse({
     description: 'Company not found.',
   })
+  @ApiForbiddenResponse({
+    description: 'Owner privileges are required for this operation.',
+  })
   async update(
     @Param('id') id: string,
     @Body() updateCompanyDto: UpdateCompanyDto,
@@ -169,6 +169,7 @@ export class CompanyController {
   }
 
   @Delete(':id')
+  @UseGuards(OwnerGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete company',
@@ -185,14 +186,14 @@ export class CompanyController {
   @ApiNotFoundResponse({
     description: 'Company not found.',
   })
+  @ApiForbiddenResponse({
+    description: 'Owner privileges are required for this operation.',
+  })
   async delete(
     @Param('id') id: string,
     @Req() request: AuthenticatedRequest,
   ): Promise<void> {
-    return this.companyService.delete(
-      id,
-      request.user.companyId,
-    );
+    return this.companyService.delete(id, request.user.companyId);
   }
 
   @Get(':id')
@@ -216,9 +217,6 @@ export class CompanyController {
     @Param('id') id: string,
     @Req() request: AuthenticatedRequest,
   ): Promise<CompanyEntity> {
-    return this.companyService.findById(
-      id,
-      request.user.companyId,
-    );
+    return this.companyService.findById(id, request.user.companyId);
   }
 }

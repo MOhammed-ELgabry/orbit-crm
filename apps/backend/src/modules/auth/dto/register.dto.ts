@@ -1,11 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsBoolean,
   IsEmail,
   IsOptional,
   IsString,
   IsStrongPassword,
-  MinLength,
+  IsUrl,
+  Length,
+  MaxLength,
 } from 'class-validator';
 
 export class RegisterDto {
@@ -13,52 +14,49 @@ export class RegisterDto {
     example: 'Mohammed',
   })
   @IsString()
-  @MinLength(2)
+  @Length(2, 50)
   firstName: string;
 
   @ApiProperty({
     example: 'Elgabry',
   })
   @IsString()
-  @MinLength(2)
+  @Length(2, 50)
   lastName: string;
 
   @ApiProperty({
-    example: 'owner@orbitcrm.com',
+    example: 'mohammed.elgabry.test@gmail.com',
   })
   @IsEmail()
+  @MaxLength(255)
   email: string;
 
   @ApiProperty({
     example: 'StrongPassword123!',
   })
   @IsStrongPassword()
+  @MaxLength(100)
   password: string;
+
+  @ApiProperty({
+    example: 'Orbit CRM',
+  })
+  @IsString()
+  @Length(2, 100)
+  companyName: string;
 
   @ApiPropertyOptional({
     example: '+201001234567',
   })
   @IsOptional()
   @IsString()
+  @Length(6, 20)
   phone?: string;
 
   @ApiPropertyOptional({
     example: 'https://cdn.orbitcrm.com/avatar.png',
   })
   @IsOptional()
-  @IsString()
+  @IsUrl()
   avatar?: string;
-
-  @ApiProperty({
-    example: 'cms6clch80000v0a8fhmevd9h',
-  })
-  @IsString()
-  companyId: string;
-
-  @ApiPropertyOptional({
-    example: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  isOwner?: boolean;
 }

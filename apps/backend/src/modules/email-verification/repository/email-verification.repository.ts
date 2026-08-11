@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
+import { PrismaExceptionMapper } from '../../../common/exceptions/prisma-exception.mapper';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 
 import { CreateEmailVerificationRepositoryDto } from '../dto/create-email-verification-repository.dto';
@@ -13,52 +14,60 @@ export class EmailVerificationRepository implements IEmailVerificationRepository
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateEmailVerificationRepositoryDto) {
-    const verification = await this.prisma.emailVerification.upsert({
-      where: {
-        email: dto.email,
-      },
+    try {
+      const verification = await this.prisma.emailVerification.upsert({
+        where: {
+          email: dto.email,
+        },
 
-      update: {
-        code: dto.code,
-        expiresAt: dto.expiresAt,
-        attempts: 0,
-        verifiedAt: null,
-      },
+        update: {
+          code: dto.code,
+          expiresAt: dto.expiresAt,
+          attempts: 0,
+          verifiedAt: null,
+        },
 
-      create: {
-        email: dto.email,
-        code: dto.code,
-        expiresAt: dto.expiresAt,
-      },
-    });
+        create: {
+          email: dto.email,
+          code: dto.code,
+          expiresAt: dto.expiresAt,
+        },
+      });
 
-    return new EmailVerificationEntity(verification);
+      return new EmailVerificationEntity(verification);
+    } catch (error) {
+      PrismaExceptionMapper.map(error);
+    }
   }
 
   async createWithTransaction(
     tx: Prisma.TransactionClient,
     dto: CreateEmailVerificationRepositoryDto,
   ) {
-    const verification = await tx.emailVerification.upsert({
-      where: {
-        email: dto.email,
-      },
+    try {
+      const verification = await tx.emailVerification.upsert({
+        where: {
+          email: dto.email,
+        },
 
-      update: {
-        code: dto.code,
-        expiresAt: dto.expiresAt,
-        attempts: 0,
-        verifiedAt: null,
-      },
+        update: {
+          code: dto.code,
+          expiresAt: dto.expiresAt,
+          attempts: 0,
+          verifiedAt: null,
+        },
 
-      create: {
-        email: dto.email,
-        code: dto.code,
-        expiresAt: dto.expiresAt,
-      },
-    });
+        create: {
+          email: dto.email,
+          code: dto.code,
+          expiresAt: dto.expiresAt,
+        },
+      });
 
-    return new EmailVerificationEntity(verification);
+      return new EmailVerificationEntity(verification);
+    } catch (error) {
+      PrismaExceptionMapper.map(error);
+    }
   }
 
   async findByEmail(email: string) {
@@ -76,40 +85,52 @@ export class EmailVerificationRepository implements IEmailVerificationRepository
   }
 
   async markAsVerified(email: string) {
-    const verification = await this.prisma.emailVerification.update({
-      where: {
-        email,
-      },
+    try {
+      const verification = await this.prisma.emailVerification.update({
+        where: {
+          email,
+        },
 
-      data: {
-        verifiedAt: new Date(),
-      },
-    });
+        data: {
+          verifiedAt: new Date(),
+        },
+      });
 
-    return new EmailVerificationEntity(verification);
+      return new EmailVerificationEntity(verification);
+    } catch (error) {
+      PrismaExceptionMapper.map(error);
+    }
   }
 
   async incrementAttempts(email: string) {
-    const verification = await this.prisma.emailVerification.update({
-      where: {
-        email,
-      },
-
-      data: {
-        attempts: {
-          increment: 1,
+    try {
+      const verification = await this.prisma.emailVerification.update({
+        where: {
+          email,
         },
-      },
-    });
 
-    return new EmailVerificationEntity(verification);
+        data: {
+          attempts: {
+            increment: 1,
+          },
+        },
+      });
+
+      return new EmailVerificationEntity(verification);
+    } catch (error) {
+      PrismaExceptionMapper.map(error);
+    }
   }
 
   async delete(email: string) {
-    await this.prisma.emailVerification.delete({
-      where: {
-        email,
-      },
-    });
+    try {
+      await this.prisma.emailVerification.delete({
+        where: {
+          email,
+        },
+      });
+    } catch (error) {
+      PrismaExceptionMapper.map(error);
+    }
   }
 }

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { PrismaExceptionMapper } from '../../../common/exceptions/prisma-exception.mapper';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 
 import { IPasswordResetRepository } from './password-reset.repository.interface';
@@ -9,9 +10,13 @@ export class PasswordResetRepository implements IPasswordResetRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: { userId: string; tokenHash: string; expiresAt: Date }) {
-    return this.prisma.passwordResetToken.create({
-      data,
-    });
+    try {
+      return await this.prisma.passwordResetToken.create({
+        data,
+      });
+    } catch (error) {
+      PrismaExceptionMapper.map(error);
+    }
   }
 
   async findByTokenHash(tokenHash: string) {
@@ -31,21 +36,29 @@ export class PasswordResetRepository implements IPasswordResetRepository {
   }
 
   async markAsUsed(id: string): Promise<void> {
-    await this.prisma.passwordResetToken.update({
-      where: {
-        id,
-      },
-      data: {
-        usedAt: new Date(),
-      },
-    });
+    try {
+      await this.prisma.passwordResetToken.update({
+        where: {
+          id,
+        },
+        data: {
+          usedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      PrismaExceptionMapper.map(error);
+    }
   }
 
   async deleteByUserId(userId: string): Promise<void> {
-    await this.prisma.passwordResetToken.deleteMany({
-      where: {
-        userId,
-      },
-    });
+    try {
+      await this.prisma.passwordResetToken.deleteMany({
+        where: {
+          userId,
+        },
+      });
+    } catch (error) {
+      PrismaExceptionMapper.map(error);
+    }
   }
 }

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { createHash } from 'crypto';
+import { createHash, timingSafeEqual } from 'crypto';
 
 @Injectable()
 export class TokenHashService {
@@ -8,6 +8,13 @@ export class TokenHashService {
   }
 
   compare(token: string, hash: string): boolean {
-    return this.hash(token) === hash;
+    const computedHash = Buffer.from(this.hash(token), 'hex');
+    const providedHash = Buffer.from(hash, 'hex');
+
+    if (computedHash.length !== providedHash.length) {
+      return false;
+    }
+
+    return timingSafeEqual(computedHash, providedHash);
   }
 }

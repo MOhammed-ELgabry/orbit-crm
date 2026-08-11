@@ -15,7 +15,7 @@ export interface IUser {
 
   lastLoginAt: Date | null;
 
-  companyId: string;
+  companyId: string | null;
 
   createdAt: Date;
   updatedAt: Date;

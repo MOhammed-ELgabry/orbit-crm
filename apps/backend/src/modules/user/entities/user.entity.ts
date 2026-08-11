@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
 import { IUser } from '../interfaces/user.interface';
 
 export class UserEntity implements IUser {
@@ -66,11 +65,12 @@ export class UserEntity implements IUser {
   })
   lastLoginAt: Date | null;
 
-  @ApiProperty({
-    example: 'cms6clch80000v0a8fhmevd9h',
-    description: 'Company identifier',
+  @ApiPropertyOptional({
+    example: null,
+    description: 'Company identifier. Assigned after email verification.',
+    nullable: true,
   })
-  companyId: string;
+  companyId: string | null;
 
   @ApiProperty({
     example: '2026-08-01T20:00:00.000Z',

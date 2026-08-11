@@ -16,10 +16,7 @@ export interface ICompanyRepository {
 
   findById(id: string): Promise<CompanyEntity | null>;
 
-  update(
-    id: string,
-    data: UpdateCompanyDto,
-  ): Promise<CompanyEntity>;
+  update(id: string, data: UpdateCompanyDto): Promise<CompanyEntity>;
 
   delete(id: string): Promise<void>;
 }

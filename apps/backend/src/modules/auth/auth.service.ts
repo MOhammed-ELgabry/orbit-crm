@@ -82,18 +82,6 @@ export class AuthService {
       throw new BadRequestException('Email already exists.');
     }
 
-    const company = await this.prisma.company.findFirst({
-      where: {
-        id: dto.companyId,
-        isActive: true,
-        deletedAt: null,
-      },
-    });
-
-    if (!company) {
-      throw new NotFoundException('Active company not found.');
-    }
-
     const verificationCode = Math.floor(
       100000 + Math.random() * 900000,
     ).toString();
@@ -125,8 +113,8 @@ export class AuthService {
             passwordHash,
             phone: dto.phone,
             avatar: dto.avatar,
-            companyId: dto.companyId,
-            isOwner: dto.isOwner ?? false,
+            companyId: null,
+            pendingCompanyName: dto.companyName,
           },
         });
 
@@ -191,16 +179,33 @@ export class AuthService {
       throw new NotFoundException('User not found.');
     }
 
+    if (user.isEmailVerified) {
+      throw new BadRequestException('Email is already verified.');
+    }
+
     await this.prisma.$transaction(async (tx) => {
+      // 1. Create the user's company
+      const company = await tx.company.create({
+        data: {
+          name: `${user.firstName} ${user.lastName}'s Company`,
+          contactEmail: user.email,
+          isActive: true,
+        },
+      });
+
+      // 2. Verify the email and attach the user to the company
       await tx.user.update({
         where: {
           id: user.id,
         },
         data: {
           isEmailVerified: true,
+          companyId: company.id,
+          isOwner: true,
         },
       });
 
+      // 3. Mark verification as completed
       await tx.emailVerification.update({
         where: {
           email,
@@ -213,21 +218,27 @@ export class AuthService {
 
     return {
       success: true,
-      message: 'Email verified successfully.',
+      message: 'Email verified successfully. Your company has been created.',
     };
   }
 
   async resendVerification(dto: ResendVerificationDto) {
     const email = dto.email.trim().toLowerCase();
 
+    const genericResponse = {
+      success: true,
+      message:
+        'If an account with this email exists and is not yet verified, a new verification code has been sent.',
+    };
+
     const user = await this.userRepository.findByEmail(email);
 
     if (!user) {
-      throw new NotFoundException('User not found.');
+      return genericResponse;
     }
 
     if (user.isEmailVerified) {
-      throw new BadRequestException('Email is already verified.');
+      return genericResponse;
     }
 
     const verificationCode = Math.floor(
@@ -244,10 +255,7 @@ export class AuthService {
 
     await this.mailService.sendVerificationEmail(email, verificationCode);
 
-    return {
-      success: true,
-      message: 'Verification code resent successfully.',
-    };
+    return genericResponse;
   }
 
   private generateAccessToken(payload: IJwtPayload): string {
@@ -276,10 +284,6 @@ export class AuthService {
       throw new BadRequestException('Invalid email or password.');
     }
 
-    if (!user.isActive) {
-      throw new BadRequestException('User account is inactive.');
-    }
-
     const isPasswordValid = await this.passwordService.compare(
       dto.password,
       user.passwordHash,
@@ -289,10 +293,16 @@ export class AuthService {
       throw new BadRequestException('Invalid email or password.');
     }
 
+    if (!user.isActive) {
+      throw new BadRequestException('User account is inactive.');
+    }
+
     if (!user.isEmailVerified) {
       throw new BadRequestException('Email is not verified.');
     }
-
+    if (!user.companyId) {
+      throw new BadRequestException('User is not associated with a company.');
+    }
     const accessTokenPayload: IJwtPayload = {
       sub: user.id,
       companyId: user.companyId,
@@ -452,9 +462,7 @@ export class AuthService {
       throw new BadRequestException('Refresh token has expired.');
     }
 
-    const refreshTokenHash = this.tokenHashService.hash(refreshToken);
-
-    if (refreshTokenHash !== session.tokenHash) {
+    if (!this.tokenHashService.compare(refreshToken, session.tokenHash)) {
       throw new BadRequestException('Invalid refresh token.');
     }
 
@@ -471,7 +479,9 @@ export class AuthService {
     if (!user.isEmailVerified) {
       throw new BadRequestException('Email is not verified.');
     }
-
+    if (!user.companyId) {
+      throw new BadRequestException('User is not associated with a company.');
+    }
     const accessTokenPayload: IJwtPayload = {
       sub: user.id,
       companyId: user.companyId,
@@ -488,14 +498,16 @@ export class AuthService {
       sessionId: newSessionId,
     };
 
-    const newRefreshToken = this.generateRefreshToken(
-      newRefreshTokenPayload,
-    );
+    const newRefreshToken = this.generateRefreshToken(newRefreshTokenPayload);
 
     const newRefreshTokenHash = this.tokenHashService.hash(newRefreshToken);
 
+    const newRefreshTokenExpiresIn = this.configService.getOrThrow<string>(
+      'jwt.refreshExpiresIn',
+    ) as StringValue;
+
     const newRefreshTokenExpiresAt = new Date(
-      Date.now() + 7 * 24 * 60 * 60 * 1000,
+      Date.now() + ms(newRefreshTokenExpiresIn),
     );
 
     const rotatedSession = await this.authSessionRepository.rotate(
@@ -545,9 +557,7 @@ export class AuthService {
       throw new BadRequestException('Refresh token has already been revoked.');
     }
 
-    const refreshTokenHash = this.tokenHashService.hash(refreshToken);
-
-    if (refreshTokenHash !== session.tokenHash) {
+    if (!this.tokenHashService.compare(refreshToken, session.tokenHash)) {
       throw new BadRequestException('Invalid refresh token.');
     }
 

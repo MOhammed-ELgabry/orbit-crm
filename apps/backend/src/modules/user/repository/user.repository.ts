@@ -13,6 +13,7 @@ import { CreateUserRepositoryDto } from '../dto/create-user-repository.dto';
 import { UserEntity } from '../entities/user.entity';
 import { IUserRepository } from './user.repository.interface';
 import { IAuthUser } from '../../auth/interfaces/auth-user.interface';
+
 @Injectable()
 export class UserRepository implements IUserRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -46,6 +47,7 @@ export class UserRepository implements IUserRepository {
 
   async findAll(
     query: PaginationQueryDto,
+    companyId: string,
   ): Promise<PaginationResult<UserEntity>> {
     const { page, limit } = PaginationUtil.getPagination(query);
 
@@ -87,6 +89,7 @@ export class UserRepository implements IUserRepository {
         ],
       },
       {
+        companyId,
         deletedAt: null,
       },
     );
@@ -120,6 +123,25 @@ export class UserRepository implements IUserRepository {
     const user = await this.prisma.user.findFirst({
       where: {
         id,
+        deletedAt: null,
+      },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    return new UserEntity(user);
+  }
+
+  async findByIdAndCompany(
+    id: string,
+    companyId: string,
+  ): Promise<UserEntity | null> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        id,
+        companyId,
         deletedAt: null,
       },
     });
@@ -173,10 +195,17 @@ export class UserRepository implements IUserRepository {
     return user;
   }
 
-  async update(id: string, data: UpdateUserRepositoryDto): Promise<UserEntity> {
+  async update(
+    id: string,
+    companyId: string,
+    data: UpdateUserRepositoryDto,
+  ): Promise<UserEntity> {
     try {
       const user = await this.prisma.user.update({
-        where: { id },
+        where: {
+          id,
+          companyId,
+        },
         data,
       });
 
@@ -185,6 +214,29 @@ export class UserRepository implements IUserRepository {
       PrismaExceptionMapper.map(error);
     }
   }
+
+  async updateStatus(
+    id: string,
+    companyId: string,
+    isActive: boolean,
+  ): Promise<UserEntity> {
+    try {
+      const user = await this.prisma.user.update({
+        where: {
+          id,
+          companyId,
+        },
+        data: {
+          isActive,
+        },
+      });
+
+      return new UserEntity(user);
+    } catch (error) {
+      PrismaExceptionMapper.map(error);
+    }
+  }
+
   async updatePassword(id: string, passwordHash: string): Promise<void> {
     await this.prisma.user.update({
       where: {
@@ -195,10 +247,14 @@ export class UserRepository implements IUserRepository {
       },
     });
   }
-  async delete(id: string): Promise<void> {
+
+  async delete(id: string, companyId: string): Promise<void> {
     try {
       await this.prisma.user.update({
-        where: { id },
+        where: {
+          id,
+          companyId,
+        },
         data: {
           deletedAt: new Date(),
         },

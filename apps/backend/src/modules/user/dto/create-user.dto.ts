@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
-  IsBoolean,
   IsEmail,
   IsNotEmpty,
   IsOptional,
@@ -69,21 +68,4 @@ export class CreateUserDto {
   @IsOptional()
   @IsUrl()
   avatar?: string;
-
-  @ApiProperty({
-    example: 'cms6clch80000v0a8fhmevd9h',
-    description: 'Company identifier',
-  })
-  @IsString()
-  @IsNotEmpty()
-  companyId: string;
-
-  @ApiPropertyOptional({
-    example: false,
-    default: false,
-    description: 'Company owner flag',
-  })
-  @IsOptional()
-  @IsBoolean()
-  isOwner?: boolean;
 }

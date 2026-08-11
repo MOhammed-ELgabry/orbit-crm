@@ -9,7 +9,7 @@ export class MailService {
   constructor(private readonly configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
       host: this.configService.get<string>('MAIL_HOST'),
-      port: this.configService.get<number>('MAIL_PORT'),
+      port: Number(this.configService.get<string>('MAIL_PORT')),
       secure: false,
 
       auth: {
@@ -20,11 +20,9 @@ export class MailService {
   }
 
   async sendVerificationEmail(email: string, code: string): Promise<void> {
-    await this.transporter.sendMail({
+    const result = await this.transporter.sendMail({
       from: this.configService.get<string>('MAIL_FROM'),
-
       to: email,
-
       subject: 'Orbit CRM - Email Verification',
 
       html: `
@@ -54,6 +52,12 @@ export class MailService {
         </div>
       `,
     });
+
+    console.log('--- VERIFICATION EMAIL ---');
+    console.log('To:', email);
+    console.log('Message ID:', result.messageId);
+    console.log('Accepted:', result.accepted);
+    console.log('Rejected:', result.rejected);
   }
 
   async sendPasswordResetEmail(
@@ -67,11 +71,9 @@ export class MailService {
       resetToken,
     )}`;
 
-    await this.transporter.sendMail({
+    const result = await this.transporter.sendMail({
       from: this.configService.get<string>('MAIL_FROM'),
-
       to: email,
-
       subject: 'Orbit CRM - Reset Your Password',
 
       html: `
@@ -116,5 +118,11 @@ export class MailService {
         </div>
       `,
     });
+
+    console.log('--- PASSWORD RESET EMAIL ---');
+    console.log('To:', email);
+    console.log('Message ID:', result.messageId);
+    console.log('Accepted:', result.accepted);
+    console.log('Rejected:', result.rejected);
   }
 }

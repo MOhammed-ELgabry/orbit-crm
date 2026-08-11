@@ -27,10 +27,7 @@ export class CompanyService {
     return this.companyRepository.findAll(query, companyId);
   }
 
-  async findById(
-    id: string,
-    companyId: string,
-  ): Promise<CompanyEntity> {
+  async findById(id: string, companyId: string): Promise<CompanyEntity> {
     if (id !== companyId) {
       throw new NotFoundException('Company not found');
     }
@@ -62,10 +59,7 @@ export class CompanyService {
     return this.companyRepository.update(id, updateCompanyDto);
   }
 
-  async delete(
-    id: string,
-    companyId: string,
-  ): Promise<void> {
+  async delete(id: string, companyId: string): Promise<void> {
     if (id !== companyId) {
       throw new NotFoundException('Company not found');
     }
