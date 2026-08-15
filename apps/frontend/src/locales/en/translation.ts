@@ -52,9 +52,30 @@ const en = {
   didntReceiveCode: "Didn't receive the code?",
   resendCode: "Resend Code",
   changeEmail: "Change Email",
- 
-almostThere: "Almost There!",
-completeAccountSetup: "Verify your email to complete your account setup.",
+
+  almostThere: "Almost There!",
+  completeAccountSetup: "Verify your email to complete your account setup.",
+
+  // Industry Selection
+  welcomeToOrbit: "Welcome to Orbit CRM",
+  chooseBusinessIndustry: "Choose your business industry",
+  chooseWorkspaceDescription:
+    "Choose the workspace that best fits your business.",
+
+  textileAndFabrics: "Textile & Fabrics",
+  textileAndFabricsDescription:
+    "Manage customers, orders, suppliers and inventory.",
+
+  dentalClinic: "Dental Clinic",
+  dentalClinicDescription: "Manage patients, appointments and treatments.",
+
+  realEstate: "Real Estate",
+  realEstateDescription: "Manage properties, leads, clients and deals.",
+
+  marketingAgency: "Marketing Agency",
+  marketingAgencyDescription: "Manage clients, campaigns, projects and tasks.",
+
+  continue: "Continue",
 };
 
 export default en;

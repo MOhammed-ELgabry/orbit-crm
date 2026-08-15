@@ -3,6 +3,7 @@ import RegisterPage from "./pages/auth/RegisterPage/RegisterPage";
 import LoginPage from "./pages/auth/LoginPage/LoginPage";
 import VerifyEmail from "./pages/auth/VerifyEmail/VerifyEmail";
 import LanguageSwitcher from "./Components/shared/LanguageSwitcher";
+import IndustrySelection from "./pages/industry-selection/IndustrySelection";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/industry-selection" element={<IndustrySelection />} />
         </Routes>
       </div>
     </BrowserRouter>

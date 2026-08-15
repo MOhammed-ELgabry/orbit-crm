@@ -57,6 +57,34 @@ const ar = {
   // Email Verification
 almostThere: "أوشكت على الانتهاء!",
 completeAccountSetup: "قم بتأكيد بريدك الإلكتروني لإكمال إعداد حسابك.",
+
+
+
+// Industry Selection
+  welcomeToOrbit: "مرحبًا بك في Orbit CRM",
+  chooseBusinessIndustry: "اختر مجال عملك",
+  chooseWorkspaceDescription:
+    "اختر مساحة العمل التي تناسب نشاطك التجاري.",
+
+  textileAndFabrics: "الأقمشة والمنسوجات",
+  textileAndFabricsDescription:
+    "إدارة العملاء والطلبات والموردين والمخزون.",
+
+  dentalClinic: "عيادة أسنان",
+  dentalClinicDescription:
+    "إدارة المرضى والمواعيد والعلاجات.",
+
+  realEstate: "العقارات",
+  realEstateDescription:
+    "إدارة العقارات والعملاء المحتملين والصفقات.",
+
+  marketingAgency: "وكالة تسويق",
+  marketingAgencyDescription:
+    "إدارة العملاء والحملات والمشاريع والمهام.",
+
+  continue: "متابعة",
+
+  
 };
 
 export default ar;

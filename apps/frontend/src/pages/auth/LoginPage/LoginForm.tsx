@@ -4,11 +4,10 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { loginUser } from "../../../services/authService";
 import LoginHeader from "./LoginHeader";
-import EmailField from "./EmailField";
-import PasswordField from "./PasswordField";
 import LoginOptions from "./LoginOptions";
 import SocialLogin from "../SocialLogin";
 import AuthDivider from "../AuthDivider";
+import LoginFields from "./LoginFields";
 
 interface LoginValues {
   email: string;
@@ -67,11 +66,8 @@ export default function LoginForm() {
           onSubmit={handleLogin}
         >
           <Form className="flex w-full flex-col gap-3">
-            {/* Email */}
-            <EmailField />
-
-            {/* Password */}
-            <PasswordField />
+            {/* Password  */}
+            <LoginFields />
 
             {/* Remember Me + Forgot Password */}
             <LoginOptions />

@@ -1,7 +1,7 @@
 import RegisterForm from "./RegisterForm";
 import RegisterSide from "./RegisterSide";
 import { useTranslation } from "react-i18next";
-
+import "animate.css";
 export default function RegisterPage() {
   const { i18n } = useTranslation();
 
@@ -11,12 +11,12 @@ export default function RegisterPage() {
       className="min-h-screen flex flex-col lg:flex-row bg-white"
     >
       {/* Register Form */}
-      <div className="w-full lg:w-1/2 min-h-screen">
+      <div className="w-full lg:w-1/2 min-h-screen animate__animated animate__fadeInLeft">
         <RegisterForm />
       </div>
 
       {/* Register Side */}
-      <div className="w-full lg:w-1/2 min-h-screen">
+      <div className="w-full lg:w-1/2 min-h-screen animate__animated animate__fadeInRight">
         <RegisterSide />
       </div>
     </div>
