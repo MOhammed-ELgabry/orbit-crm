@@ -8,6 +8,7 @@ import { SecurityModule } from '../../common/security/security.module';
 
 import { CompanyModule } from '../company/company.module';
 import { UserModule } from '../user/user.module';
+import { ContactModule } from '../contact/contact.module';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -30,6 +31,8 @@ import { AuthModule } from '../auth/auth.module';
     UserModule,
 
     AuthModule,
+
+    ContactModule,
   ],
 
   controllers: [AppController],

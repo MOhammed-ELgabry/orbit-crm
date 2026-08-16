@@ -24,8 +24,9 @@ model Company {
   isActive Boolean @default(true)
 
   // Relations
-  users User[]
-  roles Role[]
+  users    User[]
+  roles    Role[]
+  contacts Contact[]
 
   // Audit
   createdAt DateTime  @default(now())
@@ -73,17 +74,21 @@ model User {
   // Company
   // Optional during registration.
   // The company is created and assigned after email verification.
-  companyId         String?
-  company           Company? @relation(fields: [companyId], references: [id])
+  companyId          String?
+  company            Company? @relation(fields: [companyId], references: [id])
   pendingCompanyName String?
 
   // RBAC
   roleId String?
-  role   Role? @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  role   Role?   @relation(fields: [roleId], references: [id], onDelete: SetNull)
 
   // Sessions & Password Reset
   authSessions        AuthSession[]
   passwordResetTokens PasswordResetToken[]
+
+  // Contacts
+  contactsCreated  Contact[] @relation("ContactCreatedBy")
+  contactsAssigned Contact[] @relation("ContactAssignedTo")
 
   // Audit
   createdAt DateTime  @default(now())
@@ -191,4 +196,60 @@ model RolePermission {
 
   @@id([roleId, permissionId])
   @@index([permissionId])
+}
+
+model Contact {
+  id String @id @default(cuid())
+
+  // Tenant
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Personal Information
+  firstName String
+  lastName  String
+
+  // Contact Information
+  email  String?
+  phone  String?
+  mobile String?
+
+  // Business Information
+  jobTitle         String?
+  organizationName String?
+  website          String?
+
+  // Address
+  address    String?
+  city       String?
+  state      String?
+  country    String?
+  postalCode String?
+
+  // CRM Information
+  notes  String?
+  source String?
+  status String  @default("active")
+
+  // Ownership / Assignment
+  createdById String
+  createdBy   User   @relation("ContactCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  assignedToId String?
+  assignedTo   User?   @relation("ContactAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  // Audit
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([companyId])
+  @@index([companyId, deletedAt])
+  @@index([companyId, email])
+  @@index([companyId, phone])
+  @@index([companyId, status])
+  @@index([companyId, assignedToId])
+  @@index([createdById])
+  @@index([assignedToId])
+  @@index([deletedAt])
 }
