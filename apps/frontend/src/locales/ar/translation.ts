@@ -11,6 +11,7 @@ const ar = {
   signUp: "إنشاء حساب",
   google: "جوجل",
   facebook: "فيسبوك",
+  microsoft: "مايكروسوفت",
   or: "أو",
 
   // Login Validation

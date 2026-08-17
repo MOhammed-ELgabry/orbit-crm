@@ -1,8 +1,10 @@
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { loginUser } from "../../../services/authService";
+import { useAuth } from "../../../context/AuthContext";
+import { decodeJwtPayload } from "../../../services/jwt";
 import LoginHeader from "./LoginHeader";
 import LoginOptions from "./LoginOptions";
 import SocialLogin from "../SocialLogin";
@@ -17,6 +19,8 @@ interface LoginValues {
 
 export default function LoginForm() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const initialValues: LoginValues = {
     email: "",
@@ -41,7 +45,19 @@ export default function LoginForm() {
         password: values.password,
       });
 
-      console.log("Login successful:", response);
+      const claims = decodeJwtPayload<{
+        sub: string;
+        email: string;
+        isOwner: boolean;
+      }>(response.accessToken);
+
+      login(response.accessToken, response.refreshToken, {
+        id: claims?.sub ?? "",
+        email: claims?.email ?? values.email,
+        isOwner: claims?.isOwner ?? false,
+      });
+
+      navigate("/industry-selection");
     } catch (error) {
       console.error("Login failed:", error);
     }

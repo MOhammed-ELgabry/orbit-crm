@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import ms, { type StringValue } from 'ms';
@@ -20,6 +21,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { PasswordService } from '../user/services/password.service';
 import { MailService } from '../mail/mail.service';
 import { TokenHashService } from './services/token-hash.service';
+import { OAuthStateService } from './services/oauth-state.service';
 
 import { RegisterDto } from './dto/register.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
@@ -31,11 +33,19 @@ import {
   AUTH_REPOSITORY,
   AUTH_SESSION_REPOSITORY,
   PASSWORD_RESET_REPOSITORY,
+  SOCIAL_ACCOUNT_REPOSITORY,
 } from './constants/auth.constants';
+import type { SocialProviderName } from './constants/auth.constants';
 
 import type { IAuthRepository } from './repository/auth.repository.interface';
 import type { IAuthSessionRepository } from './repository/auth-session.repository.interface';
 import type { IPasswordResetRepository } from './repository/password-reset.repository.interface';
+import type { ISocialAccountRepository } from './repository/social-account.repository.interface';
+import type { ISocialAuthProvider } from './interfaces/social-profile.interface';
+
+import { GoogleAuthProvider } from './providers/google-auth.provider';
+import { FacebookAuthProvider } from './providers/facebook-auth.provider';
+import { MicrosoftAuthProvider } from './providers/microsoft-auth.provider';
 
 import { LoginDto } from './dto/login.dto';
 import { IJwtPayload } from './interfaces/jwt-payload.interface';
@@ -66,9 +76,18 @@ export class AuthService {
     @Inject(PASSWORD_RESET_REPOSITORY)
     private readonly passwordResetRepository: IPasswordResetRepository,
 
+    @Inject(SOCIAL_ACCOUNT_REPOSITORY)
+    private readonly socialAccountRepository: ISocialAccountRepository,
+
     private readonly configService: ConfigService,
 
     private readonly tokenHashService: TokenHashService,
+
+    private readonly oauthStateService: OAuthStateService,
+
+    private readonly googleAuthProvider: GoogleAuthProvider,
+    private readonly facebookAuthProvider: FacebookAuthProvider,
+    private readonly microsoftAuthProvider: MicrosoftAuthProvider,
 
     private readonly jwtService: JwtService,
   ) {}
@@ -566,6 +585,230 @@ export class AuthService {
     return {
       success: true,
       message: 'Logout successful.',
+    };
+  }
+
+  private resolveSocialProvider(
+    provider: SocialProviderName,
+  ): ISocialAuthProvider {
+    switch (provider) {
+      case 'google':
+        return this.googleAuthProvider;
+      case 'facebook':
+        return this.facebookAuthProvider;
+      case 'microsoft':
+        return this.microsoftAuthProvider;
+      default:
+        throw new BadRequestException('Unsupported social provider.');
+    }
+  }
+
+  /**
+   * Builds the URL the popup should navigate to for the given provider.
+   * Throws ServiceUnavailableException (not a boot-time failure) if that
+   * provider's env vars aren't configured, so an unconfigured provider
+   * simply can't be started rather than crashing the app.
+   */
+  async getSocialAuthorizeUrl(provider: SocialProviderName): Promise<string> {
+    const providerService = this.resolveSocialProvider(provider);
+
+    if (!providerService.isConfigured()) {
+      throw new ServiceUnavailableException(
+        `${provider} sign-in is not configured.`,
+      );
+    }
+
+    const state = this.oauthStateService.generate(provider);
+
+    return providerService.getAuthorizeUrl(state);
+  }
+
+  /**
+   * Handles the provider's redirect back to our backend callback. Verifies
+   * CSRF state, verifies the identity server-side via the provider's own
+   * SDK/API, resolves or creates the local User exactly the way
+   * verifyEmail() does today, then issues an access/refresh token pair
+   * using the SAME generateAccessToken/generateRefreshToken/AuthSession
+   * mechanism login() already uses — no second token system.
+   */
+  async handleSocialCallback(
+    provider: SocialProviderName,
+    code: string,
+    state: string,
+  ) {
+    const providerService = this.resolveSocialProvider(provider);
+
+    if (!providerService.isConfigured()) {
+      throw new ServiceUnavailableException(
+        `${provider} sign-in is not configured.`,
+      );
+    }
+
+    if (!this.oauthStateService.verify(provider, state)) {
+      throw new BadRequestException(
+        'Invalid or expired authentication request.',
+      );
+    }
+
+    const profile = await providerService.getProfile(code);
+
+    if (!profile.email) {
+      throw new BadRequestException(
+        'This provider did not return an email address required to sign in.',
+      );
+    }
+
+    // Scenario 4 — refuse unsafe automatic account creation/linking when
+    // the provider cannot establish a trustworthy verified email.
+    if (!profile.emailVerified) {
+      throw new BadRequestException(
+        'This provider did not confirm a verified email address. Please use a different sign-in method.',
+      );
+    }
+
+    const email = profile.email.trim().toLowerCase();
+
+    const existingSocialAccount =
+      await this.socialAccountRepository.findByProviderAccount(
+        provider,
+        profile.providerAccountId,
+      );
+
+    let userId: string;
+
+    if (existingSocialAccount) {
+      // Scenario 2 — existing social identity, straightforward login.
+      const user = await this.userRepository.findById(
+        existingSocialAccount.userId,
+      );
+
+      if (!user) {
+        throw new BadRequestException('Associated account no longer exists.');
+      }
+
+      userId = user.id;
+    } else {
+      const existingUser = await this.userRepository.findByEmail(email);
+
+      if (existingUser) {
+        // Scenario 3 — same verified email as an existing Orbit CRM user.
+        // We link rather than create a duplicate. This is safe specifically
+        // because we only reach this branch when profile.emailVerified is
+        // true (checked above) — an unverified provider email is never
+        // used to link into an existing account (Scenario 4).
+        await this.socialAccountRepository.create({
+          provider,
+          providerAccountId: profile.providerAccountId,
+          email,
+          userId: existingUser.id,
+        });
+
+        userId = existingUser.id;
+      } else {
+        // Scenario 1 — brand-new social user. Mirrors verifyEmail(): a new
+        // Company is created and the user becomes its owner. Email/password
+        // login is not disabled for this user — they can set a password
+        // later via "forgot password" if they ever want to.
+        const createdUserId = await this.prisma.$transaction(async (tx) => {
+          const company = await tx.company.create({
+            data: {
+              name: `${profile.firstName} ${profile.lastName}'s Company`,
+              contactEmail: email,
+              isActive: true,
+            },
+          });
+
+          const createdUser = await tx.user.create({
+            data: {
+              firstName: profile.firstName,
+              lastName: profile.lastName,
+              email,
+              passwordHash: null,
+              avatar: profile.avatar,
+              isEmailVerified: true,
+              companyId: company.id,
+              isOwner: true,
+            },
+          });
+
+          await tx.socialAccount.create({
+            data: {
+              provider,
+              providerAccountId: profile.providerAccountId,
+              email,
+              userId: createdUser.id,
+            },
+          });
+
+          return createdUser.id;
+        });
+
+        userId = createdUserId;
+      }
+    }
+
+    const user = await this.userRepository.findById(userId);
+
+    if (!user) {
+      throw new BadRequestException('Associated account no longer exists.');
+    }
+
+    if (!user.isActive) {
+      throw new BadRequestException('User account is inactive.');
+    }
+
+    if (!user.companyId) {
+      throw new BadRequestException('User is not associated with a company.');
+    }
+
+    // From here down this is deliberately identical to login()'s token
+    // issuance — same JWT payload shape, same AuthSession mechanism.
+    const accessTokenPayload: IJwtPayload = {
+      sub: user.id,
+      companyId: user.companyId,
+      email: user.email,
+      isOwner: user.isOwner,
+    };
+
+    const accessToken = this.generateAccessToken(accessTokenPayload);
+
+    const sessionId = randomUUID();
+
+    const refreshTokenPayload: IRefreshTokenPayload = {
+      sub: user.id,
+      sessionId,
+    };
+
+    const refreshToken = this.generateRefreshToken(refreshTokenPayload);
+    const refreshTokenHash = this.tokenHashService.hash(refreshToken);
+
+    const refreshTokenExpiresIn = this.configService.getOrThrow<string>(
+      'jwt.refreshExpiresIn',
+    ) as StringValue;
+
+    const refreshTokenExpiresAt = new Date(
+      Date.now() + ms(refreshTokenExpiresIn),
+    );
+
+    await this.authSessionRepository.create({
+      id: sessionId,
+      userId: user.id,
+      tokenHash: refreshTokenHash,
+      expiresAt: refreshTokenExpiresAt,
+    });
+
+    return {
+      success: true,
+      message: 'Social authentication successful.',
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        isOwner: user.isOwner,
+      },
     };
   }
 }

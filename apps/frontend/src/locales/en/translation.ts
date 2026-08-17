@@ -11,6 +11,7 @@ const en = {
   signUp: "Sign Up",
   google: "Google",
   facebook: "Facebook",
+  microsoft: "Microsoft",
   or: "Or",
 
   // Login Validation
