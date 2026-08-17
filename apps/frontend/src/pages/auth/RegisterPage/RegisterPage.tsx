@@ -16,7 +16,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Register Side */}
-      <div className="w-full lg:w-1/2 min-h-screen animate__animated animate__fadeInRight">
+      <div className="hidden lg:flex lg:w-1/2 lg:min-h-screen animate__animated animate__fadeInRight">
         <RegisterSide />
       </div>
     </div>

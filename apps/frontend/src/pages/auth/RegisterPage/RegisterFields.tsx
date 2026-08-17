@@ -132,7 +132,7 @@ export default function RegisterFields() {
           htmlFor="avatar"
           className="text-xs font-semibold text-gray-700"
         >
-          {t("avatar")}{" "}
+          {t("avatar")}
           <span className="font-normal text-gray-400">
             ({t("optional")})
           </span>

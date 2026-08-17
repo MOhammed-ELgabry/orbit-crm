@@ -5,7 +5,7 @@ export default function RegisterHeader() {
   const { t } = useTranslation();
 
   return (
-    <div className="mb-2 flex flex-col items-center gap-0">
+    <div className="mb-2 flex flex-col items-center gap-0 pt-5">
       <img
         src={logo}
         alt="avatar"

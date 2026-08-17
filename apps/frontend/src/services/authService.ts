@@ -7,7 +7,7 @@ export interface RegisterData {
   password: string;
   phone: string;
   companyName: string;
-  avatar: string | null;
+  avatar: File | null ;
 }
 
 export interface VerifyEmailData {

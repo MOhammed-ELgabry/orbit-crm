@@ -12,6 +12,10 @@ import RegisterOptions from "./RegisterOptions";
 import SocialLogin from "../SocialLogin";
 import AuthDivider from "../AuthDivider";
 
+import { showSweetAlert } from "../../../Components/SweetAlert/SweetAlert";
+
+import axios from "axios";
+
 interface RegisterValues {
   firstName: string;
   lastName: string;
@@ -20,6 +24,7 @@ interface RegisterValues {
   companyName: string;
   phone: string;
   avatar: File | null;
+  terms: boolean;
 }
 
 export default function RegisterForm() {
@@ -34,6 +39,7 @@ export default function RegisterForm() {
     companyName: "",
     phone: "",
     avatar: null,
+    terms: false,
   };
 
   const validationSchema = Yup.object({
@@ -52,6 +58,8 @@ export default function RegisterForm() {
     phone: Yup.string(),
 
     avatar: Yup.mixed<File>().nullable(),
+
+    terms: Yup.boolean().oneOf([true], t("termsRequired")),
   });
 
   const handleRegister = async (values: RegisterValues) => {
@@ -63,20 +71,48 @@ export default function RegisterForm() {
         password: values.password,
         phone: values.phone,
         companyName: values.companyName,
-        avatar: null,
+        avatar: values.avatar,
       };
 
       const response = await registerUser(data);
 
       console.log("Register successful:", response);
 
-      navigate("/verify-email", {
-        state: {
-          email: values.email,
-        },
-      });
-    } catch (error) {
+      const result = await showSweetAlert(
+        "success",
+        "Welcome to Orbit CRM",
+        "Your account has been created successfully.",
+      );
+
+      if (result.isConfirmed) {
+        navigate("/verify-email", {
+          state: {
+            email: values.email,
+          },
+        });
+      }
+    } catch (error: unknown) {
       console.error("Register failed:", error);
+
+      if (axios.isAxiosError(error)) {
+        const message = error.response?.data?.message;
+
+        showSweetAlert(
+          "error",
+          "Registration Failed",
+          typeof message === "string"
+            ? message
+            : "Something went wrong. Please try again.",
+        );
+
+        return;
+      }
+
+      showSweetAlert(
+        "error",
+        "Registration Failed",
+        "Something went wrong. Please try again.",
+      );
     }
   };
 
@@ -108,7 +144,7 @@ export default function RegisterForm() {
             {/* Register Button */}
             <button
               type="submit"
-              className="w-full h-[40px] rounded-[10px] bg-[#605BFF] text-white text-sm font-semibold mt-1 flex items-center justify-center"
+              className="mt-2 h-[42px] w-full rounded-[10px] bg-[#605BFF] text-sm font-semibold text-white transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(96,91,255,0.25)] active:translate-y-0 cursor-pointer"
             >
               {t("createAccount")}
             </button>

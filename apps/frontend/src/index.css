@@ -5,3 +5,172 @@
 @theme {
   --font-nunito: "Nunito", sans-serif;
 }
+
+/* SweetAlert */
+
+.alert-popup {
+  width: min(420px, calc(100vw - 32px)) !important;
+  padding: 34px 30px 30px !important;
+
+  border-radius: 28px !important;
+
+  background: #ffffff !important;
+
+  box-shadow: 0 25px 70px rgba(31, 41, 55, 0.14) !important;
+}
+
+.alert-icon {
+  width: 72px !important;
+  height: 72px !important;
+
+  margin: 0 auto 18px !important;
+
+  border-width: 0 !important;
+}
+
+/* Success */
+
+.swal2-icon.swal2-success {
+  background: #eeefff !important;
+}
+
+.swal2-icon.swal2-success .swal2-success-ring {
+  border-color: rgba(96, 91, 255, 0.2) !important;
+}
+
+.swal2-icon.swal2-success .swal2-success-line-tip,
+.swal2-icon.swal2-success .swal2-success-line-long {
+  background-color: #605bff !important;
+}
+
+/* Error */
+
+.swal2-icon.swal2-error {
+  background: #fff1f2 !important;
+}
+
+.swal2-icon.swal2-error .swal2-x-mark-line-left,
+.swal2-icon.swal2-error .swal2-x-mark-line-right {
+  background-color: #ef4444 !important;
+}
+
+/* Title */
+
+.alert-title {
+  margin: 0 !important;
+
+  color: #111827 !important;
+
+  font-size: 22px !important;
+  line-height: 1.35 !important;
+  font-weight: 700 !important;
+}
+
+/* Text */
+
+.alert-text {
+  max-width: 330px !important;
+
+  margin: 10px auto 0 !important;
+
+  color: #6b7280 !important;
+
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+}
+
+/* Button */
+
+.alert-btn {
+  min-width: 140px !important;
+  height: 44px !important;
+
+  margin-top: 24px !important;
+  padding: 0 26px !important;
+
+  border: none !important;
+  border-radius: 12px !important;
+
+  background: #605bff !important;
+  color: #ffffff !important;
+
+  font-size: 14px !important;
+  font-weight: 600 !important;
+
+  cursor: pointer !important;
+
+  transition: all 0.2s ease !important;
+}
+
+.alert-btn:hover {
+  background: #514cf0 !important;
+
+  transform: translateY(-1px);
+
+  box-shadow: 0 8px 18px rgba(96, 91, 255, 0.2) !important;
+}
+
+.alert-btn:active {
+  transform: translateY(0);
+}
+
+/* Animation */
+
+.alert-show {
+  animation: alertIn 0.25s ease-out !important;
+}
+
+.alert-hide {
+  animation: alertOut 0.25s ease-in forwards !important;
+}
+
+@keyframes alertIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes alertOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+/* Responsive */
+
+@media (max-width: 480px) {
+  .alert-popup {
+    width: calc(100vw - 24px) !important;
+    padding: 28px 20px 24px !important;
+    border-radius: 22px !important;
+  }
+
+  .alert-title {
+    font-size: 20px !important;
+  }
+
+  .alert-text {
+    font-size: 13px !important;
+  }
+
+  .alert-btn {
+    width: 100% !important;
+  }
+
+  .alert-icon {
+    width: 64px !important;
+    height: 64px !important;
+  }
+}

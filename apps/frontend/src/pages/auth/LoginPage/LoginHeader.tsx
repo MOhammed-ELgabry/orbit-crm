@@ -1,4 +1,3 @@
-import React from "react";
 import logo from "../../../assets/Subtract.png";
 import { useTranslation } from "react-i18next";
 
@@ -6,7 +5,7 @@ export default function LoginHeader() {
   const { t } = useTranslation();
 
   return (
-    <div className="mb-4 flex flex-col items-center gap-1">
+    <div className="mb-4 flex flex-col items-center gap-1 pt-5">
       <img
         src={logo}
         alt="logo"
