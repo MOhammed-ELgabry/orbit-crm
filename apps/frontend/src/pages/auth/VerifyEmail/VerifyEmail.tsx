@@ -1,6 +1,6 @@
 import VerificationForm from "./VerificationForm";
 import VerificationSide from "./VerificationSide";
-import "animate.css";
+
 export default function VerifyEmail() {
   return (
     <div className="min-h-screen w-full flex bg-white">

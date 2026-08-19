@@ -77,6 +77,29 @@ const en = {
   marketingAgencyDescription: "Manage clients, campaigns, projects and tasks.",
 
   continue: "Continue",
+
+  // Alerts (SweetAlert2)
+  ok: "OK",
+  genericErrorMessage: "Something went wrong. Please try again.",
+
+  loginFailedTitle: "Login Failed",
+  loginFailedMessage:
+    "The email or password you entered is incorrect. Please try again.",
+
+  registerSuccessTitle: "Account Created",
+  registerSuccessMessage:
+    "Your account has been created. Please check your email to verify your account.",
+  registerFailedTitle: "Registration Failed",
+  registerFailedMessage:
+    "We couldn't create your account. Please check your details and try again.",
+
+  verifyEmailSuccessTitle: "Email Verified",
+  verifyEmailSuccessMessage: "Your email has been verified successfully.",
+  verifyEmailFailedTitle: "Verification Failed",
+  verifyEmailFailedMessage:
+    "The code you entered is invalid or has expired. Please try again.",
+
+  socialLoginFailedTitle: "Sign-in Failed",
 };
 
 export default en;

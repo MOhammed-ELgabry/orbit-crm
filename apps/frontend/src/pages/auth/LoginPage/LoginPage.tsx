@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import LoginForm from "./LoginForm";
 import LoginSide from "./LoginSide";
-import "animate.css";
+
 export default function LoginPage() {
   const { i18n } = useTranslation();
 

@@ -26,7 +26,7 @@
 import RegisterForm from "./RegisterForm";
 import RegisterSide from "./RegisterSide";
 import { useTranslation } from "react-i18next";
-import "animate.css";
+
 export default function RegisterPage() {
   const { i18n } = useTranslation();
 
