@@ -35,7 +35,7 @@ export interface SocialAuthUser {
   firstName?: string;
   lastName?: string;
   avatar?: string | null;
-  isOwner?: boolean;
+  isOwner: boolean;
 }
 
 export interface SocialAuthResult {
