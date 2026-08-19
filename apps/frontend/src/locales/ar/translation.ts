@@ -85,7 +85,27 @@ completeAccountSetup: "قم بتأكيد بريدك الإلكتروني لإك�
 
   continue: "متابعة",
 
-  
+  // Alerts (SweetAlert2)
+  ok: "حسناً",
+  genericErrorMessage: "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+
+  loginFailedTitle: "فشل تسجيل الدخول",
+  loginFailedMessage: "البريد الإلكتروني أو كلمة المرور غير صحيحة. حاول مرة أخرى.",
+
+  registerSuccessTitle: "تم إنشاء الحساب",
+  registerSuccessMessage:
+    "تم إنشاء حسابك بنجاح. يرجى التحقق من بريدك الإلكتروني لتأكيد حسابك.",
+  registerFailedTitle: "فشل إنشاء الحساب",
+  registerFailedMessage:
+    "تعذر إنشاء حسابك. يرجى التحقق من بياناتك والمحاولة مرة أخرى.",
+
+  verifyEmailSuccessTitle: "تم تأكيد البريد الإلكتروني",
+  verifyEmailSuccessMessage: "تم تأكيد بريدك الإلكتروني بنجاح.",
+  verifyEmailFailedTitle: "فشل التحقق",
+  verifyEmailFailedMessage:
+    "الرمز الذي أدخلته غير صحيح أو منتهي الصلاحية. حاول مرة أخرى.",
+
+  socialLoginFailedTitle: "فشل تسجيل الدخول",
 };
 
 export default ar;

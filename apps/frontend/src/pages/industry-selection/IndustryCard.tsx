@@ -30,8 +30,6 @@ export default function IndustryCard({
         hover:bg-[#FAF9FF]
         hover:-translate-y-1
         hover:shadow-[0_8px_25px_rgba(96,91,255,0.12)]
-         animate__animated
-        animate__fadeInUp
       "
     >
       {/* Icon */}

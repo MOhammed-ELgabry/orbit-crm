@@ -1,15 +1,24 @@
 import { useTranslation } from "react-i18next";
+import { motion, useReducedMotion } from "framer-motion";
 import IndustryCard from "./IndustryCard";
 import { industries } from "./industryData";
+import { fadeSlide, staggerContainer } from "../../lib/motion";
 
 export default function IndustrySelection() {
     const { t } = useTranslation();
+    const shouldReduceMotion = useReducedMotion();
+
   return (
     <div className="min-h-screen w-full bg-[#F7F7F8] flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-[850px]">
 
         {/* Header */}
-        <div className="text-center mb-8">
+        <motion.div
+          className="text-center mb-8"
+          initial="hidden"
+          animate="visible"
+          variants={fadeSlide("up", !!shouldReduceMotion)}
+        >
           <h1 className="font-nunito font-bold text-[28px] sm:text-[32px] text-[#030229]">
            {t("welcomeToOrbit")}
           </h1>
@@ -21,17 +30,24 @@ export default function IndustrySelection() {
           <p className="text-sm text-gray-500 mt-2 max-w-[450px] mx-auto">
             {t("chooseWorkspaceDescription")}
           </p>
-        </div>
+        </motion.div>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5"
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer(!!shouldReduceMotion)}
+        >
           {industries.map((industry) => (
-            <IndustryCard
+            <motion.div
               key={industry.title}
-              {...industry}
-            />
+              variants={fadeSlide("up", !!shouldReduceMotion)}
+            >
+              <IndustryCard {...industry} />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Continue */}
         <button
