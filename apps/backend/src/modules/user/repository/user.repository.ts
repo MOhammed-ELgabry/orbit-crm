@@ -180,6 +180,7 @@ export class UserRepository implements IUserRepository {
         firstName: true,
         lastName: true,
         email: true,
+        avatar: true,
         passwordHash: true,
         isActive: true,
         isEmailVerified: true,

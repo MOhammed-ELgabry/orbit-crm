@@ -1,8 +1,6 @@
-export const SOCIAL_AUTH_SUCCESS_MESSAGE =
-  "orbit-social-auth-success";
+export const SOCIAL_AUTH_SUCCESS_MESSAGE = 'orbit-social-auth-success';
 
-export const SOCIAL_AUTH_ERROR_MESSAGE =
-  "orbit-social-auth-error";
+export const SOCIAL_AUTH_ERROR_MESSAGE = 'orbit-social-auth-error';
 
 /**
  * Renders the HTML page returned by the OAuth callback.
@@ -46,13 +44,9 @@ export function renderSocialAuthCallbackPage(
    * Escape "<" to prevent a malicious provider-supplied
    * value from breaking out of the inline script.
    */
-  const safeOrigin = JSON.stringify(
-    targetOrigin,
-  ).replace(/</g, "\\u003c");
+  const safeOrigin = JSON.stringify(targetOrigin).replace(/</g, '\\u003c');
 
-  const safeMessage = JSON.stringify(
-    message,
-  ).replace(/</g, "\\u003c");
+  const safeMessage = JSON.stringify(message).replace(/</g, '\\u003c');
 
   return `<!DOCTYPE html>
 <html lang="en">

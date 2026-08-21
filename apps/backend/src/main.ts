@@ -1,71 +1,9 @@
-// import { NestFactory } from '@nestjs/core';
-// import { ValidationPipe } from '@nestjs/common';
-// import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-
-// import { AppModule } from './modules/app/app.module';
-// import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-// import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
-// import { ResponseInterceptor } from './common/interceptors/response.interceptor';
-
-// async function bootstrap() {
-//   const app = await NestFactory.create(AppModule);
-
-//   // Global Exception Filters
-//   app.useGlobalFilters(new PrismaExceptionFilter(), new HttpExceptionFilter());
-
-//   // Global Response Interceptor
-//   app.useGlobalInterceptors(new ResponseInterceptor());
-
-//   // Global Validation
-//   app.useGlobalPipes(
-//     new ValidationPipe({
-//       whitelist: true,
-//       transform: true,
-//       forbidNonWhitelisted: true,
-//     }),
-//   );
-
-//   // Swagger Configuration
-//   const config = new DocumentBuilder()
-//     .setTitle('Orbit CRM API')
-//     .setDescription('Professional REST API documentation for Orbit CRM')
-//     .setVersion('1.0.0')
-//     .addBearerAuth(
-//       {
-//         type: 'http',
-//         scheme: 'bearer',
-//         bearerFormat: 'JWT',
-//         description: 'Enter JWT Access Token',
-//       },
-//       'JWT',
-//     )
-//     .build();
-
-//   // const document = SwaggerModule.createDocument(app, config);
-//   const document = SwaggerModule.createDocument(app, config, {
-//     deepScanRoutes: true,
-//   });
-//   SwaggerModule.setup('docs', app, document, {
-//     swaggerOptions: {
-//       persistAuthorization: true,
-//       displayRequestDuration: true,
-//       filter: true,
-//       docExpansion: 'none',
-//       tagsSorter: 'alpha',
-//       operationsSorter: 'alpha',
-//     },
-//   });
-
-//   await app.listen(process.env.PORT ?? 3000);
-// }
-
-// bootstrap().catch((error) => {
-//   console.error(error);
-// });
-
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 
 import { AppModule } from './modules/app/app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -75,11 +13,45 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // CORS Configuration
+  const configService = app.get(ConfigService);
+  const frontendUrl = configService.getOrThrow<string>('frontendUrl');
+
+  // CORS Configuration — a single explicit origin, read from config, never
+  // a wildcard and never a dynamic reflection of the request's Origin
+  // header. This is safety-critical now that auth uses cookies: getting
+  // this wrong (wildcard, or reflecting arbitrary Origin) would let any
+  // site read authenticated responses via credentialed cross-origin
+  // requests.
   app.enableCors({
-    origin: 'http://localhost:5173',
+    origin: frontendUrl,
     credentials: true,
   });
+
+  app.use(cookieParser());
+
+  // Security headers. contentSecurityPolicy and crossOriginOpenerPolicy
+  // are deliberately disabled here rather than left on Helmet's defaults:
+  // - Helmet's default CSP blocks inline <script>/<style>, which would
+  //   break both the OAuth popup callback page (utils/social-callback-page.util.ts
+  //   renders an inline script that does the window.opener.postMessage
+  //   call this whole social-login flow depends on) and Swagger UI's
+  //   bundled assets at /docs.
+  // - Helmet's default Cross-Origin-Opener-Policy (same-origin) isolates
+  //   the popup's browsing context group on navigation to this origin,
+  //   which severs window.opener — silently breaking the same postMessage
+  //   call (it would just never fire).
+  // Enabling either safely is possible (a nonce-based CSP threaded through
+  // social-callback-page.util.ts; a COOP value scoped to exclude the
+  // callback route) but needs to be built and verified against a real
+  // browser, which isn't possible in the environment this was written in
+  // — see the audit report's "Remaining Risks" section.
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginOpenerPolicy: false,
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
 
   // Global Exception Filters
   app.useGlobalFilters(new PrismaExceptionFilter(), new HttpExceptionFilter());
@@ -106,7 +78,10 @@ async function bootstrap() {
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
-        description: 'Enter JWT Access Token',
+        description:
+          'Optional when testing from a browser with session cookies set; ' +
+          'paste an access token here to call endpoints without cookies ' +
+          '(e.g. from outside the browser).',
       },
       'JWT',
     )

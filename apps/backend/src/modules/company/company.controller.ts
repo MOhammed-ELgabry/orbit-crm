@@ -42,6 +42,7 @@ import { CompanyService } from './company.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OwnerGuard } from '../auth/guards/owner.guard';
 import type { IJwtPayload } from '../auth/interfaces/jwt-payload.interface';
+import { CsrfGuard } from '../../common/security/csrf.guard';
 
 type AuthenticatedRequest = Request & {
   user: IJwtPayload;
@@ -56,6 +57,7 @@ export class CompanyController {
   constructor(private readonly companyService: CompanyService) {}
 
   @Post()
+  @UseGuards(CsrfGuard)
   @ApiOperation({
     summary: 'Create a new company',
     description:
@@ -133,7 +135,7 @@ export class CompanyController {
   }
 
   @Patch(':id')
-  @UseGuards(OwnerGuard)
+  @UseGuards(OwnerGuard, CsrfGuard)
   @ApiOperation({
     summary: 'Update company',
     description: 'Updates an existing company.',
@@ -169,7 +171,7 @@ export class CompanyController {
   }
 
   @Delete(':id')
-  @UseGuards(OwnerGuard)
+  @UseGuards(OwnerGuard, CsrfGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete company',

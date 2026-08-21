@@ -48,9 +48,9 @@ export default function SocialLogin() {
     setLoadingProvider(provider);
 
     try {
-      const result = await openSocialAuthPopup(provider);
+      const user = await openSocialAuthPopup(provider);
 
-      login(result.accessToken, result.refreshToken, result.user);
+      login(user);
     } catch (err) {
       errorAlert({
         title: t("socialLoginFailedTitle"),

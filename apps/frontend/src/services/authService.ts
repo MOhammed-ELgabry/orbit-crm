@@ -1,8 +1,4 @@
-import axios from "axios";
-
-const api = axios.create({
- baseURL: import.meta.env.VITE_API_BASE_URL,
-});
+import api from "./api";
 
 export interface RegisterData {
   firstName: string;
@@ -24,24 +20,23 @@ export interface LoginData {
   password: string;
 }
 
-export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
-}
-
-export interface SocialAuthUser {
+/**
+ * Safe, client-facing user shape returned by login, social auth, and
+ * /auth/me. Mirrors the backend's ISafeAuthUser — never a token.
+ */
+export interface AuthUser {
   id: string;
   email: string;
-  firstName?: string;
-  lastName?: string;
-  avatar?: string | null;
+  firstName: string;
+  lastName: string;
+  avatar: string | null;
   isOwner: boolean;
 }
 
-export interface SocialAuthResult {
-  accessToken: string;
-  refreshToken: string;
-  user: SocialAuthUser;
+export interface LoginResponse {
+  success: boolean;
+  message: string;
+  user: AuthUser;
 }
 
 export type SocialProvider = "google" | "facebook" | "microsoft";
@@ -63,7 +58,9 @@ export const verifyEmail = async (data: VerifyEmailData) => {
   return response.data;
 };
 
-export const loginUser = async (data: LoginData) => {
+export const loginUser = async (
+  data: LoginData,
+): Promise<LoginResponse> => {
   const response = await api.post("/auth/login", data);
 
   return response.data;
@@ -88,7 +85,11 @@ export const loginUser = async (data: LoginData) => {
  *
  * Security:
  * - OAuth secrets remain on the backend.
- * - The callback result is delivered through postMessage.
+ * - The backend sets the session as HttpOnly cookies directly on the
+ *   popup's own navigation to its callback URL — by the time the popup
+ *   posts its message, the browser already has the cookies for the API's
+ *   domain, available to this window too. postMessage is only used to
+ *   signal success/failure and carry the (non-sensitive) user profile.
  * - The message origin is strictly validated.
  * - No wildcard "*" origin is accepted.
  * - The authentication flow does not depend on popup.closed.
@@ -96,7 +97,7 @@ export const loginUser = async (data: LoginData) => {
  */
 export function openSocialAuthPopup(
   provider: SocialProvider,
-): Promise<SocialAuthResult> {
+): Promise<AuthUser> {
   return new Promise((resolve, reject) => {
     const baseURL = api.defaults.baseURL;
 
@@ -159,7 +160,7 @@ export function openSocialAuthPopup(
       }
     };
 
-    const finishSuccess = (result: SocialAuthResult) => {
+    const finishSuccess = (user: AuthUser) => {
       if (settled) {
         return;
       }
@@ -169,7 +170,7 @@ export function openSocialAuthPopup(
       cleanup();
       closePopup();
 
-      resolve(result);
+      resolve(user);
     };
 
     const finishError = (error: Error) => {
@@ -210,7 +211,12 @@ export function openSocialAuthPopup(
        * Successful authentication.
        */
       if (data.type === SUCCESS_MESSAGE_TYPE) {
-        if (!data.payload || typeof data.payload !== "object") {
+        const payload =
+          data.payload && typeof data.payload === "object"
+            ? (data.payload as { user?: unknown })
+            : undefined;
+
+        if (!payload?.user || typeof payload.user !== "object") {
           finishError(
             new Error("Invalid authentication response."),
           );
@@ -218,9 +224,7 @@ export function openSocialAuthPopup(
           return;
         }
 
-        finishSuccess(
-          data.payload as SocialAuthResult,
-        );
+        finishSuccess(payload.user as AuthUser);
 
         return;
       }
@@ -268,24 +272,29 @@ export function openSocialAuthPopup(
   });
 }
 
-export const refreshTokens = async (
-  refreshToken: string,
-) => {
-  const response = await api.post(
-    "/auth/refresh",
-    { refreshToken },
-  );
+/**
+ * Returns the currently authenticated user (via the session cookie), or
+ * rejects if there isn't a valid session. Used to restore auth state on
+ * app load, since there's no local token/user cache to read synchronously
+ * anymore.
+ */
+export const getCurrentUser = async (): Promise<{
+  success: boolean;
+  message: string;
+  user: AuthUser;
+}> => {
+  const response = await api.get("/auth/me");
 
   return response.data;
 };
 
-export const logoutUser = async (
-  refreshToken: string,
-) => {
-  const response = await api.post(
-    "/auth/logout",
-    { refreshToken },
-  );
+/**
+ * Ends the session. No parameters: the refresh cookie (and the matching
+ * CSRF header, attached automatically by api.ts's interceptor) is all the
+ * backend needs to know which session to revoke.
+ */
+export const logoutUser = async () => {
+  const response = await api.post("/auth/logout");
 
   return response.data;
 };

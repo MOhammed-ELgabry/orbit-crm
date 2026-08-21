@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import type { StringValue } from 'ms';
 
 import { UserModule } from '../user/user.module';
 import { EmailVerificationModule } from '../email-verification/email-verification.module';
@@ -44,9 +43,7 @@ import { JwtModule } from '@nestjs/jwt';
         secret: configService.getOrThrow<string>('jwt.accessSecret'),
 
         signOptions: {
-          expiresIn: configService.getOrThrow<string>(
-            'jwt.accessExpiresIn',
-          ) as StringValue,
+          expiresIn: configService.getOrThrow<string>('jwt.accessExpiresIn'),
         },
       }),
     }),

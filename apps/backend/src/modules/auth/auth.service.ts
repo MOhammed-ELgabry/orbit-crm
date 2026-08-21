@@ -4,9 +4,10 @@ import {
   Injectable,
   NotFoundException,
   ServiceUnavailableException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import ms, { type StringValue } from 'ms';
+import ms from 'ms';
 import { Prisma } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
@@ -26,8 +27,6 @@ import { OAuthStateService } from './services/oauth-state.service';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { LogoutDto } from './dto/logout.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import {
   AUTH_REPOSITORY,
@@ -49,6 +48,32 @@ import { MicrosoftAuthProvider } from './providers/microsoft-auth.provider';
 
 import { LoginDto } from './dto/login.dto';
 import { IJwtPayload } from './interfaces/jwt-payload.interface';
+
+/**
+ * Safe, client-facing user shape. Every auth endpoint that returns a user
+ * (login, social callback, /auth/me) returns exactly this — never the
+ * full entity, never a token.
+ */
+export interface ISafeAuthUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  avatar: string | null;
+  isOwner: boolean;
+}
+
+/**
+ * Internal result of issuing a new session. `accessToken`/`refreshToken`
+ * here are for AuthController to turn into Set-Cookie headers — they are
+ * never meant to be forwarded into a JSON response body. This type is not
+ * used as an HTTP response shape.
+ */
+interface IIssuedSession {
+  accessToken: string;
+  refreshToken: string;
+  user: ISafeAuthUser;
+}
 
 @Injectable()
 export class AuthService {
@@ -286,11 +311,16 @@ export class AuthService {
       secret: this.configService.getOrThrow<string>('jwt.refreshSecret'),
       expiresIn: this.configService.getOrThrow<string>(
         'jwt.refreshExpiresIn',
-      ) as StringValue,
+      ) as any,
     });
   }
 
-  async login(dto: LoginDto) {
+  /**
+   * Verifies credentials and issues a new session. Returns the raw tokens
+   * for AuthController to set as cookies — see IIssuedSession. Never
+   * return this value directly as an HTTP response body.
+   */
+  async login(dto: LoginDto): Promise<IIssuedSession> {
     const email = dto.email.trim().toLowerCase();
 
     const user = await this.authRepository.findUserForLogin(email);
@@ -343,7 +373,7 @@ export class AuthService {
 
     const refreshTokenExpiresIn = this.configService.getOrThrow<string>(
       'jwt.refreshExpiresIn',
-    ) as StringValue;
+    );
 
     const refreshTokenExpiresAt = new Date(
       Date.now() + ms(refreshTokenExpiresIn),
@@ -357,10 +387,16 @@ export class AuthService {
     });
 
     return {
-      success: true,
-      message: 'Login successful.',
       accessToken,
       refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatar: user.avatar,
+        isOwner: user.isOwner,
+      },
     };
   }
 
@@ -452,9 +488,14 @@ export class AuthService {
     };
   }
 
-  async refresh(dto: RefreshTokenDto) {
-    const { refreshToken } = dto;
-
+  /**
+   * Rotates a refresh session. `refreshToken` is the raw value read from
+   * the HttpOnly cookie by AuthController — this method never reads a
+   * request body. Returns the new tokens for the controller to set as
+   * cookies (see IIssuedSession's doc comment — never return this as a
+   * JSON body).
+   */
+  async refresh(refreshToken: string): Promise<Omit<IIssuedSession, 'user'>> {
     let payload: IRefreshTokenPayload;
 
     try {
@@ -474,6 +515,14 @@ export class AuthService {
     }
 
     if (session.revokedAt) {
+      // Reuse of a refresh token that was already rotated away is a
+      // strong signal of compromise (the token was copied and is now
+      // being replayed by someone other than — or racing — its
+      // legitimate holder). Rather than just rejecting this one attempt,
+      // proactively kill every session this user has, so a stolen-but-
+      // detected token can't be quietly ridden out.
+      await this.authSessionRepository.revokeAllByUserId(session.userId);
+
       throw new BadRequestException('Refresh token has been revoked.');
     }
 
@@ -523,12 +572,11 @@ export class AuthService {
 
     const newRefreshTokenExpiresIn = this.configService.getOrThrow<string>(
       'jwt.refreshExpiresIn',
-    ) as StringValue;
+    );
 
     const newRefreshTokenExpiresAt = new Date(
       Date.now() + ms(newRefreshTokenExpiresIn),
     );
-
     const rotatedSession = await this.authSessionRepository.rotate(
       payload.sessionId,
       {
@@ -544,15 +592,26 @@ export class AuthService {
     }
 
     return {
-      success: true,
-      message: 'Access token refreshed successfully.',
       accessToken,
       refreshToken: newRefreshToken,
     };
   }
 
-  async logout(dto: LogoutDto) {
-    const { refreshToken } = dto;
+  /**
+   * Ends a session. Deliberately lenient: a missing, malformed, expired,
+   * or already-revoked refresh token all just mean "there's nothing left
+   * to revoke" rather than an error — the caller's intent (no longer be
+   * logged in) is satisfied either way, and AuthController clears the
+   * cookies unconditionally regardless of what happens here.
+   */
+  async logout(
+    refreshToken: string | undefined,
+  ): Promise<{ success: true; message: string }> {
+    const response = { success: true as const, message: 'Logout successful.' };
+
+    if (!refreshToken) {
+      return response;
+    }
 
     let payload: IRefreshTokenPayload;
 
@@ -561,30 +620,47 @@ export class AuthService {
         secret: this.configService.getOrThrow<string>('jwt.refreshSecret'),
       });
     } catch {
-      throw new BadRequestException('Invalid refresh token.');
+      return response;
     }
 
     const session = await this.authSessionRepository.findById(
       payload.sessionId,
     );
 
-    if (!session) {
-      throw new BadRequestException('Invalid refresh token.');
+    if (session && !session.revokedAt) {
+      await this.authSessionRepository.revoke(payload.sessionId);
     }
 
-    if (session.revokedAt) {
-      throw new BadRequestException('Refresh token has already been revoked.');
-    }
+    return response;
+  }
 
-    if (!this.tokenHashService.compare(refreshToken, session.tokenHash)) {
-      throw new BadRequestException('Invalid refresh token.');
-    }
+  /**
+   * Returns the safe, client-facing shape of the currently authenticated
+   * user. Used both for /auth/me (session restoration on the frontend)
+   * and anywhere else "who am I" is needed.
+   */
+  async getCurrentUser(userId: string): Promise<{
+    success: true;
+    message: string;
+    user: ISafeAuthUser;
+  }> {
+    const user = await this.userRepository.findById(userId);
 
-    await this.authSessionRepository.revoke(payload.sessionId);
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('User account is no longer available.');
+    }
 
     return {
       success: true,
-      message: 'Logout successful.',
+      message: 'Current user retrieved successfully.',
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatar: user.avatar,
+        isOwner: user.isOwner,
+      },
     };
   }
 
@@ -629,13 +705,15 @@ export class AuthService {
    * SDK/API, resolves or creates the local User exactly the way
    * verifyEmail() does today, then issues an access/refresh token pair
    * using the SAME generateAccessToken/generateRefreshToken/AuthSession
-   * mechanism login() already uses — no second token system.
+   * mechanism login() already uses — no second token system. Returns the
+   * raw tokens for AuthController to set as cookies directly on this
+   * callback response — see IIssuedSession's doc comment.
    */
   async handleSocialCallback(
     provider: SocialProviderName,
     code: string,
     state: string,
-  ) {
+  ): Promise<IIssuedSession> {
     const providerService = this.resolveSocialProvider(provider);
 
     if (!providerService.isConfigured()) {
@@ -784,7 +862,7 @@ export class AuthService {
 
     const refreshTokenExpiresIn = this.configService.getOrThrow<string>(
       'jwt.refreshExpiresIn',
-    ) as StringValue;
+    );
 
     const refreshTokenExpiresAt = new Date(
       Date.now() + ms(refreshTokenExpiresIn),
@@ -798,15 +876,14 @@ export class AuthService {
     });
 
     return {
-      success: true,
-      message: 'Social authentication successful.',
       accessToken,
       refreshToken,
       user: {
         id: user.id,
+        email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        email: user.email,
+        avatar: user.avatar,
         isOwner: user.isOwner,
       },
     };

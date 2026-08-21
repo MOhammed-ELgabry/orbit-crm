@@ -6,6 +6,8 @@ export interface IAuthUser {
 
   email: string;
 
+  avatar: string | null;
+
   passwordHash: string | null;
 
   isActive: boolean;

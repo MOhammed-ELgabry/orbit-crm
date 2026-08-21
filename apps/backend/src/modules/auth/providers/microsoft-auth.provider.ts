@@ -15,9 +15,7 @@ export class MicrosoftAuthProvider implements ISocialAuthProvider {
 
   private getConfig() {
     return {
-      clientId: this.configService.get<string>(
-        'socialAuth.microsoft.clientId',
-      ),
+      clientId: this.configService.get<string>('socialAuth.microsoft.clientId'),
       clientSecret: this.configService.get<string>(
         'socialAuth.microsoft.clientSecret',
       ),
@@ -115,9 +113,8 @@ export class MicrosoftAuthProvider implements ISocialAuthProvider {
         result.account.name ??
         'Microsoft',
       lastName:
-        (typeof claims.family_name === 'string'
-          ? claims.family_name
-          : null) ?? 'User',
+        (typeof claims.family_name === 'string' ? claims.family_name : null) ??
+        'User',
       // Fetching a profile photo requires an additional Microsoft Graph
       // call beyond the ID token — omitted to keep this feature scoped to
       // authentication only, matching the approved scope.

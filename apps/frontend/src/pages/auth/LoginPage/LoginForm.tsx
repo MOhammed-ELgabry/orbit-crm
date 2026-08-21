@@ -4,7 +4,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { loginUser } from "../../../services/authService";
 import { useAuth } from "../../../context/AuthContext";
-import { decodeJwtPayload } from "../../../services/jwt";
 import LoginHeader from "./LoginHeader";
 import LoginOptions from "./LoginOptions";
 import SocialLogin from "../SocialLogin";
@@ -50,17 +49,7 @@ export default function LoginForm() {
         password: values.password,
       });
 
-      const claims = decodeJwtPayload<{
-        sub: string;
-        email: string;
-        isOwner: boolean;
-      }>(response.accessToken);
-
-      login(response.accessToken, response.refreshToken, {
-        id: claims?.sub ?? "",
-        email: claims?.email ?? values.email,
-        isOwner: claims?.isOwner ?? false,
-      });
+      login(response.user);
 
       navigate("/industry-selection");
     } catch (error) {

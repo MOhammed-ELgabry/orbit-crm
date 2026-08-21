@@ -109,7 +109,8 @@ export class FacebookAuthProvider implements ISocialAuthProvider {
       throw new BadRequestException('Facebook authentication failed.');
     }
 
-    const debugData = (await debugResponse.json()) as FacebookDebugTokenResponse;
+    const debugData =
+      (await debugResponse.json()) as FacebookDebugTokenResponse;
 
     if (
       !debugData.data?.is_valid ||
