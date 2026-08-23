@@ -3,6 +3,7 @@ import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsEmail,
+  IsIn,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -10,6 +11,9 @@ import {
   Length,
   MaxLength,
 } from 'class-validator';
+
+import { BUSINESS_TYPES } from '../constants/business-type.constants';
+import type { BusinessType } from '../constants/business-type.constants';
 
 export class CreateCompanyDto {
   @ApiProperty({
@@ -89,6 +93,17 @@ export class CreateCompanyDto {
   @IsString()
   @MaxLength(1000)
   description?: string;
+
+  @ApiPropertyOptional({
+    example: 'real_estate',
+    enum: BUSINESS_TYPES,
+    description:
+      'Business type, normally set once via the onboarding ' +
+      'POST /auth/business-type step rather than here.',
+  })
+  @IsOptional()
+  @IsIn(BUSINESS_TYPES)
+  businessType?: BusinessType;
 
   @ApiPropertyOptional({
     example: true,

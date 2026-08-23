@@ -20,13 +20,21 @@ model Company {
   taxNumber    String?
   description  String?
 
+  // Onboarding
+  // Set via the post-verification "Business Type Selection" step (see
+  // OnboardingToken below). Nullable because a company exists before this
+  // step runs — it's populated once the owner picks one of the offered
+  // business types, not at company-creation time.
+  businessType String?
+
   // Status
   isActive Boolean @default(true)
 
   // Relations
-  users    User[]
-  roles    Role[]
-  contacts Contact[]
+  users            User[]
+  roles            Role[]
+  contacts         Contact[]
+  onboardingTokens OnboardingToken[]
 
   // Audit
   createdAt DateTime  @default(now())
@@ -177,6 +185,31 @@ model PasswordResetToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([expiresAt])
+}
+
+// Single-purpose, single-use ticket that lets the Business Type Selection
+// step persist to the correct Company in the window between Email
+// Verification and Login — i.e. before any session/cookie exists for the
+// user. This is deliberately NOT a session or a second auth mechanism: it
+// authorizes exactly one action (setting one company's businessType),
+// mirrors PasswordResetToken's shape/lifecycle exactly (hashed at rest,
+// short expiry, single use), and grants no general API access. The raw
+// token is returned once in the verifyEmail response body (and, for a
+// brand-new social sign-up, in the social callback's postMessage payload)
+// — never persisted client-side beyond in-memory React state.
+model OnboardingToken {
+  id        String    @id @default(cuid())
+  companyId String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
   @@index([expiresAt])
 }
 

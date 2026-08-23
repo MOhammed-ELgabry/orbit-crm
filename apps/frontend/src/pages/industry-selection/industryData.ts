@@ -1,25 +1,35 @@
-import { FaTooth, FaHome, FaBullhorn } from "react-icons/fa";
-import { GiSewingString } from "react-icons/gi";
+import { FaClinicMedical, FaHome, FaCogs } from "react-icons/fa";
+import type { IconType } from "react-icons";
 
-export const industries = [
+import type { BusinessType } from "../../services/authService";
+
+export interface IndustryOption {
+  /** Sent to POST /auth/business-type — must match the backend's BUSINESS_TYPES exactly. */
+  value: BusinessType;
+  /** i18n key for the card title. */
+  title: string;
+  /** i18n key for the card description. */
+  description: string;
+  icon: IconType;
+}
+
+export const industries: IndustryOption[] = [
   {
-    title: "textileAndFabrics",
-    description: "textileAndFabricsDescription",
-    icon: GiSewingString,
+    value: "medical_clinics",
+    title: "medicalClinics",
+    description: "medicalClinicsDescription",
+    icon: FaClinicMedical,
   },
   {
-    title: "dentalClinic",
-    description: "MdentalClinicDescription",
-    icon: FaTooth,
-  },
-  {
+    value: "real_estate",
     title: "realEstate",
     description: "realEstateDescription",
     icon: FaHome,
   },
   {
-    title: "marketingAgency",
-    description: "marketingAgencyDescription",
-    icon: FaBullhorn,
+    value: "auto_spare_parts",
+    title: "autoSpareParts",
+    description: "autoSparePartsDescription",
+    icon: FaCogs,
   },
 ];

@@ -28,18 +28,22 @@ import { RegisterDto } from './dto/register.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { SetBusinessTypeDto } from './dto/set-business-type.dto';
 import {
   AUTH_REPOSITORY,
   AUTH_SESSION_REPOSITORY,
   PASSWORD_RESET_REPOSITORY,
   SOCIAL_ACCOUNT_REPOSITORY,
+  ONBOARDING_TOKEN_REPOSITORY,
 } from './constants/auth.constants';
 import type { SocialProviderName } from './constants/auth.constants';
+import { PrismaExceptionMapper } from '../../common/exceptions/prisma-exception.mapper';
 
 import type { IAuthRepository } from './repository/auth.repository.interface';
 import type { IAuthSessionRepository } from './repository/auth-session.repository.interface';
 import type { IPasswordResetRepository } from './repository/password-reset.repository.interface';
 import type { ISocialAccountRepository } from './repository/social-account.repository.interface';
+import type { IOnboardingTokenRepository } from './repository/onboarding-token.repository.interface';
 import type { ISocialAuthProvider } from './interfaces/social-profile.interface';
 
 import { GoogleAuthProvider } from './providers/google-auth.provider';
@@ -75,6 +79,22 @@ interface IIssuedSession {
   user: ISafeAuthUser;
 }
 
+/**
+ * handleSocialCallback()'s result. A social sign-in always gets a real
+ * session (unlike the normal register→verify flow, verifyEmail() never
+ * issues cookies) — but a brand-new social user still needs to go through
+ * Business Type Selection before the dashboard, exactly like a normal
+ * new user. `onboardingToken` is only present when `isNewUser` is true,
+ * and is issued the same way — and consumed by the same setBusinessType()
+ * endpoint — as the one verifyEmail() returns. Having a session already
+ * doesn't change that: the ticket is a separate, narrowly-scoped
+ * authorization for that one action, not a replacement for the session.
+ */
+interface ISocialCallbackResult extends IIssuedSession {
+  isNewUser: boolean;
+  onboardingToken?: string;
+}
+
 @Injectable()
 export class AuthService {
   private readonly maxVerificationAttempts = 5;
@@ -103,6 +123,9 @@ export class AuthService {
 
     @Inject(SOCIAL_ACCOUNT_REPOSITORY)
     private readonly socialAccountRepository: ISocialAccountRepository,
+
+    @Inject(ONBOARDING_TOKEN_REPOSITORY)
+    private readonly onboardingTokenRepository: IOnboardingTokenRepository,
 
     private readonly configService: ConfigService,
 
@@ -227,7 +250,7 @@ export class AuthService {
       throw new BadRequestException('Email is already verified.');
     }
 
-    await this.prisma.$transaction(async (tx) => {
+    const companyId = await this.prisma.$transaction(async (tx) => {
       // 1. Create the user's company
       const company = await tx.company.create({
         data: {
@@ -258,11 +281,22 @@ export class AuthService {
           verifiedAt: new Date(),
         },
       });
+
+      return company.id;
     });
+
+    // The user has no session yet — verifyEmail() deliberately does not
+    // authenticate them (that stays the explicit Login step's job). This
+    // one-time token is what lets the very next step, Business Type
+    // Selection, persist to the right company without one. See
+    // OnboardingToken's doc comment in schema.prisma and setBusinessType()
+    // below.
+    const onboardingToken = await this.issueOnboardingToken(companyId);
 
     return {
       success: true,
       message: 'Email verified successfully. Your company has been created.',
+      onboardingToken,
     };
   }
 
@@ -300,6 +334,79 @@ export class AuthService {
     await this.mailService.sendVerificationEmail(email, verificationCode);
 
     return genericResponse;
+  }
+
+  /**
+   * Issues a fresh one-time onboarding ticket for `companyId`, deleting
+   * any previous unused one for the same company first (mirrors
+   * forgotPassword()'s deleteByUserId-then-create pattern, so re-verifying
+   * or re-running social sign-up never leaves more than one live ticket
+   * outstanding). Returns the raw token — store nothing but its hash.
+   */
+  private async issueOnboardingToken(companyId: string): Promise<string> {
+    const token = randomBytes(32).toString('hex');
+    const tokenHash = this.tokenHashService.hash(token);
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+    await this.onboardingTokenRepository.deleteByCompanyId(companyId);
+
+    await this.onboardingTokenRepository.create({
+      companyId,
+      tokenHash,
+      expiresAt,
+    });
+
+    return token;
+  }
+
+  /**
+   * Consumes a one-time onboarding token to record the company's chosen
+   * business type. Deliberately does not require a session — see
+   * OnboardingToken's doc comment in schema.prisma for why. Possession of
+   * the (high-entropy, single-use, short-lived) raw token is the only
+   * credential this checks.
+   */
+  async setBusinessType(
+    dto: SetBusinessTypeDto,
+  ): Promise<{ success: true; message: string }> {
+    const tokenHash = this.tokenHashService.hash(dto.token);
+
+    const onboardingToken =
+      await this.onboardingTokenRepository.findByTokenHash(tokenHash);
+
+    if (!onboardingToken) {
+      throw new BadRequestException('Invalid or expired onboarding token.');
+    }
+
+    if (onboardingToken.usedAt) {
+      throw new BadRequestException(
+        'This onboarding step has already been completed.',
+      );
+    }
+
+    if (onboardingToken.expiresAt <= new Date()) {
+      throw new BadRequestException('Onboarding token has expired.');
+    }
+
+    try {
+      await this.prisma.company.update({
+        where: {
+          id: onboardingToken.companyId,
+        },
+        data: {
+          businessType: dto.businessType,
+        },
+      });
+    } catch (error) {
+      PrismaExceptionMapper.map(error);
+    }
+
+    await this.onboardingTokenRepository.markAsUsed(onboardingToken.id);
+
+    return {
+      success: true,
+      message: 'Business type saved successfully.',
+    };
   }
 
   private generateAccessToken(payload: IJwtPayload): string {
@@ -713,7 +820,7 @@ export class AuthService {
     provider: SocialProviderName,
     code: string,
     state: string,
-  ): Promise<IIssuedSession> {
+  ): Promise<ISocialCallbackResult> {
     const providerService = this.resolveSocialProvider(provider);
 
     if (!providerService.isConfigured()) {
@@ -753,6 +860,11 @@ export class AuthService {
       );
 
     let userId: string;
+    // Only Scenario 1 (brand-new user + brand-new company) needs the
+    // Business Type Selection step — Scenarios 2/3 are an existing Orbit
+    // CRM user who (by definition) already has a company and, if they
+    // needed to, already went through onboarding.
+    let isNewUser = false;
 
     if (existingSocialAccount) {
       // Scenario 2 — existing social identity, straightforward login.
@@ -783,6 +895,8 @@ export class AuthService {
 
         userId = existingUser.id;
       } else {
+        isNewUser = true;
+
         // Scenario 1 — brand-new social user. Mirrors verifyEmail(): a new
         // Company is created and the user becomes its owner. Email/password
         // login is not disabled for this user — they can set a password
@@ -875,9 +989,20 @@ export class AuthService {
       expiresAt: refreshTokenExpiresAt,
     });
 
+    // A brand-new social user already has a session (cookies are set on
+    // this same response by AuthController) but still hasn't picked a
+    // business type. Issue the same one-time ticket verifyEmail() issues
+    // so the frontend can send them through the identical Business Type
+    // Selection step/endpoint before the dashboard.
+    const onboardingToken = isNewUser
+      ? await this.issueOnboardingToken(user.companyId)
+      : undefined;
+
     return {
       accessToken,
       refreshToken,
+      isNewUser,
+      onboardingToken,
       user: {
         id: user.id,
         email: user.email,

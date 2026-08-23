@@ -17,6 +17,20 @@ export const envValidationSchema = Joi.object({
 
   DATABASE_URL: Joi.string().required(),
 
+  // Required: MailService reads these directly and register()/
+  // resendVerification()/forgotPassword() all call it synchronously as
+  // part of the request — with these unset or wrong, the failure doesn't
+  // surface here at boot, it surfaces mid-registration as a generic 500
+  // AFTER the user + verification rows are already committed, leaving an
+  // account the user can never verify (a retry then fails with "already
+  // exists"). Required so that misconfiguration is caught immediately
+  // instead of during a live demo of the registration flow.
+  MAIL_HOST: Joi.string().required(),
+  MAIL_PORT: Joi.number().required(),
+  MAIL_USER: Joi.string().required(),
+  MAIL_PASSWORD: Joi.string().required(),
+  MAIL_FROM: Joi.string().required(),
+
   // Required: this is now the single source of truth for both the CORS
   // allow-list and the OAuth popup's postMessage targetOrigin. Auth now
   // relies on cookies, so an unconfigured/wrong value here doesn't just

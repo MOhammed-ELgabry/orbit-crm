@@ -58,6 +58,7 @@ export class CompanyRepository implements ICompanyRepository {
           'website',
           'taxNumber',
           'description',
+          'businessType',
           'isActive',
           'createdAt',
           'updatedAt',

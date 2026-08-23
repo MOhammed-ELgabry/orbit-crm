@@ -2,20 +2,37 @@ import logo from "../../../assets/Subtract.png";
 import { FaEnvelope } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
-import { verifyEmail } from "../../../services/authService";
-import { useState } from "react";
+import { resendVerification, verifyEmail } from "../../../services/authService";
+import { useEffect, useState } from "react";
 import OtpInput from "react-otp-input";
 import { successAlert, errorAlert } from "../../../lib/swal";
 import { getErrorMessage } from "../../../lib/errors";
 
 export default function VerificationForm() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
 
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
-  const email = location.state?.email;
+  const email = location.state?.email as string | undefined;
+
+  // This page is meaningless without an email to verify — reachable
+  // state (from Register) rather than a URL param, so it doesn't survive
+  // e.g. a manual refresh. Send anyone who lands here without it back to
+  // Register rather than showing a blank identity and letting a verify
+  // attempt fire with an undefined email.
+  useEffect(() => {
+    if (!email) {
+      navigate("/register", { replace: true });
+    }
+  }, [email, navigate]);
+
+  if (!email) {
+    return null;
+  }
 
   const handleVerify = async () => {
     setIsVerifying(true);
@@ -34,7 +51,9 @@ export default function VerificationForm() {
         confirmButtonText: t("ok"),
       });
 
-      navigate("/login");
+      navigate("/industry-selection", {
+        state: { email, onboardingToken: response.onboardingToken },
+      });
     } catch (error) {
       console.error("Verification failed:", error);
 
@@ -48,7 +67,33 @@ export default function VerificationForm() {
     }
   };
 
-  const { t } = useTranslation();
+  const handleResend = async () => {
+    setIsResending(true);
+
+    try {
+      await resendVerification({ email });
+
+      await successAlert({
+        title: t("resendCodeSuccessTitle"),
+        text: t("resendCodeSuccessMessage"),
+        confirmButtonText: t("ok"),
+      });
+    } catch (error) {
+      console.error("Resend verification failed:", error);
+
+      errorAlert({
+        title: t("resendCodeFailedTitle"),
+        text: getErrorMessage(error, t("resendCodeFailedMessage")),
+        confirmButtonText: t("ok"),
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const handleChangeEmail = () => {
+    navigate("/register");
+  };
 
   return (
     <div className="w-full min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8 lg:px-10 py-8">
@@ -125,7 +170,7 @@ export default function VerificationForm() {
         <button
           type="button"
           onClick={handleVerify}
-          disabled={isVerifying}
+          disabled={isVerifying || code.length !== 6}
           className="w-full
     h-[40px]
     sm:h-[42px]
@@ -184,15 +229,18 @@ export default function VerificationForm() {
 
           <button
             type="button"
-            className="text-xs sm:text-sm font-semibold text-[#643ED7] cursor-pointer transition-colors duration-200 hover:text-[#514cf0] hover:underline"
+            onClick={handleResend}
+            disabled={isResending}
+            className="text-xs sm:text-sm font-semibold text-[#643ED7] cursor-pointer transition-colors duration-200 hover:text-[#514cf0] hover:underline disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:no-underline"
           >
-            {t("resendCode")}
+            {isResending ? t("resending") : t("resendCode")}
           </button>
         </div>
 
         {/* Change Email */}
         <button
           type="button"
+          onClick={handleChangeEmail}
           className="text-sm text-gray-500 mt-4 cursor-pointer transition-colors duration-200 hover:text-[#643ED7]"
         >
           {t("changeEmail")}

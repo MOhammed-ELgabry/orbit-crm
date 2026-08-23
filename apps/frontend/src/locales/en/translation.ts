@@ -9,6 +9,8 @@ const en = {
   forgotPassword: "Forgot Password?",
   dontHaveAccount: "Don't have an account?",
   signUp: "Sign Up",
+  alreadyHaveAccount: "Already have an account?",
+  signIn: "Sign In",
   google: "Google",
   facebook: "Facebook",
   microsoft: "Microsoft",
@@ -52,31 +54,42 @@ const en = {
   verifyEmail: "Verify Email",
   didntReceiveCode: "Didn't receive the code?",
   resendCode: "Resend Code",
+  resending: "Resending...",
   changeEmail: "Change Email",
 
   almostThere: "Almost There!",
   completeAccountSetup: "Verify your email to complete your account setup.",
 
-  // Industry Selection
+  // Industry Selection — must stay in sync with the backend's
+  // BUSINESS_TYPES (medical_clinics / real_estate / auto_spare_parts).
   welcomeToOrbit: "Welcome to Orbit CRM",
   chooseBusinessIndustry: "Choose your business industry",
   chooseWorkspaceDescription:
     "Choose the workspace that best fits your business.",
 
-  textileAndFabrics: "Textile & Fabrics",
-  textileAndFabricsDescription:
-    "Manage customers, orders, suppliers and inventory.",
-
-  dentalClinic: "Dental Clinic",
-  dentalClinicDescription: "Manage patients, appointments and treatments.",
+  medicalClinics: "Medical Clinics",
+  medicalClinicsDescription: "Manage patients, appointments and treatments.",
 
   realEstate: "Real Estate",
   realEstateDescription: "Manage properties, leads, clients and deals.",
 
-  marketingAgency: "Marketing Agency",
-  marketingAgencyDescription: "Manage clients, campaigns, projects and tasks.",
+  autoSpareParts: "Auto Spare Parts",
+  autoSparePartsDescription:
+    "Manage inventory, suppliers, orders and sales.",
 
   continue: "Continue",
+
+  // Dashboard
+  logout: "Logout",
+  welcomeBack: "Welcome back, {{name}}!",
+  dashboardSubtitle: "Here's what's happening with your business today.",
+  totalContacts: "Total Contacts",
+  teamMembers: "Team Members",
+  accountOwner: "Account Owner",
+  yes: "Yes",
+  no: "No",
+  dashboardComingSoon:
+    "More CRM tools are on the way. This is your starting point.",
 
   // Alerts (SweetAlert2)
   ok: "OK",
@@ -85,6 +98,8 @@ const en = {
   loginFailedTitle: "Login Failed",
   loginFailedMessage:
     "The email or password you entered is incorrect. Please try again.",
+  loginSuccessTitle: "Welcome Back",
+  loginSuccessMessage: "You've successfully logged in.",
 
   registerSuccessTitle: "Account Created",
   registerSuccessMessage:
@@ -98,6 +113,20 @@ const en = {
   verifyEmailFailedTitle: "Verification Failed",
   verifyEmailFailedMessage:
     "The code you entered is invalid or has expired. Please try again.",
+
+  resendCodeSuccessTitle: "Code Resent",
+  resendCodeSuccessMessage:
+    "A new verification code has been sent to your email.",
+  resendCodeFailedTitle: "Couldn't Resend Code",
+  resendCodeFailedMessage:
+    "We couldn't resend the verification code. Please try again.",
+
+  businessTypeSuccessTitle: "Business Type Saved",
+  businessTypeSuccessMessage:
+    "Your business type has been saved successfully.",
+  businessTypeFailedTitle: "Couldn't Save Business Type",
+  businessTypeFailedMessage:
+    "We couldn't save your business type. Please try again.",
 
   socialLoginFailedTitle: "Sign-in Failed",
 };

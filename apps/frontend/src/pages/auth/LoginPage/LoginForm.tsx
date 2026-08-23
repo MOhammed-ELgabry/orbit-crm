@@ -9,7 +9,7 @@ import LoginOptions from "./LoginOptions";
 import SocialLogin from "../SocialLogin";
 import AuthDivider from "../AuthDivider";
 import LoginFields from "./LoginFields";
-import { errorAlert } from "../../../lib/swal";
+import { errorAlert, successAlert } from "../../../lib/swal";
 import { getErrorMessage } from "../../../lib/errors";
 
 interface LoginValues {
@@ -51,7 +51,13 @@ export default function LoginForm() {
 
       login(response.user);
 
-      navigate("/industry-selection");
+      await successAlert({
+        title: t("loginSuccessTitle"),
+        text: t("loginSuccessMessage"),
+        confirmButtonText: t("ok"),
+      });
+
+      navigate("/dashboard");
     } catch (error) {
       console.error("Login failed:", error);
 

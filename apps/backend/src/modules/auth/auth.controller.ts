@@ -32,6 +32,7 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { SetBusinessTypeDto } from './dto/set-business-type.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -151,6 +152,27 @@ export class AuthController {
   @Throttle({ default: { limit: 3, ttl: 15 * 60_000 } })
   async resendVerification(@Body() dto: ResendVerificationDto) {
     return this.authService.resendVerification(dto);
+  }
+
+  @ApiOperation({
+    summary: 'Set the company business type (onboarding)',
+    description:
+      "Consumes the one-time onboarding token returned by verify-email " +
+      "(or a new social sign-up) to record the company's selected " +
+      'business type. Deliberately unauthenticated — the user has no ' +
+      'session yet at this point in the required flow (that is ' +
+      'established by the explicit Login step that follows). Possession ' +
+      'of the token, not a cookie, is the credential here — see ' +
+      'OnboardingToken in schema.prisma.',
+  })
+  @ApiOkResponse({
+    description: 'Business type saved successfully.',
+  })
+  @Post('business-type')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  async setBusinessType(@Body() dto: SetBusinessTypeDto) {
+    return this.authService.setBusinessType(dto);
   }
 
   @ApiOperation({
@@ -336,20 +358,23 @@ export class AuthController {
         throw new BadRequestException('Invalid authentication callback.');
       }
 
-      const { accessToken, refreshToken, user } =
+      const { accessToken, refreshToken, user, isNewUser, onboardingToken } =
         await this.authService.handleSocialCallback(validProvider, code, state);
 
       // Cookies are set on THIS response — the popup's own top-level
       // navigation to our domain — so they're already present for the
       // whole browser (including the opener tab) before the inline
-      // script below even runs. The postMessage payload therefore never
-      // needs to carry a token, only the safe user profile.
+      // script below even runs. onboardingToken is NOT a session
+      // credential (see OnboardingToken in schema.prisma) so sending it
+      // in the payload alongside the cookie-based session is fine — it
+      // authorizes exactly one thing (the business-type step) and only
+      // exists at all when isNewUser is true.
       this.setSessionCookies(res, accessToken, refreshToken);
 
       return res.send(
         renderSocialAuthCallbackPage(frontendOrigin, {
           type: 'orbit-social-auth-success',
-          payload: { user },
+          payload: { user, isNewUser, onboardingToken },
         }),
       );
     } catch (err: unknown) {

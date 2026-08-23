@@ -5,6 +5,8 @@ import LoginPage from "./pages/auth/LoginPage/LoginPage";
 import VerifyEmail from "./pages/auth/VerifyEmail/VerifyEmail";
 import LanguageSwitcher from "./Components/shared/LanguageSwitcher";
 import IndustrySelection from "./pages/industry-selection/IndustrySelection";
+import DashboardPage from "./pages/dashboard/DashboardPage";
+import { ProtectedRoute } from "./Components/ProtectedRoute";
 
 function App() {
   return (
@@ -21,6 +23,14 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/industry-selection" element={<IndustrySelection />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </div>
       </AuthProvider>

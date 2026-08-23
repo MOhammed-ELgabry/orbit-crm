@@ -10,6 +10,7 @@ import {
   AUTH_SESSION_REPOSITORY,
   PASSWORD_RESET_REPOSITORY,
   SOCIAL_ACCOUNT_REPOSITORY,
+  ONBOARDING_TOKEN_REPOSITORY,
 } from './constants/auth.constants';
 
 import { AuthController } from './auth.controller';
@@ -19,6 +20,7 @@ import { AuthRepository } from './repository/auth.repository';
 import { AuthSessionRepository } from './repository/auth-session.repository';
 import { PasswordResetRepository } from './repository/password-reset.repository';
 import { SocialAccountRepository } from './repository/social-account.repository';
+import { OnboardingTokenRepository } from './repository/onboarding-token.repository';
 import { TokenHashService } from './services/token-hash.service';
 import { OAuthStateService } from './services/oauth-state.service';
 
@@ -79,6 +81,11 @@ import { JwtModule } from '@nestjs/jwt';
     {
       provide: SOCIAL_ACCOUNT_REPOSITORY,
       useClass: SocialAccountRepository,
+    },
+
+    {
+      provide: ONBOARDING_TOKEN_REPOSITORY,
+      useClass: OnboardingTokenRepository,
     },
   ],
 

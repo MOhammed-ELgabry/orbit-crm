@@ -9,6 +9,8 @@ const ar = {
   forgotPassword: "نسيت كلمة المرور؟",
   dontHaveAccount: "ليس لديك حساب؟",
   signUp: "إنشاء حساب",
+  alreadyHaveAccount: "لديك حساب بالفعل؟",
+  signIn: "تسجيل الدخول",
   google: "جوجل",
   facebook: "فيسبوك",
   microsoft: "مايكروسوفت",
@@ -52,38 +54,41 @@ const ar = {
   verifyEmail: "تأكيد البريد الإلكتروني",
   didntReceiveCode: "لم يصلك الرمز؟",
   resendCode: "إعادة إرسال الرمز",
+  resending: "جاري إعادة الإرسال...",
   changeEmail: "تغيير البريد الإلكتروني",
 
-  
-  // Email Verification
-almostThere: "أوشكت على الانتهاء!",
-completeAccountSetup: "قم بتأكيد بريدك الإلكتروني لإكمال إعداد حسابك.",
+  almostThere: "أوشكت على الانتهاء!",
+  completeAccountSetup: "قم بتأكيد بريدك الإلكتروني لإكمال إعداد حسابك.",
 
-
-
-// Industry Selection
+  // Industry Selection — يجب أن يبقى متوافقًا مع BUSINESS_TYPES في الخادم
+  // (medical_clinics / real_estate / auto_spare_parts).
   welcomeToOrbit: "مرحبًا بك في Orbit CRM",
   chooseBusinessIndustry: "اختر مجال عملك",
   chooseWorkspaceDescription:
     "اختر مساحة العمل التي تناسب نشاطك التجاري.",
 
-  textileAndFabrics: "الأقمشة والمنسوجات",
-  textileAndFabricsDescription:
-    "إدارة العملاء والطلبات والموردين والمخزون.",
-
-  dentalClinic: "عيادة أسنان",
-  dentalClinicDescription:
-    "إدارة المرضى والمواعيد والعلاجات.",
+  medicalClinics: "العيادات الطبية",
+  medicalClinicsDescription: "إدارة المرضى والمواعيد والعلاجات.",
 
   realEstate: "العقارات",
-  realEstateDescription:
-    "إدارة العقارات والعملاء المحتملين والصفقات.",
+  realEstateDescription: "إدارة العقارات والعملاء المحتملين والصفقات.",
 
-  marketingAgency: "وكالة تسويق",
-  marketingAgencyDescription:
-    "إدارة العملاء والحملات والمشاريع والمهام.",
+  autoSpareParts: "قطع غيار السيارات",
+  autoSparePartsDescription: "إدارة المخزون والموردين والطلبات والمبيعات.",
 
   continue: "متابعة",
+
+  // Dashboard
+  logout: "تسجيل الخروج",
+  welcomeBack: "مرحبًا بعودتك، {{name}}!",
+  dashboardSubtitle: "إليك ما يحدث في نشاطك التجاري اليوم.",
+  totalContacts: "إجمالي العملاء",
+  teamMembers: "أعضاء الفريق",
+  accountOwner: "مالك الحساب",
+  yes: "نعم",
+  no: "لا",
+  dashboardComingSoon:
+    "المزيد من أدوات إدارة العملاء قريبًا. هذه نقطة البداية.",
 
   // Alerts (SweetAlert2)
   ok: "حسناً",
@@ -91,6 +96,8 @@ completeAccountSetup: "قم بتأكيد بريدك الإلكتروني لإك�
 
   loginFailedTitle: "فشل تسجيل الدخول",
   loginFailedMessage: "البريد الإلكتروني أو كلمة المرور غير صحيحة. حاول مرة أخرى.",
+  loginSuccessTitle: "مرحبًا بعودتك",
+  loginSuccessMessage: "تم تسجيل دخولك بنجاح.",
 
   registerSuccessTitle: "تم إنشاء الحساب",
   registerSuccessMessage:
@@ -104,6 +111,16 @@ completeAccountSetup: "قم بتأكيد بريدك الإلكتروني لإك�
   verifyEmailFailedTitle: "فشل التحقق",
   verifyEmailFailedMessage:
     "الرمز الذي أدخلته غير صحيح أو منتهي الصلاحية. حاول مرة أخرى.",
+
+  resendCodeSuccessTitle: "تم إعادة إرسال الرمز",
+  resendCodeSuccessMessage: "تم إرسال رمز تحقق جديد إلى بريدك الإلكتروني.",
+  resendCodeFailedTitle: "تعذر إعادة إرسال الرمز",
+  resendCodeFailedMessage: "تعذر إعادة إرسال رمز التحقق. يرجى المحاولة مرة أخرى.",
+
+  businessTypeSuccessTitle: "تم حفظ نوع النشاط",
+  businessTypeSuccessMessage: "تم حفظ نوع نشاطك التجاري بنجاح.",
+  businessTypeFailedTitle: "تعذر حفظ نوع النشاط",
+  businessTypeFailedMessage: "تعذر حفظ نوع نشاطك التجاري. يرجى المحاولة مرة أخرى.",
 
   socialLoginFailedTitle: "فشل تسجيل الدخول",
 };

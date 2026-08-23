@@ -15,6 +15,25 @@ export interface VerifyEmailData {
   code: string;
 }
 
+export interface ResendVerificationData {
+  email: string;
+}
+
+/**
+ * onboardingToken authorizes exactly one further action — POST
+ * /auth/business-type — and only that. It is not a session credential:
+ * verify-email deliberately does not log the user in (see
+ * OnboardingToken's doc comment in the backend schema). Hold it only in
+ * memory (React Router navigation state) for the current step, the same
+ * way `email` is already carried from Register to this page — never in
+ * localStorage/sessionStorage.
+ */
+export interface VerifyEmailResponse {
+  success: boolean;
+  message: string;
+  onboardingToken: string;
+}
+
 export interface LoginData {
   email: string;
   password: string;
@@ -41,6 +60,17 @@ export interface LoginResponse {
 
 export type SocialProvider = "google" | "facebook" | "microsoft";
 
+/**
+ * Must stay in sync with the backend's BUSINESS_TYPES constant
+ * (backend/src/modules/company/constants/business-type.constants.ts).
+ */
+export type BusinessType = "medical_clinics" | "real_estate" | "auto_spare_parts";
+
+export interface SetBusinessTypeData {
+  token: string;
+  businessType: BusinessType;
+}
+
 const SUCCESS_MESSAGE_TYPE = "orbit-social-auth-success";
 const ERROR_MESSAGE_TYPE = "orbit-social-auth-error";
 
@@ -52,8 +82,26 @@ export const registerUser = async (data: RegisterData) => {
   return response.data;
 };
 
-export const verifyEmail = async (data: VerifyEmailData) => {
+export const verifyEmail = async (
+  data: VerifyEmailData,
+): Promise<VerifyEmailResponse> => {
   const response = await api.post("/auth/verify-email", data);
+
+  return response.data;
+};
+
+export const resendVerification = async (
+  data: ResendVerificationData,
+): Promise<{ success: boolean; message: string }> => {
+  const response = await api.post("/auth/resend-verification", data);
+
+  return response.data;
+};
+
+export const setBusinessType = async (
+  data: SetBusinessTypeData,
+): Promise<{ success: boolean; message: string }> => {
+  const response = await api.post("/auth/business-type", data);
 
   return response.data;
 };
@@ -95,9 +143,22 @@ export const loginUser = async (
  * - The authentication flow does not depend on popup.closed.
  * - Popup closing is best-effort only.
  */
+export interface SocialAuthResult {
+  user: AuthUser;
+  /**
+   * True only for a brand-new social sign-up (backend Scenario 1). An
+   * existing user signing in via Google/Facebook/Microsoft (Scenarios
+   * 2/3) already completed onboarding previously, so this is false and
+   * onboardingToken is absent.
+   */
+  isNewUser: boolean;
+  /** Present only when isNewUser is true. See VerifyEmailResponse. */
+  onboardingToken?: string;
+}
+
 export function openSocialAuthPopup(
   provider: SocialProvider,
-): Promise<AuthUser> {
+): Promise<SocialAuthResult> {
   return new Promise((resolve, reject) => {
     const baseURL = api.defaults.baseURL;
 
@@ -160,7 +221,7 @@ export function openSocialAuthPopup(
       }
     };
 
-    const finishSuccess = (user: AuthUser) => {
+    const finishSuccess = (result: SocialAuthResult) => {
       if (settled) {
         return;
       }
@@ -170,7 +231,7 @@ export function openSocialAuthPopup(
       cleanup();
       closePopup();
 
-      resolve(user);
+      resolve(result);
     };
 
     const finishError = (error: Error) => {
@@ -213,7 +274,11 @@ export function openSocialAuthPopup(
       if (data.type === SUCCESS_MESSAGE_TYPE) {
         const payload =
           data.payload && typeof data.payload === "object"
-            ? (data.payload as { user?: unknown })
+            ? (data.payload as {
+                user?: unknown;
+                isNewUser?: unknown;
+                onboardingToken?: unknown;
+              })
             : undefined;
 
         if (!payload?.user || typeof payload.user !== "object") {
@@ -224,7 +289,14 @@ export function openSocialAuthPopup(
           return;
         }
 
-        finishSuccess(payload.user as AuthUser);
+        finishSuccess({
+          user: payload.user as AuthUser,
+          isNewUser: payload.isNewUser === true,
+          onboardingToken:
+            typeof payload.onboardingToken === "string"
+              ? payload.onboardingToken
+              : undefined,
+        });
 
         return;
       }
