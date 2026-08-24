@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
 import {
   IsEmail,
   IsOptional,
   IsString,
-  IsStrongPassword,
   IsUrl,
   Length,
   MaxLength,
@@ -32,10 +32,11 @@ export class RegisterDto {
   email: string;
 
   @ApiProperty({
-    example: 'StrongPassword123!',
+    example: 'Mohammed123',
+    description: 'Password must be between 8 and 100 characters.',
   })
-  @IsStrongPassword()
-  @MaxLength(100)
+  @IsString()
+  @Length(8, 100)
   password: string;
 
   @ApiProperty({
@@ -60,3 +61,4 @@ export class RegisterDto {
   @IsUrl()
   avatar?: string;
 }
+
