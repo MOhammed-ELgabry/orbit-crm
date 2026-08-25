@@ -12,8 +12,8 @@ export interface DashboardStats {
  */
 export const getDashboardStats = async (): Promise<DashboardStats> => {
   const [contactsResponse, usersResponse] = await Promise.all([
-    api.get("/contacts", { params: { page: 1, limit: 1 } }),
-    api.get("/users", { params: { page: 1, limit: 1 } }),
+    api.get("/api/contacts", { params: { page: 1, limit: 1 } }),
+    api.get("/api/users", { params: { page: 1, limit: 1 } }),
   ]);
 
   return {

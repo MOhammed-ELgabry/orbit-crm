@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
@@ -60,9 +65,27 @@ export class UserService {
     return this.userRepository.findByEmail(email);
   }
 
-  async update(id: string, dto: UpdateUserDto, companyId: string) {
-    // Ensures the target belongs to the caller's company; throws the
-    // same NotFoundException used cross-tenant, matching CompanyService.
+  async update(
+    id: string,
+    dto: UpdateUserDto,
+    companyId: string,
+    callerId: string,
+  ) {
+    // This is a self-service endpoint: the authenticated caller may only
+    // ever update their own profile. Checked first, before any lookup,
+    // so a caller probing arbitrary ids always gets the same generic
+    // 403 regardless of whether that id exists at all, in this company
+    // or another — no existence information is leaked. This is what
+    // stops one company member from overwriting another member's
+    // (including the owner's) password: id === callerId is required.
+    if (id !== callerId) {
+      throw new ForbiddenException('You can only update your own profile.');
+    }
+
+    // Existence + tenant check. In practice always true now that id ===
+    // callerId is enforced above, but kept as a direct, defense-in-depth
+    // confirmation the account still exists — matches CompanyService's
+    // existing pattern.
     await this.findById(id, companyId);
 
     const repositoryDto: UpdateUserRepositoryDto = {

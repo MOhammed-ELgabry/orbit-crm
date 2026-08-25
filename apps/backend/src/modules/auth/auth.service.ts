@@ -251,6 +251,32 @@ export class AuthService {
     }
 
     const companyId = await this.prisma.$transaction(async (tx) => {
+      // 0. Atomically claim the verification. Postgres takes a row lock
+      // on this User row for the rest of the transaction; a concurrent
+      // request's identical updateMany against the same row blocks
+      // until this transaction commits or rolls back, then re-evaluates
+      // its WHERE clause against the now-committed state. Two concurrent
+      // callers can therefore never both see isEmailVerified: false —
+      // exactly one gets count: 1 and proceeds, the other gets count: 0
+      // and aborts below before any company is created. This is a
+      // database-enforced guarantee, not an application-level timing
+      // check, and needs no new schema constraint: it relies on the
+      // row lock every UPDATE already takes on User.id (the existing
+      // primary key).
+      const claim = await tx.user.updateMany({
+        where: {
+          id: user.id,
+          isEmailVerified: false,
+        },
+        data: {
+          isEmailVerified: true,
+        },
+      });
+
+      if (claim.count === 0) {
+        throw new BadRequestException('Email is already verified.');
+      }
+
       // 1. Create the user's company
       const company = await tx.company.create({
         data: {
@@ -260,13 +286,12 @@ export class AuthService {
         },
       });
 
-      // 2. Verify the email and attach the user to the company
+      // 2. Attach the now-verified user to the company
       await tx.user.update({
         where: {
           id: user.id,
         },
         data: {
-          isEmailVerified: true,
           companyId: company.id,
           isOwner: true,
         },

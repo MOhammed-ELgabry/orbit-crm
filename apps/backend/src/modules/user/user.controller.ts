@@ -35,6 +35,7 @@ import { UserService } from './user.service';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OwnerGuard } from '../auth/guards/owner.guard';
+import { CsrfGuard } from '../../common/security/csrf.guard';
 import type { IJwtPayload } from '../auth/interfaces/jwt-payload.interface';
 
 type AuthenticatedRequest = Request & {
@@ -57,6 +58,7 @@ export class UserController {
     type: UserEntity,
   })
   @Post()
+  @UseGuards(CsrfGuard)
   @HttpCode(HttpStatus.CREATED)
   async create(
     @Body() dto: CreateUserDto,
@@ -102,24 +104,36 @@ export class UserController {
   }
 
   @ApiOperation({
-    summary: 'Update user profile',
+    summary: 'Update own user profile',
     description:
-      'Updates profile fields for a user belonging to the authenticated tenant company.',
+      'Self-service profile update. A caller may only update their own ' +
+      'profile (the :id path parameter must match the authenticated ' +
+      "user's id) — this endpoint cannot be used to modify another " +
+      'user, even within the same company.',
   })
   @ApiOkResponse({
     description: 'User updated successfully.',
     type: UserEntity,
   })
+  @ApiForbiddenResponse({
+    description: 'You can only update your own profile.',
+  })
   @ApiNotFoundResponse({
     description: 'User not found.',
   })
   @Patch(':id')
+  @UseGuards(CsrfGuard)
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateUserDto,
     @Req() request: AuthenticatedRequest,
   ) {
-    return this.userService.update(id, dto, request.user.companyId);
+    return this.userService.update(
+      id,
+      dto,
+      request.user.companyId,
+      request.user.sub,
+    );
   }
 
   @ApiOperation({
@@ -138,7 +152,7 @@ export class UserController {
     description: 'User not found.',
   })
   @Patch(':id/status')
-  @UseGuards(OwnerGuard)
+  @UseGuards(OwnerGuard, CsrfGuard)
   async updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateUserStatusDto,
@@ -162,7 +176,7 @@ export class UserController {
     description: 'User not found.',
   })
   @Delete(':id')
-  @UseGuards(OwnerGuard)
+  @UseGuards(OwnerGuard, CsrfGuard)
   @HttpCode(HttpStatus.OK)
   async delete(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
     return this.userService.delete(id, request.user.companyId);
