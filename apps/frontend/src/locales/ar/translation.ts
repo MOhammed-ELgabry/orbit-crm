@@ -22,6 +22,30 @@ const ar = {
   passwordMin: "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
   passwordRequired: "كلمة المرور مطلوبة",
 
+  // Forgot / Reset Password
+  forgotPasswordTitle: "نسيت كلمة المرور؟",
+  forgotPasswordDescription:
+    "أدخل البريد الإلكتروني المرتبط بحسابك وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.",
+  sendResetLink: "إرسال رابط إعادة التعيين",
+  backToLogin: "العودة لتسجيل الدخول",
+  noWorries: "لا داعي للقلق!",
+  forgotPasswordSideDescription:
+    "يحدث هذا للجميع. سنساعدك على العودة إلى حسابك.",
+
+  resetPasswordTitle: "إعادة تعيين كلمة المرور",
+  resetPasswordDescription: "أدخل كلمة مرور جديدة لحسابك أدناه.",
+  newPassword: "كلمة المرور الجديدة",
+  enterNewPassword: "أدخل كلمة المرور الجديدة",
+  confirmPassword: "تأكيد كلمة المرور",
+  enterConfirmPassword: "أعد إدخال كلمة المرور الجديدة",
+  resetPassword: "إعادة تعيين كلمة المرور",
+  passwordMinReset: "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
+  passwordsMustMatch: "يجب أن تتطابق كلمتا المرور",
+  confirmPasswordRequired: "يرجى تأكيد كلمة المرور الجديدة",
+  createNewPassword: "أنشئ كلمة مرور جديدة",
+  resetPasswordSideDescription:
+    "اختر كلمة مرور قوية لا تستخدمها في أي مكان آخر.",
+
   // Register
   firstName: "الاسم الأول",
   lastName: "اسم العائلة",
@@ -121,6 +145,19 @@ const ar = {
   businessTypeSuccessMessage: "تم حفظ نوع نشاطك التجاري بنجاح.",
   businessTypeFailedTitle: "تعذر حفظ نوع النشاط",
   businessTypeFailedMessage: "تعذر حفظ نوع نشاطك التجاري. يرجى المحاولة مرة أخرى.",
+
+  forgotPasswordSuccessTitle: "تحقق من بريدك الإلكتروني",
+  forgotPasswordSuccessMessage:
+    "إذا كان هناك حساب مرتبط بهذا البريد الإلكتروني، فسيتم إرسال رابط إعادة تعيين كلمة المرور إليه.",
+  forgotPasswordFailedTitle: "حدث خطأ ما",
+  forgotPasswordFailedMessage: "تعذرت معالجة طلبك. يرجى المحاولة مرة أخرى.",
+
+  resetPasswordSuccessTitle: "تم إعادة تعيين كلمة المرور",
+  resetPasswordSuccessMessage:
+    "تم إعادة تعيين كلمة مرورك بنجاح. يرجى تسجيل الدخول بكلمة المرور الجديدة.",
+  resetPasswordFailedTitle: "تعذر إعادة تعيين كلمة المرور",
+  resetPasswordFailedMessage:
+    "رابط إعادة التعيين غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.",
 
   socialLoginFailedTitle: "فشل تسجيل الدخول",
 };

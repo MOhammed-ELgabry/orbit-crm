@@ -39,6 +39,15 @@ export interface LoginData {
   password: string;
 }
 
+export interface ForgotPasswordData {
+  email: string;
+}
+
+export interface ResetPasswordData {
+  token: string;
+  newPassword: string;
+}
+
 /**
  * Safe, client-facing user shape returned by login, social auth, and
  * /auth/me. Mirrors the backend's ISafeAuthUser — never a token.
@@ -110,6 +119,28 @@ export const loginUser = async (
   data: LoginData,
 ): Promise<LoginResponse> => {
   const response = await api.post("/auth/login", data);
+
+  return response.data;
+};
+
+/**
+ * Always resolves with the same generic message whether or not the
+ * email belongs to an account — this mirrors the backend's response
+ * exactly (see AuthService.forgotPassword) so the UI never has to
+ * (and never can) branch on account existence.
+ */
+export const forgotPassword = async (
+  data: ForgotPasswordData,
+): Promise<{ success: boolean; message: string }> => {
+  const response = await api.post("/auth/forgot-password", data);
+
+  return response.data;
+};
+
+export const resetPassword = async (
+  data: ResetPasswordData,
+): Promise<{ success: boolean; message: string }> => {
+  const response = await api.post("/auth/reset-password", data);
 
   return response.data;
 };

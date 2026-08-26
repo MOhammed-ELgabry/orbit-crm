@@ -22,6 +22,30 @@ const en = {
   passwordMin: "Password must be at least 6 characters",
   passwordRequired: "Password is required",
 
+  // Forgot / Reset Password
+  forgotPasswordTitle: "Forgot Password?",
+  forgotPasswordDescription:
+    "Enter the email associated with your account and we'll send you a link to reset your password.",
+  sendResetLink: "Send Reset Link",
+  backToLogin: "Back to Login",
+  noWorries: "No Worries!",
+  forgotPasswordSideDescription:
+    "It happens to everyone. We'll help you get back into your account.",
+
+  resetPasswordTitle: "Reset Password",
+  resetPasswordDescription: "Enter a new password for your account below.",
+  newPassword: "New Password",
+  enterNewPassword: "Enter your new password",
+  confirmPassword: "Confirm Password",
+  enterConfirmPassword: "Re-enter your new password",
+  resetPassword: "Reset Password",
+  passwordMinReset: "Password must be at least 8 characters",
+  passwordsMustMatch: "Passwords must match",
+  confirmPasswordRequired: "Please confirm your new password",
+  createNewPassword: "Create a New Password",
+  resetPasswordSideDescription:
+    "Choose a strong password you don't use anywhere else.",
+
   // Register
   firstName: "First Name",
   lastName: "Last Name",
@@ -127,6 +151,20 @@ const en = {
   businessTypeFailedTitle: "Couldn't Save Business Type",
   businessTypeFailedMessage:
     "We couldn't save your business type. Please try again.",
+
+  forgotPasswordSuccessTitle: "Check Your Email",
+  forgotPasswordSuccessMessage:
+    "If an account with this email exists, a password reset link has been sent.",
+  forgotPasswordFailedTitle: "Something Went Wrong",
+  forgotPasswordFailedMessage:
+    "We couldn't process your request. Please try again.",
+
+  resetPasswordSuccessTitle: "Password Reset",
+  resetPasswordSuccessMessage:
+    "Your password has been reset successfully. Please log in with your new password.",
+  resetPasswordFailedTitle: "Couldn't Reset Password",
+  resetPasswordFailedMessage:
+    "This reset link is invalid or has expired. Please request a new one.",
 
   socialLoginFailedTitle: "Sign-in Failed",
 };
