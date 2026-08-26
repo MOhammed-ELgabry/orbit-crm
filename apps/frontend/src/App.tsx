@@ -9,6 +9,15 @@ import LanguageSwitcher from "./Components/shared/LanguageSwitcher";
 import IndustrySelection from "./pages/industry-selection/IndustrySelection";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import { ProtectedRoute } from "./Components/ProtectedRoute";
+import DashboardLayout from "./Components/Dashboard/DashboardLayout";
+import Companies from "./pages/Companies/Companies";
+import UsersPage from "./pages/Users/UsersPage";
+import LeadsPage from "./pages/Leads/LeadsPage";
+import DealsPage from "./pages/Deals/DealsPage";
+import TasksPage from "./pages/Tasks/TasksPage";
+import CalendarPage from "./pages/Calendar/CalendarPage";
+import SettingsPage from "./pages/Settings/SettingsPage";
+import ReportsPage from "./pages/Reports/ReportsPage";
 
 function App() {
   return (
@@ -31,10 +40,28 @@ function App() {
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <DashboardPage />
+                  <DashboardLayout />
                 </ProtectedRoute>
               }
-            />
+            >
+              <Route index element={<DashboardPage />} />
+
+              <Route path="companies" element={<Companies />} />
+
+              <Route path="users" element={<UsersPage />} />
+
+              <Route path="leads" element={<LeadsPage />} />
+
+              <Route path="deals" element={<DealsPage />} />
+
+              <Route path="tasks" element={<TasksPage />} />
+
+              <Route path="calendar" element={<CalendarPage />} />
+
+              <Route path="reports" element={<ReportsPage />} />
+
+              <Route path="settings" element={<SettingsPage />} />
+            </Route>
           </Routes>
         </div>
       </AuthProvider>
