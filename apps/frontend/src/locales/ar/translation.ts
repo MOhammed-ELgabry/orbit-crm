@@ -88,8 +88,7 @@ const ar = {
   // (medical_clinics / real_estate / auto_spare_parts).
   welcomeToOrbit: "مرحبًا بك في Orbit CRM",
   chooseBusinessIndustry: "اختر مجال عملك",
-  chooseWorkspaceDescription:
-    "اختر مساحة العمل التي تناسب نشاطك التجاري.",
+  chooseWorkspaceDescription: "اختر مساحة العمل التي تناسب نشاطك التجاري.",
 
   medicalClinics: "العيادات الطبية",
   medicalClinicsDescription: "إدارة المرضى والمواعيد والعلاجات.",
@@ -119,7 +118,8 @@ const ar = {
   genericErrorMessage: "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
 
   loginFailedTitle: "فشل تسجيل الدخول",
-  loginFailedMessage: "البريد الإلكتروني أو كلمة المرور غير صحيحة. حاول مرة أخرى.",
+  loginFailedMessage:
+    "البريد الإلكتروني أو كلمة المرور غير صحيحة. حاول مرة أخرى.",
   loginSuccessTitle: "مرحبًا بعودتك",
   loginSuccessMessage: "تم تسجيل دخولك بنجاح.",
 
@@ -139,12 +139,14 @@ const ar = {
   resendCodeSuccessTitle: "تم إعادة إرسال الرمز",
   resendCodeSuccessMessage: "تم إرسال رمز تحقق جديد إلى بريدك الإلكتروني.",
   resendCodeFailedTitle: "تعذر إعادة إرسال الرمز",
-  resendCodeFailedMessage: "تعذر إعادة إرسال رمز التحقق. يرجى المحاولة مرة أخرى.",
+  resendCodeFailedMessage:
+    "تعذر إعادة إرسال رمز التحقق. يرجى المحاولة مرة أخرى.",
 
   businessTypeSuccessTitle: "تم حفظ نوع النشاط",
   businessTypeSuccessMessage: "تم حفظ نوع نشاطك التجاري بنجاح.",
   businessTypeFailedTitle: "تعذر حفظ نوع النشاط",
-  businessTypeFailedMessage: "تعذر حفظ نوع نشاطك التجاري. يرجى المحاولة مرة أخرى.",
+  businessTypeFailedMessage:
+    "تعذر حفظ نوع نشاطك التجاري. يرجى المحاولة مرة أخرى.",
 
   forgotPasswordSuccessTitle: "تحقق من بريدك الإلكتروني",
   forgotPasswordSuccessMessage:
@@ -160,6 +162,81 @@ const ar = {
     "رابط إعادة التعيين غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.",
 
   socialLoginFailedTitle: "فشل تسجيل الدخول",
+
+  /* Sidebar */
+  dashboard: "لوحة التحكم",
+  companies: "الشركات",
+  users: "المستخدمون",
+  leads: "العملاء المحتملون",
+  deals: "الصفقات",
+  tasks: "المهام",
+  calendar: "التقويم",
+  reports: "التقارير",
+  settings: "الإعدادات",
+  clinicAdmin: "مدير العيادة",
+
+  /*Header*/
+  manageDentalClinic: "إدارة عيادة الأسنان الخاصة بك",
+
+  // Analytics
+  analytics: "التحليلات",
+  overallClinicPerformance: "الأداء العام للعيادة",
+  performance: "الأداء",
+  completed: "مكتمل",
+  remaining: "متبقي",
+
+  // Recent Patients
+  recentPatients: "المرضى الجدد",
+  recentlyRegisteredPatients: "المرضى المسجلون مؤخرًا",
+  moreOptions: "المزيد من الخيارات",
+  viewAllPatients: "عرض جميع المرضى",
+
+  // Dashboard Chart
+  appointmentsOverview: "نظرة عامة على المواعيد",
+  appointmentsDuringWeek: "المواعيد خلال هذا الأسبوع",
+  selectPeriod: "اختر الفترة",
+  weekly: "أسبوعي",
+  monthly: "شهري",
+  yearly: "سنوي",
+
+  Mon: "الإثنين",
+  Tue: "الثلاثاء",
+  Wed: "الأربعاء",
+  Thu: "الخميس",
+  Fri: "الجمعة",
+  Sat: "السبت",
+  Sun: "الأحد",
+
+  // Appointments Stats Card
+  todaysAppointments: "مواعيد اليوم",
+  vsYesterday: "مقارنةً بالأمس",
+
+  // Patients Stats Card
+  newPatients: "المرضى الجدد",
+  vsLastMonth: "مقارنةً بالشهر الماضي",
+
+  // Pending Appointments Card
+  pendingAppointments: "المواعيد قيد الانتظار",
+
+  // Revenue Stats Card
+  todaysRevenue: "إيرادات اليوم",
+
+  // Treatments Stats Card
+  completedTreatments: "العلاجات المكتملة",
+
+  // Upcoming Appointments
+  upcomingAppointments: "المواعيد القادمة",
+  nextScheduledAppointments: "مواعيدك المجدولة القادمة",
+
+  dentalCleaning: "تنظيف الأسنان",
+  rootCanal: "علاج العصب",
+  dentalCheckup: "فحص الأسنان",
+  teethWhitening: "تبييض الأسنان",
+
+  confirmed: "مؤكد",
+  pending: "قيد الانتظار",
+
+  viewCalendar: "عرض التقويم",
 };
 
 export default ar;

@@ -7,34 +7,36 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 
-const data = [
-  { day: "Mon", appointments: 18 },
-  { day: "Tue", appointments: 25 },
-  { day: "Wed", appointments: 20 },
-  { day: "Thu", appointments: 32 },
-  { day: "Fri", appointments: 28 },
-  { day: "Sat", appointments: 38 },
-  { day: "Sun", appointments: 30 },
-];
+import { dashboardChartData } from "./dashboardChartData";
 
 export default function DashboardChart() {
+  const { t } = useTranslation();
+
+  const translatedData = dashboardChartData.map((item) => ({
+    ...item,
+    day: t(item.day),
+  }));
+
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+    <div className="w-full rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
       {/* Header */}
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <h2 className="text-[16px] font-bold text-slate-800">
-            Appointments Overview
+      <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="truncate text-base font-bold text-slate-800">
+            {t("appointmentsOverview")}
           </h2>
 
-          <p className="mt-0.5 text-[11px] text-slate-400">
-            Appointments during this week
+          <p className="mt-0.5 truncate text-[11px] text-slate-400">
+            {t("appointmentsDuringWeek")}
           </p>
         </div>
 
         <select
+          aria-label={t("selectPeriod")}
           className="
+            w-full
             rounded-lg
             border border-slate-200
             bg-slate-50
@@ -45,19 +47,20 @@ export default function DashboardChart() {
             outline-none
             transition
             focus:border-blue-300
+            sm:w-auto
           "
         >
-          <option>Weekly</option>
-          <option>Monthly</option>
-          <option>Yearly</option>
+          <option value="weekly">{t("weekly")}</option>
+          <option value="monthly">{t("monthly")}</option>
+          <option value="yearly">{t("yearly")}</option>
         </select>
       </div>
 
       {/* Chart */}
-      <div className="h-[280px] w-full">
+      <div className="h-[220px] w-full sm:h-[280px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
-            data={data}
+            data={translatedData}
             margin={{
               top: 10,
               right: 10,

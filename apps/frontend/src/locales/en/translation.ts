@@ -98,8 +98,7 @@ const en = {
   realEstateDescription: "Manage properties, leads, clients and deals.",
 
   autoSpareParts: "Auto Spare Parts",
-  autoSparePartsDescription:
-    "Manage inventory, suppliers, orders and sales.",
+  autoSparePartsDescription: "Manage inventory, suppliers, orders and sales.",
 
   continue: "Continue",
 
@@ -146,8 +145,7 @@ const en = {
     "We couldn't resend the verification code. Please try again.",
 
   businessTypeSuccessTitle: "Business Type Saved",
-  businessTypeSuccessMessage:
-    "Your business type has been saved successfully.",
+  businessTypeSuccessMessage: "Your business type has been saved successfully.",
   businessTypeFailedTitle: "Couldn't Save Business Type",
   businessTypeFailedMessage:
     "We couldn't save your business type. Please try again.",
@@ -167,6 +165,78 @@ const en = {
     "This reset link is invalid or has expired. Please request a new one.",
 
   socialLoginFailedTitle: "Sign-in Failed",
+
+  /* Sidebar */
+  dashboard: "Dashboard",
+  companies: "Companies",
+  users: "Users",
+  leads: "Leads",
+  deals: "Deals",
+  tasks: "Tasks",
+  calendar: "Calendar",
+  reports: "Reports",
+  settings: "Settings",
+  clinicAdmin: "Clinic Admin",
+
+  /*Header*/
+  manageDentalClinic: "Manage your dental clinic",
+
+  // Analytics
+  analytics: "Analytics",
+  overallClinicPerformance: "Overall clinic performance",
+  performance: "Performance",
+  completed: "Completed",
+  remaining: "Remaining",
+
+  // Recent Patients
+  recentPatients: "Recent Patients",
+  recentlyRegisteredPatients: "Recently registered patients",
+  moreOptions: "More options",
+  viewAllPatients: "View All Patients",
+
+  // Dashboard Chart
+  appointmentsOverview: "Appointments Overview",
+  appointmentsDuringWeek: "Appointments during this week",
+  selectPeriod: "Select period",
+  weekly: "Weekly",
+  monthly: "Monthly",
+  yearly: "Yearly",
+
+  Mon: "Mon",
+  Tue: "Tue",
+  Wed: "Wed",
+  Thu: "Thu",
+  Fri: "Fri",
+  Sat: "Sat",
+  Sun: "Sun",
+
+  // Appointments Stats Card
+  todaysAppointments: "Today's Appointments",
+  vsYesterday: "vs yesterday",
+
+  // Patients Stats Card
+  newPatients: "New Patients",
+  vsLastMonth: "vs last month",
+
+  // Revenue Stats Card
+  todaysRevenue: "Today's Revenue",
+
+  // Treatments Stats Card
+  completedTreatments: "Completed Treatments",
+
+  // Upcoming Appointments
+  upcomingAppointments: "Upcoming Appointments",
+  nextScheduledAppointments: "Your next scheduled appointments",
+
+  dentalCleaning: "Dental Cleaning",
+  rootCanal: "Root Canal",
+  dentalCheckup: "Dental Check-up",
+  teethWhitening: "Teeth Whitening",
+
+  confirmed: "Confirmed",
+  pending: "Pending",
+
+  viewCalendar: "View Calendar",
 };
 
 export default en;
