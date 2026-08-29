@@ -11,6 +11,7 @@ import { SecurityModule } from '../../common/security/security.module';
 import { CompanyModule } from '../company/company.module';
 import { UserModule } from '../user/user.module';
 import { ContactModule } from '../contact/contact.module';
+import { ActivityModule } from '../activity/activity.module';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -47,6 +48,8 @@ import { AuthModule } from '../auth/auth.module';
     AuthModule,
 
     ContactModule,
+
+    ActivityModule,
   ],
 
   controllers: [AppController],

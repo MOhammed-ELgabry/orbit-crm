@@ -157,7 +157,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Set the company business type (onboarding)',
     description:
-      "Consumes the one-time onboarding token returned by verify-email " +
+      'Consumes the one-time onboarding token returned by verify-email ' +
       "(or a new social sign-up) to record the company's selected " +
       'business type. Deliberately unauthenticated — the user has no ' +
       'session yet at this point in the required flow (that is ' +

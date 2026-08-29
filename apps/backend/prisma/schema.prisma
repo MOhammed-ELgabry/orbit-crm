@@ -23,8 +23,7 @@ model Company {
   // Onboarding
   // Set via the post-verification "Business Type Selection" step (see
   // OnboardingToken below). Nullable because a company exists before this
-  // step runs — it's populated once the owner picks one of the offered
-  // business types, not at company-creation time.
+  // step runs — it's populated once this step runs.
   businessType String?
 
   // Status
@@ -35,6 +34,7 @@ model Company {
   roles            Role[]
   contacts         Contact[]
   onboardingTokens OnboardingToken[]
+  activities       Activity[]
 
   // Audit
   createdAt DateTime  @default(now())
@@ -57,12 +57,12 @@ model User {
   passwordHash String?
 
   // Authentication Provider
-  provider   String  @default("local")
+  provider   String @default("local")
   providerId String?
 
   // Email Verification
-  isEmailVerified          Boolean   @default(false)
-  emailVerificationCode    String?
+  isEmailVerified       Boolean   @default(false)
+  emailVerificationCode String?
   emailVerificationExpires DateTime?
 
   // Refresh Token
@@ -88,7 +88,7 @@ model User {
 
   // RBAC
   roleId String?
-  role   Role?   @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  role   Role? @relation(fields: [roleId], references: [id], onDelete: SetNull)
 
   // Sessions & Password Reset
   authSessions        AuthSession[]
@@ -100,6 +100,9 @@ model User {
   // Contacts
   contactsCreated  Contact[] @relation("ContactCreatedBy")
   contactsAssigned Contact[] @relation("ContactAssignedTo")
+
+  // Activities
+  activitiesCreated Activity[] @relation("ActivityCreatedBy")
 
   // Audit
   createdAt DateTime  @default(now())
@@ -115,11 +118,7 @@ model User {
 }
 
 // Links an OAuth/OIDC provider identity (Google, Facebook, Microsoft) to an
-// existing Orbit CRM User. One User may have multiple SocialAccount rows
-// (one per linked provider) — this is why linking is a separate table
-// rather than reusing the single dormant User.provider/providerId pair
-// above, which can only ever represent one provider per user and is not
-// used by any application code today.
+// existing Orbit CRM User.
 model SocialAccount {
   id String @id @default(cuid())
 
@@ -129,12 +128,11 @@ model SocialAccount {
   email String?
 
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // A given provider identity may never be linked to more than one user.
   @@unique([provider, providerAccountId])
   @@index([userId])
 }
@@ -143,7 +141,7 @@ model AuthSession {
   id String @id @default(cuid())
 
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   tokenHash String
 
@@ -190,14 +188,7 @@ model PasswordResetToken {
 
 // Single-purpose, single-use ticket that lets the Business Type Selection
 // step persist to the correct Company in the window between Email
-// Verification and Login — i.e. before any session/cookie exists for the
-// user. This is deliberately NOT a session or a second auth mechanism: it
-// authorizes exactly one action (setting one company's businessType),
-// mirrors PasswordResetToken's shape/lifecycle exactly (hashed at rest,
-// short expiry, single use), and grants no general API access. The raw
-// token is returned once in the verifyEmail response body (and, for a
-// brand-new social sign-up, in the social callback's postMessage payload)
-// — never persisted client-side beyond in-memory React state.
+// Verification and Login.
 model OnboardingToken {
   id        String    @id @default(cuid())
   companyId String
@@ -290,14 +281,17 @@ model Contact {
   // CRM Information
   notes  String?
   source String?
-  status String  @default("active")
+  status String @default("active")
 
   // Ownership / Assignment
   createdById String
-  createdBy   User   @relation("ContactCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdBy   User @relation("ContactCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
 
   assignedToId String?
-  assignedTo   User?   @relation("ContactAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  assignedTo   User? @relation("ContactAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  // Activities
+  activities Activity[]
 
   // Audit
   createdAt DateTime  @default(now())
@@ -314,3 +308,47 @@ model Contact {
   @@index([assignedToId])
   @@index([deletedAt])
 }
+
+// A single chronological CRM event such as a note, call, email, or meeting.
+// Every activity belongs to exactly one tenant company and may optionally
+// be linked to one Contact.
+model Activity {
+  id String @id @default(cuid())
+
+  // Tenant
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Classification
+  type String
+
+  // Content
+  title       String
+  description String?
+
+  // When the activity actually happened
+  occurredAt DateTime @default(now())
+
+  // User who performed/logged the activity
+  createdById String
+  createdBy   User @relation("ActivityCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  // Optional Contact association
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  // Audit
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([companyId])
+  @@index([companyId, deletedAt])
+  @@index([companyId, occurredAt])
+  @@index([companyId, type])
+  @@index([companyId, contactId])
+  @@index([createdById])
+  @@index([contactId])
+  @@index([deletedAt])
+}
+

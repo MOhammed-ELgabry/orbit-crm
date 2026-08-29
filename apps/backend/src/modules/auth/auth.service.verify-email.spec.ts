@@ -52,7 +52,9 @@ describe('AuthService.verifyEmail — F4: concurrent verification', () => {
       deleteByCompanyId: jest.fn().mockResolvedValue(undefined),
       create: jest.fn().mockResolvedValue(undefined),
     };
-    const tokenHashService = { hash: jest.fn().mockReturnValue('hashed-token') };
+    const tokenHashService = {
+      hash: jest.fn().mockReturnValue('hashed-token'),
+    };
 
     // Constructed directly, positionally, matching AuthService's real
     // constructor order — every dependency verifyEmail()/

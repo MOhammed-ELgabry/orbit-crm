@@ -112,9 +112,7 @@ describe('UserService', () => {
         callerId,
       );
 
-      expect(passwordService.hash).toHaveBeenCalledWith(
-        'MyOwnNewPassword123!',
-      );
+      expect(passwordService.hash).toHaveBeenCalledWith('MyOwnNewPassword123!');
       expect(userRepository.update).toHaveBeenCalledWith(
         callerId,
         companyId,

@@ -61,4 +61,3 @@ export class RegisterDto {
   @IsUrl()
   avatar?: string;
 }
-
