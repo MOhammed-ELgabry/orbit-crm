@@ -56,6 +56,12 @@ export interface IUserRepository {
     isActive: boolean,
   ): Promise<UserEntity>;
 
+  updateRole(
+    id: string,
+    companyId: string,
+    roleId: string | null,
+  ): Promise<UserEntity>;
+
   updatePassword(id: string, passwordHash: string): Promise<void>;
 
   delete(id: string, companyId: string): Promise<void>;

@@ -4,6 +4,7 @@ import { PrismaModule } from '../../infrastructure/prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserModule } from '../user/user.module';
+import { PermissionsGuard } from '../../common/security/permissions.guard';
 
 import { CONTACT_REPOSITORY } from './constants/contact.constants';
 import { ContactController } from './contact.controller';
@@ -24,6 +25,7 @@ import { ContactService } from './contact.service';
     },
 
     JwtAuthGuard,
+    PermissionsGuard,
   ],
 
   exports: [ContactService],

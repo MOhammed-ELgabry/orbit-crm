@@ -30,6 +30,7 @@ import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { UserEntity } from './entities/user.entity';
 import { UserService } from './user.service';
 
@@ -159,6 +160,39 @@ export class UserController {
     @Req() request: AuthenticatedRequest,
   ) {
     return this.userService.updateStatus(id, dto, request.user.companyId);
+  }
+
+  @ApiOperation({
+    summary: 'Assign or unassign a user’s role',
+    description:
+      'Owner-only. Assigns a role (by id) to a user belonging to the ' +
+      'authenticated tenant company, or unassigns it by passing ' +
+      'roleId: null. The roleId must belong to the same company — a ' +
+      'role id from another tenant is rejected exactly like an unknown ' +
+      'id, with no information about its existence elsewhere leaked.',
+  })
+  @ApiOkResponse({
+    description: 'User role updated successfully.',
+    type: UserEntity,
+  })
+  @ApiForbiddenResponse({
+    description: 'Owner privileges are required for this operation.',
+  })
+  @ApiNotFoundResponse({
+    description: 'User or role not found.',
+  })
+  @Patch(':id/role')
+  @UseGuards(OwnerGuard, CsrfGuard)
+  async updateRole(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserRoleDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.userService.assignRole(
+      id,
+      dto.roleId,
+      request.user.companyId,
+    );
   }
 
   @ApiOperation({

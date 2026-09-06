@@ -73,6 +73,29 @@ export function warningAlert({
  * app already shows loading state on the triggering button itself,
  * which is preferable to a blocking dialog.
  */
+interface ConfirmAlertOptions extends AlertOptions {
+  cancelButtonText?: string;
+}
+
+/** Resolves true only if the user actually clicked confirm (not the backdrop/escape). */
+export async function confirmAlert({
+  title,
+  text,
+  confirmButtonText,
+  cancelButtonText,
+}: ConfirmAlertOptions): Promise<boolean> {
+  const result = await orbitSwal.fire({
+    icon: "warning",
+    title,
+    text,
+    showCancelButton: true,
+    confirmButtonText: confirmButtonText ?? "OK",
+    cancelButtonText: cancelButtonText ?? "Cancel",
+  });
+
+  return result.isConfirmed;
+}
+
 export function loadingAlert(title: string) {
   return orbitSwal.fire({
     title,

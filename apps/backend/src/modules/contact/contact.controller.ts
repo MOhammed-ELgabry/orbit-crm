@@ -22,6 +22,8 @@ import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { IJwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { CsrfGuard } from '../../common/security/csrf.guard';
+import { PermissionsGuard } from '../../common/security/permissions.guard';
+import { RequirePermissions } from '../../common/security/permissions.decorator';
 
 import { ContactService } from './contact.service';
 import { CreateContactDto } from './dto/create-contact.dto';
@@ -40,7 +42,8 @@ export class ContactController {
   constructor(private readonly contactService: ContactService) {}
 
   @Post()
-  @UseGuards(CsrfGuard)
+  @UseGuards(PermissionsGuard, CsrfGuard)
+  @RequirePermissions({ resource: 'contact', action: 'create' })
   @ApiOperation({
     summary: 'Create contact',
     description:
@@ -96,7 +99,8 @@ export class ContactController {
   }
 
   @Patch(':id')
-  @UseGuards(CsrfGuard)
+  @UseGuards(PermissionsGuard, CsrfGuard)
+  @RequirePermissions({ resource: 'contact', action: 'update' })
   @ApiOperation({
     summary: 'Update contact',
     description:
@@ -119,7 +123,8 @@ export class ContactController {
   }
 
   @Delete(':id')
-  @UseGuards(CsrfGuard)
+  @UseGuards(PermissionsGuard, CsrfGuard)
+  @RequirePermissions({ resource: 'contact', action: 'delete' })
   @ApiOperation({
     summary: 'Delete contact',
     description:

@@ -74,6 +74,7 @@ export class UserRepository implements IUserRepository {
           'avatar',
           'isActive',
           'isOwner',
+          'roleId',
           'lastLoginAt',
           'companyId',
           'createdAt',
@@ -229,6 +230,28 @@ export class UserRepository implements IUserRepository {
         },
         data: {
           isActive,
+        },
+      });
+
+      return new UserEntity(user);
+    } catch (error) {
+      PrismaExceptionMapper.map(error);
+    }
+  }
+
+  async updateRole(
+    id: string,
+    companyId: string,
+    roleId: string | null,
+  ): Promise<UserEntity> {
+    try {
+      const user = await this.prisma.user.update({
+        where: {
+          id,
+          companyId,
+        },
+        data: {
+          roleId,
         },
       });
 

@@ -13,6 +13,8 @@ export interface IUser {
   isOwner: boolean;
   isEmailVerified: boolean;
 
+  roleId: string | null;
+
   lastLoginAt: Date | null;
 
   companyId: string | null;

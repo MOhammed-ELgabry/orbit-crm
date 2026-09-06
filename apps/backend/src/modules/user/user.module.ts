@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RoleModule } from '../role/role.module';
 
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
@@ -12,6 +13,8 @@ import { USER_REPOSITORY } from './constants/user.constants';
 
 @Module({
   imports: [
+    RoleModule,
+
     // JwtAuthGuard needs a configured JwtService to verify access
     // tokens. We cannot import AuthModule here (AuthModule already
     // imports UserModule for USER_REPOSITORY, and importing it back

@@ -60,6 +60,15 @@ export class UserEntity implements IUser {
 
   @ApiPropertyOptional({
     example: null,
+    description:
+      'Assigned role id, or null if this user has no role assigned ' +
+      '(see PermissionsGuard for what that means for their access).',
+    nullable: true,
+  })
+  roleId: string | null;
+
+  @ApiPropertyOptional({
+    example: null,
     description: 'Last login date',
     nullable: true,
   })
@@ -103,6 +112,7 @@ export class UserEntity implements IUser {
     this.isActive = data.isActive;
     this.isOwner = data.isOwner;
     this.isEmailVerified = data.isEmailVerified;
+    this.roleId = data.roleId;
     this.lastLoginAt = data.lastLoginAt;
     this.companyId = data.companyId;
     this.createdAt = data.createdAt;

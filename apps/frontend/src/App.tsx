@@ -10,7 +10,8 @@ import IndustrySelection from "./pages/industry-selection/IndustrySelection";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import { ProtectedRoute } from "./Components/ProtectedRoute";
 import DashboardLayout from "./Components/Dashboard/DashboardLayout";
-import Companies from "./pages/Companies/Companies";
+import ContactsPage from "./pages/Contacts/ContactsPage";
+import ContactDetailPage from "./pages/Contacts/ContactDetailPage";
 import UsersPage from "./pages/Users/UsersPage";
 import LeadsPage from "./pages/Leads/LeadsPage";
 import DealsPage from "./pages/Deals/DealsPage";
@@ -46,7 +47,9 @@ function App() {
             >
               <Route index element={<DashboardPage />} />
 
-              <Route path="companies" element={<Companies />} />
+              <Route path="contacts" element={<ContactsPage />} />
+
+              <Route path="contacts/:id" element={<ContactDetailPage />} />
 
               <Route path="users" element={<UsersPage />} />
 

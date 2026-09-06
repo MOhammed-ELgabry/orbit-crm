@@ -1,4 +1,5 @@
 import type { IconType } from "react-icons";
+import { useTranslation } from "react-i18next";
 
 interface IndustryCardProps {
   title: string;
@@ -15,6 +16,11 @@ export default function IndustryCard({
   selected,
   onClick,
 }: IndustryCardProps) {
+  // title/description arrive as i18n KEYS (see IndustryOption in
+  // industryData.ts), not display text — this was previously
+  // rendering the raw keys ("medicalClinics") straight to the page.
+  const { t } = useTranslation();
+
   return (
     <button
       type="button"
@@ -36,10 +42,10 @@ export default function IndustryCard({
 
       <div>
         <h3 className="font-nunito font-semibold text-[16px] text-[#030229]">
-          {title}
+          {t(title)}
         </h3>
 
-        <p className="text-sm text-gray-500 mt-1 leading-5">{description}</p>
+        <p className="text-sm text-gray-500 mt-1 leading-5">{t(description)}</p>
       </div>
     </button>
   );

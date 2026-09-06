@@ -4,6 +4,7 @@ import { PrismaModule } from '../../infrastructure/prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ContactModule } from '../contact/contact.module';
+import { PermissionsGuard } from '../../common/security/permissions.guard';
 
 import { ActivityController } from './activity.controller';
 import { ActivityService } from './activity.service';
@@ -24,6 +25,7 @@ import { ActivityRepository } from './repository/activity.repository';
     },
 
     JwtAuthGuard,
+    PermissionsGuard,
   ],
 
   exports: [ActivityService],

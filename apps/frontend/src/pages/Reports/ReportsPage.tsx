@@ -1,7 +1,7 @@
+import { FaChartBar } from "react-icons/fa";
 
+import ComingSoonPage from "../../Components/shared/ComingSoonPage";
 
 export default function ReportsPage() {
-  return (
-    <div>ReportsPage</div>
-  )
+  return <ComingSoonPage icon={FaChartBar} titleKey="reportsNavLabel" />;
 }

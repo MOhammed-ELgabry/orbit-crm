@@ -1,16 +1,25 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class MailService {
+  private readonly logger = new Logger(MailService.name);
   private transporter: nodemailer.Transporter;
 
   constructor(private readonly configService: ConfigService) {
+    const port = Number(this.configService.get<string>('MAIL_PORT'));
+
     this.transporter = nodemailer.createTransport({
       host: this.configService.get<string>('MAIL_HOST'),
-      port: Number(this.configService.get<string>('MAIL_PORT')),
-      secure: false,
+      port,
+      // 465 is implicit TLS (secure: true) everywhere else (587/25 use
+      // STARTTLS instead, negotiated after a plaintext connect, which is
+      // what secure: false actually means to nodemailer). Hardcoding
+      // false here meant a MAIL_PORT=465 deployment would silently try a
+      // plaintext handshake against a TLS-only port instead of failing
+      // loudly or working correctly.
+      secure: port === 465,
 
       auth: {
         user: this.configService.get<string>('MAIL_USER'),
@@ -53,11 +62,9 @@ export class MailService {
       `,
     });
 
-    console.log('--- VERIFICATION EMAIL ---');
-    console.log('To:', email);
-    console.log('Message ID:', result.messageId);
-    console.log('Accepted:', result.accepted);
-    console.log('Rejected:', result.rejected);
+    this.logger.log(
+      `Verification email sent to ${email} (messageId=${result.messageId}, accepted=${result.accepted.length}, rejected=${result.rejected.length})`,
+    );
   }
 
   async sendPasswordResetEmail(
@@ -119,10 +126,8 @@ export class MailService {
       `,
     });
 
-    console.log('--- PASSWORD RESET EMAIL ---');
-    console.log('To:', email);
-    console.log('Message ID:', result.messageId);
-    console.log('Accepted:', result.accepted);
-    console.log('Rejected:', result.rejected);
+    this.logger.log(
+      `Password reset email sent to ${email} (messageId=${result.messageId}, accepted=${result.accepted.length}, rejected=${result.rejected.length})`,
+    );
   }
 }

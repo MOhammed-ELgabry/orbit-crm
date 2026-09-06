@@ -215,11 +215,13 @@ model Role {
   users           User[]
   rolePermissions RolePermission[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@unique([companyId, name])
   @@index([companyId])
+  @@index([deletedAt])
 }
 
 model Permission {

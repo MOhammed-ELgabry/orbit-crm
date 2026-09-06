@@ -69,38 +69,47 @@ async function bootstrap() {
   );
 
   // Swagger Configuration
-  const config = new DocumentBuilder()
-    .setTitle('Orbit CRM API')
-    .setDescription('Professional REST API documentation for Orbit CRM')
-    .setVersion('1.0.0')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        description:
-          'Optional when testing from a browser with session cookies set; ' +
-          'paste an access token here to call endpoints without cookies ' +
-          '(e.g. from outside the browser).',
+  //
+  // Only mounted outside production. Every route still independently
+  // requires real authentication/authorization regardless of whether
+  // this is enabled — Swagger never was the thing standing between an
+  // attacker and the data — but publishing the full route/DTO/example
+  // surface at a well-known path in a live deployment is free
+  // reconnaissance for no product benefit, so it's kept dev/staging-only.
+  if (!configService.get<boolean>('app.isProduction')) {
+    const config = new DocumentBuilder()
+      .setTitle('Orbit CRM API')
+      .setDescription('Professional REST API documentation for Orbit CRM')
+      .setVersion('1.0.0')
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description:
+            'Optional when testing from a browser with session cookies set; ' +
+            'paste an access token here to call endpoints without cookies ' +
+            '(e.g. from outside the browser).',
+        },
+        'JWT',
+      )
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config, {
+      deepScanRoutes: true,
+    });
+
+    SwaggerModule.setup('docs', app, document, {
+      swaggerOptions: {
+        persistAuthorization: true,
+        displayRequestDuration: true,
+        filter: true,
+        docExpansion: 'none',
+        tagsSorter: 'alpha',
+        operationsSorter: 'alpha',
       },
-      'JWT',
-    )
-    .build();
-
-  const document = SwaggerModule.createDocument(app, config, {
-    deepScanRoutes: true,
-  });
-
-  SwaggerModule.setup('docs', app, document, {
-    swaggerOptions: {
-      persistAuthorization: true,
-      displayRequestDuration: true,
-      filter: true,
-      docExpansion: 'none',
-      tagsSorter: 'alpha',
-      operationsSorter: 'alpha',
-    },
-  });
+    });
+  }
 
   await app.listen(process.env.PORT ?? 3000);
 }

@@ -1,7 +1,7 @@
+import { FaTasks } from "react-icons/fa";
 
+import ComingSoonPage from "../../Components/shared/ComingSoonPage";
 
 export default function TasksPage() {
-  return (
-    <div>TasksPage</div>
-  )
+  return <ComingSoonPage icon={FaTasks} titleKey="tasksNavLabel" />;
 }

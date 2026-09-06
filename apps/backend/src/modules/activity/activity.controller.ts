@@ -21,6 +21,8 @@ import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { IJwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { CsrfGuard } from '../../common/security/csrf.guard';
+import { PermissionsGuard } from '../../common/security/permissions.guard';
+import { RequirePermissions } from '../../common/security/permissions.decorator';
 
 import { ActivityService } from './activity.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
@@ -39,7 +41,8 @@ export class ActivityController {
   constructor(private readonly activityService: ActivityService) {}
 
   @Post()
-  @UseGuards(CsrfGuard)
+  @UseGuards(PermissionsGuard, CsrfGuard)
+  @RequirePermissions({ resource: 'activity', action: 'create' })
   @ApiOperation({
     summary: 'Create activity',
     description:
@@ -86,7 +89,8 @@ export class ActivityController {
   }
 
   @Patch(':id')
-  @UseGuards(CsrfGuard)
+  @UseGuards(PermissionsGuard, CsrfGuard)
+  @RequirePermissions({ resource: 'activity', action: 'update' })
   @ApiOperation({
     summary: 'Update activity',
     description:
@@ -103,7 +107,8 @@ export class ActivityController {
   }
 
   @Delete(':id')
-  @UseGuards(CsrfGuard)
+  @UseGuards(PermissionsGuard, CsrfGuard)
+  @RequirePermissions({ resource: 'activity', action: 'delete' })
   @ApiOperation({
     summary: 'Delete activity',
     description:

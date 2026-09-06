@@ -1,20 +1,72 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import IndustryCard from "./IndustryCard";
 import { industries } from "./industryData";
+import { setBusinessType, type BusinessType } from "../../services/authService";
+import { successAlert, errorAlert } from "../../lib/swal";
+import { getErrorMessage } from "../../lib/errors";
 
 export default function IndustrySelection() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null);
+  const onboardingToken = location.state?.onboardingToken as string | undefined;
 
-  const handleContinue = () => {
-    if (selectedIndustry !== "dentalClinic") return;
+  const [selectedIndustry, setSelectedIndustry] = useState<BusinessType | null>(
+    null,
+  );
+  const [isSaving, setIsSaving] = useState(false);
 
-    navigate("/dashboard");
+  // Reachable only via VerificationForm or SocialLogin navigating here
+  // with an onboarding token in route state (see ProtectedRoute's
+  // comment on this page guarding itself) — not a URL anyone can type
+  // in directly. Mirrors VerificationForm's identical guard for `email`.
+  useEffect(() => {
+    if (!onboardingToken) {
+      navigate("/register", { replace: true });
+    }
+  }, [onboardingToken, navigate]);
+
+  if (!onboardingToken) {
+    return null;
+  }
+
+  const handleContinue = async () => {
+    if (!selectedIndustry || isSaving) {
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      await setBusinessType({
+        token: onboardingToken,
+        businessType: selectedIndustry,
+      });
+
+      await successAlert({
+        title: t("businessTypeSuccessTitle"),
+        text: t("businessTypeSuccessMessage"),
+        confirmButtonText: t("ok"),
+      });
+
+      // The onboarding token authorizes exactly this one action and
+      // nothing else — it is not a session credential, so there is no
+      // dashboard to land on yet. An explicit Login step is required
+      // next (see ProtectedRoute's comment on this flow).
+      navigate("/login", { replace: true });
+    } catch (error) {
+      errorAlert({
+        title: t("businessTypeFailedTitle"),
+        text: getErrorMessage(error, t("businessTypeFailedMessage")),
+        confirmButtonText: t("ok"),
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -38,22 +90,23 @@ export default function IndustrySelection() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
           {industries.map((industry) => (
             <div
-              key={industry.title}
-              onClick={() => setSelectedIndustry(industry.title)}
+              key={industry.value}
+              onClick={() => setSelectedIndustry(industry.value)}
               className="cursor-pointer"
             >
               <div
                 className={
-                  selectedIndustry === industry.title
+                  selectedIndustry === industry.value
                     ? "ring-2 ring-[#605BFF] rounded-[16px]"
                     : ""
                 }
               >
                 <IndustryCard
-                  key={industry.title}
-                  {...industry}
-                  selected={selectedIndustry === industry.title}
-                  onClick={() => setSelectedIndustry(industry.title)}
+                  title={industry.title}
+                  description={industry.description}
+                  icon={industry.icon}
+                  selected={selectedIndustry === industry.value}
+                  onClick={() => setSelectedIndustry(industry.value)}
                 />
               </div>
             </div>
@@ -63,7 +116,7 @@ export default function IndustrySelection() {
         <button
           type="button"
           onClick={handleContinue}
-          disabled={selectedIndustry !== "dentalClinic"}
+          disabled={!selectedIndustry || isSaving}
           className="
             block
             w-full
@@ -89,7 +142,29 @@ export default function IndustrySelection() {
             disabled:hover:translate-y-0
           "
         >
-          {t("continue")}
+          {isSaving ? (
+            <svg
+              className="h-4 w-4 animate-spin text-white mx-auto"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
+            </svg>
+          ) : (
+            t("continue")
+          )}
         </button>
       </div>
     </div>

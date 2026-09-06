@@ -1,7 +1,7 @@
+import { FaBullseye } from "react-icons/fa";
 
+import ComingSoonPage from "../../Components/shared/ComingSoonPage";
 
 export default function LeadsPage() {
-  return (
-    <div>LeadsPage</div>
-  )
+  return <ComingSoonPage icon={FaBullseye} titleKey="leadsNavLabel" />;
 }

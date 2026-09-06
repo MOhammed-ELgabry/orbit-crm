@@ -18,6 +18,7 @@ import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import type { IUserRepository } from './repository/user.repository.interface';
 
 import { PasswordService } from './services/password.service';
+import { RoleService } from '../role/role.service';
 
 @Injectable()
 export class UserService {
@@ -26,6 +27,8 @@ export class UserService {
     private readonly userRepository: IUserRepository,
 
     private readonly passwordService: PasswordService,
+
+    private readonly roleService: RoleService,
   ) {}
 
   async create(dto: CreateUserDto, companyId: string) {
@@ -108,6 +111,21 @@ export class UserService {
     await this.findById(id, companyId);
 
     return this.userRepository.updateStatus(id, companyId, dto.isActive);
+  }
+
+  async assignRole(id: string, roleId: string | null, companyId: string) {
+    await this.findById(id, companyId);
+
+    if (roleId !== null) {
+      // RoleService.findById throws NotFoundException if roleId doesn't
+      // exist OR belongs to a different company — a role id from
+      // another tenant is rejected exactly like an unknown one, the
+      // same "behaves as if it doesn't exist" treatment already used
+      // for assignedToId on Contact.
+      await this.roleService.findById(companyId, roleId);
+    }
+
+    return this.userRepository.updateRole(id, companyId, roleId);
   }
 
   async delete(id: string, companyId: string) {

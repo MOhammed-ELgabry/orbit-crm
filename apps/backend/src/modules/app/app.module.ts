@@ -6,12 +6,12 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { configuration, envValidationSchema } from '../../config';
 import { PrismaModule } from '../../infrastructure/prisma/prisma.module';
 
-import { SecurityModule } from '../../common/security/security.module';
-
 import { CompanyModule } from '../company/company.module';
 import { UserModule } from '../user/user.module';
 import { ContactModule } from '../contact/contact.module';
 import { ActivityModule } from '../activity/activity.module';
+import { RoleModule } from '../role/role.module';
+import { PermissionModule } from '../permission/permission.module';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -39,8 +39,6 @@ import { AuthModule } from '../auth/auth.module';
 
     PrismaModule,
 
-    SecurityModule,
-
     CompanyModule,
 
     UserModule,
@@ -50,6 +48,10 @@ import { AuthModule } from '../auth/auth.module';
     ContactModule,
 
     ActivityModule,
+
+    RoleModule,
+
+    PermissionModule,
   ],
 
   controllers: [AppController],

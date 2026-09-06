@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  OnModuleInit,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -96,8 +97,14 @@ interface ISocialCallbackResult extends IIssuedSession {
 }
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
   private readonly maxVerificationAttempts = 5;
+
+  // Precomputed once at boot (see onModuleInit) and used only to keep
+  // login()'s response timing identical whether or not the account
+  // exists — see login()'s comment. The plaintext behind this hash is
+  // random and discarded; it never authenticates anything.
+  private dummyPasswordHash = '';
 
   constructor(
     private readonly prisma: PrismaService,
@@ -139,6 +146,15 @@ export class AuthService {
 
     private readonly jwtService: JwtService,
   ) {}
+
+  async onModuleInit(): Promise<void> {
+    // Computed once at boot (bcrypt is deliberately slow — doing this
+    // per-request would defeat the point) rather than hardcoded, so it
+    // always matches this deployment's configured salt rounds exactly.
+    this.dummyPasswordHash = await this.passwordService.hash(
+      randomBytes(32).toString('hex'),
+    );
+  }
 
   async register(dto: RegisterDto) {
     const email = dto.email.trim().toLowerCase();
@@ -457,20 +473,20 @@ export class AuthService {
 
     const user = await this.authRepository.findUserForLogin(email);
 
-    if (!user) {
-      throw new BadRequestException('Invalid email or password.');
-    }
-
-    if (!user.passwordHash) {
-      throw new BadRequestException('Invalid email or password.');
-    }
-
+    // Always run a bcrypt compare — same cost factor, every request —
+    // whether or not an account exists for this email or has a password
+    // set at all (e.g. a social-only signup). Branching straight to a
+    // rejection for those cases would make login() measurably faster for
+    // "no such account" than for "account exists, wrong password",
+    // letting an attacker enumerate registered emails purely from
+    // response timing. dummyPasswordHash never matches any real
+    // password, so this changes nothing about which requests succeed.
     const isPasswordValid = await this.passwordService.compare(
       dto.password,
-      user.passwordHash,
+      user?.passwordHash ?? this.dummyPasswordHash,
     );
 
-    if (!isPasswordValid) {
+    if (!user || !user.passwordHash || !isPasswordValid) {
       throw new BadRequestException('Invalid email or password.');
     }
 
