@@ -26,7 +26,10 @@ export class PermissionController {
       'company sees the same catalog. Used to build the permission ' +
       'picker when an owner creates or edits a Role.',
   })
-  @ApiOkResponse({ description: 'Permissions retrieved successfully.', type: [PermissionEntity] })
+  @ApiOkResponse({
+    description: 'Permissions retrieved successfully.',
+    type: [PermissionEntity],
+  })
   async findAll(): Promise<PermissionEntity[]> {
     return this.permissionService.findAll();
   }

@@ -20,6 +20,9 @@ import type { IUserRepository } from './repository/user.repository.interface';
 import { PasswordService } from './services/password.service';
 import { RoleService } from '../role/role.service';
 
+import { AUTH_SESSION_REPOSITORY } from '../auth/constants/auth.constants';
+import type { IAuthSessionRepository } from '../auth/repository/auth-session.repository.interface';
+
 @Injectable()
 export class UserService {
   constructor(
@@ -29,6 +32,9 @@ export class UserService {
     private readonly passwordService: PasswordService,
 
     private readonly roleService: RoleService,
+
+    @Inject(AUTH_SESSION_REPOSITORY)
+    private readonly authSessionRepository: IAuthSessionRepository,
   ) {}
 
   async create(dto: CreateUserDto, companyId: string) {
@@ -45,6 +51,20 @@ export class UserService {
       // Tenant identity and ownership are never client-controlled.
       companyId,
       isOwner: false,
+
+      // This endpoint is reached only by an authenticated Owner
+      // creating a team member (see OwnerGuard on
+      // UserController.create) — not by public self-registration,
+      // which goes through AuthService.register()/verifyEmail() and is
+      // untouched by this. A team member created this way has no
+      // pending EmailVerification row and no way to reach the normal
+      // verification flow, so requiring it here would leave them
+      // permanently unable to log in. isActive/isEmailVerified are
+      // therefore forced true here — server-side, not client input:
+      // CreateUserDto has no isActive/isEmailVerified field, so there
+      // is nothing in `dto` that could ever reach this object.
+      isActive: true,
+      isEmailVerified: true,
     };
 
     return this.userRepository.create(repositoryDto);
@@ -104,7 +124,37 @@ export class UserService {
       );
     }
 
-    return this.userRepository.update(id, companyId, repositoryDto);
+    const updated = await this.userRepository.update(
+      id,
+      companyId,
+      repositoryDto,
+    );
+
+    if (dto.password) {
+      // Mirrors AuthService.resetPassword(), which already revokes
+      // every session after a successful password change — without
+      // this, a stolen-but-valid session would survive a legitimate
+      // user changing their password from their own profile instead
+      // of using "forgot password". Runs only after the update above
+      // has resolved (a failed update throws before this line is
+      // reached, so a failed password change never revokes anything),
+      // and only when this call actually changed the password (a
+      // plain profile edit with no `password` field never revokes
+      // anything). id === callerId was already enforced above, so
+      // this can only ever revoke the caller's own sessions.
+      //
+      // Deliberately not wrapped in a transaction with the update
+      // above: resetPassword() already established the precedent for
+      // this exact sequence — plain sequential awaits, no rollback if
+      // revocation fails after the password itself was successfully
+      // changed. The password change is the security-critical outcome
+      // and stands on its own; a transient revocation failure surfaces
+      // as a thrown error rather than silently discarding an already-
+      // successful password change.
+      await this.authSessionRepository.revokeAllByUserId(id);
+    }
+
+    return updated;
   }
 
   async updateStatus(id: string, dto: UpdateUserStatusDto, companyId: string) {

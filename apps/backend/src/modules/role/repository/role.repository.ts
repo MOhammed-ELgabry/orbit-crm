@@ -134,7 +134,10 @@ export class RoleRepository implements IRoleRepository {
     };
   }
 
-  async findById(companyId: string, roleId: string): Promise<RoleEntity | null> {
+  async findById(
+    companyId: string,
+    roleId: string,
+  ): Promise<RoleEntity | null> {
     const role = await this.prisma.role.findFirst({
       where: { id: roleId, companyId, deletedAt: null },
       include: ROLE_INCLUDE,

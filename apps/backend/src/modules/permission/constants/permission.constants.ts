@@ -40,5 +40,6 @@ export const PERMISSION_CATALOG = [
   { resource: 'role', action: 'manage' },
 ] as const;
 
-export type PermissionResource = (typeof PERMISSION_CATALOG)[number]['resource'];
+export type PermissionResource =
+  (typeof PERMISSION_CATALOG)[number]['resource'];
 export type PermissionAction = (typeof PERMISSION_CATALOG)[number]['action'];

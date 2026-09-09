@@ -20,6 +20,10 @@ export const listContacts = async (
   });
 
   return { contacts: response.data.data, meta: response.data.meta };
+//   return {
+//   contacts: Array.isArray(response.data?.data) ? response.data.data : [],
+//   meta: response.data.meta,
+// };
 };
 
 export const getContact = async (id: string): Promise<Contact> => {

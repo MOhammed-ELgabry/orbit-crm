@@ -1,15 +1,29 @@
-@import url("https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&family=Manrope:wght@500;600;700;800&display=swap");
 
 @import "tailwindcss";
 
 @theme {
-  --font-nunito: "Nunito", sans-serif;
+  --font-nunito: "Manrope", "DM Sans", sans-serif;
+  --font-sans: "DM Sans", sans-serif;
 }
 
-/* SweetAlert2 — themed to match Orbit CRM's existing visual language.
-   Colors, radii, and font are the same tokens used across the auth
-   pages (#605BFF / #514cf0 primary, #030229 heading text, #F7F7F8
-   surface, Nunito font, 10px/18px radii). See src/lib/swal.ts. */
+:root { color: #172033; background: #f6f8fc; font-family: "DM Sans", sans-serif; font-synthesis: none; text-rendering: optimizeLegibility; }
+* { box-sizing: border-box; }
+html, body { min-width: 320px; margin: 0; background: #f6f8fc; }
+button, input, select, textarea { font: inherit; }
+button:not(:disabled), [role="button"]:not([aria-disabled="true"]) { cursor: pointer; }
+:focus-visible { outline: 3px solid rgb(79 70 229 / 0.3); outline-offset: 2px; }
+::selection { background: rgb(79 70 229 / 0.18); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { border: 3px solid transparent; border-radius: 999px; background: #cbd5e1; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; background-clip: content-box; }
+
+/* Presentation-only shared control treatment: no form or request behavior changes. */
+input:not([type="checkbox"]):not([type="radio"]), select, textarea { border-color: transparent; transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease; }
+input:not([type="checkbox"]):not([type="radio"]):focus, select:focus, textarea:focus { border-color: #a5b4fc !important; background-color: #fff !important; box-shadow: 0 0 0 3px rgb(79 70 229 / 0.1) !important; }
+
+/* SweetAlert2 themed to match Orbit CRM's existing visual language. */
 .orbit-swal-popup {
   border-radius: 18px !important;
   padding: 1.75rem !important;

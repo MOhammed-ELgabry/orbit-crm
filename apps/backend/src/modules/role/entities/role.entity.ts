@@ -18,10 +18,16 @@ export class RoleEntity {
   @ApiProperty({ example: 'Sales Rep' })
   name: string;
 
-  @ApiPropertyOptional({ example: 'Can manage contacts and log activity.', nullable: true })
+  @ApiPropertyOptional({
+    example: 'Can manage contacts and log activity.',
+    nullable: true,
+  })
   description: string | null;
 
-  @ApiProperty({ example: 'cmf8m3v8j0000l704q9i8v4bx', description: 'Owning tenant.' })
+  @ApiProperty({
+    example: 'cmf8m3v8j0000l704q9i8v4bx',
+    description: 'Owning tenant.',
+  })
   companyId: string;
 
   @ApiProperty({ type: [RolePermissionSummary] })

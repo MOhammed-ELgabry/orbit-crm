@@ -51,15 +51,23 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @ApiOperation({
-    summary: 'Create a new user',
-    description: 'Creates a new user within the authenticated tenant company.',
+    summary: 'Create a new team member',
+    description:
+      'Owner-only. Creates a new user within the authenticated tenant ' +
+      'company. The created user is active and email-verified ' +
+      'immediately, so they can log in right away — this is the ' +
+      'Owner-created counterpart to public self-registration, which ' +
+      'still requires the normal email-verification flow.',
   })
   @ApiCreatedResponse({
     description: 'User created successfully.',
     type: UserEntity,
   })
+  @ApiForbiddenResponse({
+    description: 'Owner privileges are required for this operation.',
+  })
   @Post()
-  @UseGuards(CsrfGuard)
+  @UseGuards(OwnerGuard, CsrfGuard)
   @HttpCode(HttpStatus.CREATED)
   async create(
     @Body() dto: CreateUserDto,
@@ -188,11 +196,7 @@ export class UserController {
     @Body() dto: UpdateUserRoleDto,
     @Req() request: AuthenticatedRequest,
   ) {
-    return this.userService.assignRole(
-      id,
-      dto.roleId,
-      request.user.companyId,
-    );
+    return this.userService.assignRole(id, dto.roleId, request.user.companyId);
   }
 
   @ApiOperation({

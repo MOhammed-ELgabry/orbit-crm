@@ -58,10 +58,16 @@ export class RoleController {
   @UseGuards(CsrfGuard)
   @ApiOperation({
     summary: 'Create a role',
-    description: 'Owner-only. Creates a role scoped to the authenticated tenant company.',
+    description:
+      'Owner-only. Creates a role scoped to the authenticated tenant company.',
   })
-  @ApiOkResponse({ description: 'Role created successfully.', type: RoleEntity })
-  @ApiForbiddenResponse({ description: 'Owner privileges are required for this operation.' })
+  @ApiOkResponse({
+    description: 'Role created successfully.',
+    type: RoleEntity,
+  })
+  @ApiForbiddenResponse({
+    description: 'Owner privileges are required for this operation.',
+  })
   async create(
     @Body() dto: CreateRoleDto,
     @Req() request: AuthenticatedRequest,
@@ -72,7 +78,8 @@ export class RoleController {
   @Get()
   @ApiOperation({
     summary: 'List roles',
-    description: 'Owner-only. Returns paginated roles scoped to the authenticated tenant company.',
+    description:
+      'Owner-only. Returns paginated roles scoped to the authenticated tenant company.',
   })
   @ApiOkResponse({ description: 'Roles retrieved successfully.' })
   async findAll(
@@ -85,9 +92,13 @@ export class RoleController {
   @Get(':id')
   @ApiOperation({
     summary: 'Get role by id',
-    description: 'Owner-only. Returns a single role scoped to the authenticated tenant company.',
+    description:
+      'Owner-only. Returns a single role scoped to the authenticated tenant company.',
   })
-  @ApiOkResponse({ description: 'Role retrieved successfully.', type: RoleEntity })
+  @ApiOkResponse({
+    description: 'Role retrieved successfully.',
+    type: RoleEntity,
+  })
   @ApiNotFoundResponse({ description: 'Role not found.' })
   async findById(
     @Param('id') id: string,
@@ -103,7 +114,10 @@ export class RoleController {
     description:
       'Owner-only. Renames/redescribes a role and/or replaces its permission set.',
   })
-  @ApiOkResponse({ description: 'Role updated successfully.', type: RoleEntity })
+  @ApiOkResponse({
+    description: 'Role updated successfully.',
+    type: RoleEntity,
+  })
   @ApiNotFoundResponse({ description: 'Role not found.' })
   async update(
     @Param('id') id: string,

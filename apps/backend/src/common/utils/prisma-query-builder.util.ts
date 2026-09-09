@@ -34,7 +34,10 @@ export class PrismaQueryBuilder {
     const derivedWhere: Record<string, unknown> = {};
 
     if (options.filters?.length) {
-      Object.assign(derivedWhere, PrismaFilterBuilder.build(query, options.filters));
+      Object.assign(
+        derivedWhere,
+        PrismaFilterBuilder.build(query, options.filters),
+      );
     }
 
     if (query.search && options.searchableFields.length > 0) {

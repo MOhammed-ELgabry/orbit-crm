@@ -21,7 +21,9 @@ export class RoleService {
     private readonly roleRepository: IRoleRepository,
   ) {}
 
-  private async assertPermissionIdsExist(permissionIds?: string[]): Promise<void> {
+  private async assertPermissionIdsExist(
+    permissionIds?: string[],
+  ): Promise<void> {
     if (!permissionIds?.length) {
       return;
     }
@@ -72,7 +74,11 @@ export class RoleService {
 
     await this.assertPermissionIdsExist(dto.permissionIds);
 
-    const updatedRole = await this.roleRepository.update(companyId, roleId, dto);
+    const updatedRole = await this.roleRepository.update(
+      companyId,
+      roleId,
+      dto,
+    );
 
     if (!updatedRole) {
       throw new NotFoundException(`Role with ID "${roleId}" not found.`);

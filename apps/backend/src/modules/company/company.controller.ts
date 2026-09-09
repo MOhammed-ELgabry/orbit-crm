@@ -148,9 +148,7 @@ export class CompanyController {
     description: 'Company retrieved successfully.',
     type: CompanyEntity,
   })
-  async findMine(
-    @Req() request: AuthenticatedRequest,
-  ): Promise<CompanyEntity> {
+  async findMine(@Req() request: AuthenticatedRequest): Promise<CompanyEntity> {
     return this.companyService.findById(
       request.user.companyId,
       request.user.companyId,
