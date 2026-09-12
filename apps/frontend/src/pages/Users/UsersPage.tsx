@@ -18,6 +18,24 @@ const inputClass =
   "h-[38px] w-full rounded-[10px] bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none";
 const labelClass = "text-xs font-semibold text-gray-700";
 
+/**
+ * Translation keys for the 4 default staff roles every company gets
+ * (see backend role/constants/default-roles.constants.ts) — their
+ * `name` is a fixed, known string, so it's safe to map to a translated
+ * label. A company can also create its own custom roles via the Role
+ * API (RoleController), and those have arbitrary free-text names that
+ * can't be looked up here — formatRoleName() below falls back to
+ * showing that name exactly as entered, the same untranslated
+ * treatment other user-authored text (e.g. a Contact's job title)
+ * already gets elsewhere in this app.
+ */
+const DEFAULT_ROLE_NAME_TRANSLATION_KEYS: Record<string, string> = {
+  MANAGER: "roleNameManager",
+  SALES: "roleNameSales",
+  SUPPORT: "roleNameSupport",
+  EMPLOYEE: "roleNameEmployee",
+};
+
 function AddMemberModal({
   onClose,
   onCreated,
@@ -185,6 +203,15 @@ export default function UsersPage() {
 
   const isOwner = currentUser?.isOwner ?? false;
 
+  // One of the 4 default roles → translated label (so the Arabic UI
+  // doesn't show a raw English constant like "MANAGER"). Any other
+  // name is a company-created custom role (see CreateRoleDto) and has
+  // no translation to look up, so it's shown exactly as named.
+  const formatRoleName = (name: string) => {
+    const translationKey = DEFAULT_ROLE_NAME_TRANSLATION_KEYS[name];
+    return translationKey ? t(translationKey) : name;
+  };
+
   const handleToggleStatus = async (member: TeamMember) => {
     if (member.isActive) {
       const confirmed = await confirmAlert({
@@ -214,8 +241,20 @@ export default function UsersPage() {
   const handleRoleChange = async (member: TeamMember, roleId: string) => {
     const previous = members;
     const nextRoleId = roleId || null;
+    // Keep `role` (used by the read-only label branch below) in sync
+    // with `roleId` locally too, sourced from the same `roles` list
+    // the dropdown itself renders from — this select's own <option>
+    // already shows the right text purely from roleId, so this isn't
+    // needed for this control's own display, but it keeps the member
+    // object internally consistent rather than leaving `role` stale
+    // until the next full reload.
+    const nextRole = nextRoleId
+      ? (roles.find((r) => r.id === nextRoleId) ?? null)
+      : null;
     setMembers((prev) =>
-      prev.map((m) => (m.id === member.id ? { ...m, roleId: nextRoleId } : m)),
+      prev.map((m) =>
+        m.id === member.id ? { ...m, roleId: nextRoleId, role: nextRole } : m,
+      ),
     );
     try {
       await assignTeamMemberRole(member.id, nextRoleId);
@@ -305,21 +344,33 @@ export default function UsersPage() {
                     <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-600">
                       {t("ownerBadge")}
                     </span>
+                  ) : isOwner && roles.length > 0 ? (
+                    <select
+                      aria-label={t("roleLabel")}
+                      value={member.roleId ?? ""}
+                      onChange={(e) => handleRoleChange(member, e.target.value)}
+                      className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-600 outline-none"
+                    >
+                      <option value="">{t("noRoleAssigned")}</option>
+                      {roles.map((role) => (
+                        <option key={role.id} value={role.id}>
+                          {formatRoleName(role.name)}
+                        </option>
+                      ))}
+                    </select>
                   ) : (
-                    isOwner && roles.length > 0 && (
-                      <select
-                        value={member.roleId ?? ""}
-                        onChange={(e) => handleRoleChange(member, e.target.value)}
-                        className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs text-slate-600 outline-none"
-                      >
-                        <option value="">{t("noRoleAssigned")}</option>
-                        {roles.map((role) => (
-                          <option key={role.id} value={role.id}>
-                            {role.name}
-                          </option>
-                        ))}
-                      </select>
-                    )
+                    // Read-only path: every non-owner viewer (who can
+                    // see roles but must never get an editable control
+                    // — enforced server-side too, see OwnerGuard on
+                    // PATCH /users/:id/role), and an Owner viewing this
+                    // row while roles.length === 0 (nothing yet to
+                    // assign, so the dropdown above has nothing to
+                    // offer either way).
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                      {member.role
+                        ? formatRoleName(member.role.name)
+                        : t("noRoleAssigned")}
+                    </span>
                   )}
 
                   <span

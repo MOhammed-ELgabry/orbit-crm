@@ -1,5 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IUser } from '../interfaces/user.interface';
+import { IUser, IUserRole } from '../interfaces/user.interface';
+
+/**
+ * Mirrors RoleEntity's existing RolePermissionSummary pattern: a
+ * minimal, display-only projection nested on a parent entity, not a
+ * parallel role representation. See IUserRole for what populates this.
+ */
+export class UserRoleSummary implements IUserRole {
+  @ApiProperty({ example: 'cmf8m3v8j0000l704q9i8v4bx' })
+  id: string;
+
+  @ApiProperty({ example: 'MANAGER' })
+  name: string;
+}
 
 export class UserEntity implements IUser {
   @ApiProperty({
@@ -68,6 +81,17 @@ export class UserEntity implements IUser {
   roleId: string | null;
 
   @ApiPropertyOptional({
+    description:
+      'Assigned role’s id and name, for display (e.g. the Team ' +
+      'Members page). null when roleId is null (see the ' +
+      '"Not Assigned" — no role — case); absent on endpoints that ' +
+      "don't load this relation — see IUser.role.",
+    type: UserRoleSummary,
+    nullable: true,
+  })
+  role?: IUserRole | null;
+
+  @ApiPropertyOptional({
     example: null,
     description: 'Last login date',
     nullable: true,
@@ -113,6 +137,7 @@ export class UserEntity implements IUser {
     this.isOwner = data.isOwner;
     this.isEmailVerified = data.isEmailVerified;
     this.roleId = data.roleId;
+    this.role = data.role;
     this.lastLoginAt = data.lastLoginAt;
     this.companyId = data.companyId;
     this.createdAt = data.createdAt;

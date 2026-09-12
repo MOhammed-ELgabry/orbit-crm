@@ -187,26 +187,56 @@ export class UserRepository implements IUserRepository {
       },
     );
 
-    const [users, total] = await Promise.all([
-      this.prisma.user.findMany({
-        where: prismaQuery.where as Prisma.UserWhereInput,
+    const where = prismaQuery.where as Prisma.UserWhereInput;
 
-        orderBy: prismaQuery.orderBy,
+    // Started now, awaited at the end — runs concurrently with
+    // whichever findMany branch below actually executes.
+    const countPromise = this.prisma.user.count({ where });
 
-        select: prismaQuery.select,
+    // Prisma rejects `select` and `include` both being provided on the
+    // same call, so these are two independent findMany branches — never
+    // one args object carrying both — each mapped to UserEntity right
+    // where it's fetched. That keeps `entities` a plain UserEntity[]
+    // rather than something built from a union of the two branches'
+    // differently-shaped rows.
+    //
+    // The common case — no `?fields=` projection requested, which is
+    // all the Team Members page ever sends (`prismaQuery.select` is
+    // undefined) — takes the `include` branch, so each user's Role
+    // (id, name only) comes back too. That's what lets every viewer —
+    // not just the Owner, who alone has GET /roles access via
+    // OwnerGuard — see a readable role label. An explicit `?fields=`
+    // projection is left exactly as narrow as it already was:
+    // `selectableFields` above has no relation entry, so that path
+    // never gained new capability here.
+    const entities: UserEntity[] = prismaQuery.select
+      ? (
+          await this.prisma.user.findMany({
+            where,
+            orderBy: prismaQuery.orderBy,
+            select: prismaQuery.select,
+            skip: prismaQuery.skip,
+            take: prismaQuery.take,
+          })
+        ).map((user) => new UserEntity(user))
+      : (
+          await this.prisma.user.findMany({
+            where,
+            orderBy: prismaQuery.orderBy,
+            include: {
+              role: {
+                select: { id: true, name: true },
+              },
+            },
+            skip: prismaQuery.skip,
+            take: prismaQuery.take,
+          })
+        ).map((user) => new UserEntity(user));
 
-        skip: prismaQuery.skip,
-
-        take: prismaQuery.take,
-      }),
-
-      this.prisma.user.count({
-        where: prismaQuery.where as Prisma.UserWhereInput,
-      }),
-    ]);
+    const total = await countPromise;
 
     return {
-      data: users.map((user) => new UserEntity(user)),
+      data: entities,
 
       meta: PaginationUtil.buildMeta(page, limit, total),
     };
