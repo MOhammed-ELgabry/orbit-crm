@@ -30,6 +30,7 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SetBusinessTypeDto } from './dto/set-business-type.dto';
+import { ensureDefaultRolesForCompany } from '../role/utils/ensure-default-roles.util';
 import {
   AUTH_REPOSITORY,
   AUTH_SESSION_REPOSITORY,
@@ -302,7 +303,14 @@ export class AuthService implements OnModuleInit {
         },
       });
 
-      // 2. Attach the now-verified user to the company
+      // 2. Give the new company its 4 default staff roles
+      // (MANAGER/SALES/SUPPORT/EMPLOYEE — no OWNER role; Owner
+      // privilege stays isOwner-only). Runs inside this same
+      // transaction so a new company never exists, even momentarily,
+      // without its default roles.
+      await ensureDefaultRolesForCompany(tx, company.id);
+
+      // 3. Attach the now-verified user to the company
       await tx.user.update({
         where: {
           id: user.id,
@@ -313,7 +321,7 @@ export class AuthService implements OnModuleInit {
         },
       });
 
-      // 3. Mark verification as completed
+      // 4. Mark verification as completed
       await tx.emailVerification.update({
         where: {
           email,
@@ -950,6 +958,13 @@ export class AuthService implements OnModuleInit {
               isActive: true,
             },
           });
+
+          // Same default-role seeding as the email-verification path
+          // (AuthService.verifyEmail()) — see the comment there. Kept
+          // inside this transaction for the same reason: a new company
+          // should never exist, even momentarily, without its 4
+          // default staff roles.
+          await ensureDefaultRolesForCompany(tx, company.id);
 
           const createdUser = await tx.user.create({
             data: {

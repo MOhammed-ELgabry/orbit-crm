@@ -18,7 +18,37 @@ import { AuthService } from './auth.service';
  * call `company.create`, and when the claim wins (`count: 1`) it must
  * create exactly one company. The `txImpl` below simulates the two
  * outcomes Postgres's locking produces for two concurrent callers.
+ *
+ * verifyEmail()'s transaction also seeds the company's 4 default
+ * roles (ensureDefaultRolesForCompany — see Phase 2 RBAC), so every
+ * tx mock below that reaches company creation needs tx.permission and
+ * tx.role too, or that call throws. mockPermissions/mockTx below give
+ * a minimal, realistic stand-in — this file still only asserts F4's
+ * own claim/company-creation behavior; role-seeding itself is covered
+ * separately by ensure-default-roles.util.spec.ts.
  */
+const mockPermissions = [
+  { id: 'perm-contact-create', resource: 'contact', action: 'create' },
+  { id: 'perm-contact-read', resource: 'contact', action: 'read' },
+  { id: 'perm-contact-update', resource: 'contact', action: 'update' },
+  { id: 'perm-contact-delete', resource: 'contact', action: 'delete' },
+  { id: 'perm-activity-create', resource: 'activity', action: 'create' },
+  { id: 'perm-activity-read', resource: 'activity', action: 'read' },
+  { id: 'perm-activity-update', resource: 'activity', action: 'update' },
+  { id: 'perm-activity-delete', resource: 'activity', action: 'delete' },
+];
+
+function mockRoleAndPermission() {
+  return {
+    permission: {
+      findMany: jest.fn().mockResolvedValue(mockPermissions),
+    },
+    role: {
+      upsert: jest.fn().mockResolvedValue({ id: 'role-x' }),
+    },
+  };
+}
+
 describe('AuthService.verifyEmail — F4: concurrent verification', () => {
   const email = 'owner@example.com';
   const code = '123456';
@@ -101,6 +131,7 @@ describe('AuthService.verifyEmail — F4: concurrent verification', () => {
         },
         company: { create: companyCreate },
         emailVerification: { update: jest.fn().mockResolvedValue({}) },
+        ...mockRoleAndPermission(),
       };
 
       return cb(tx);
@@ -137,6 +168,7 @@ describe('AuthService.verifyEmail — F4: concurrent verification', () => {
         },
         company: { create: companyCreate },
         emailVerification: { update: jest.fn() },
+        ...mockRoleAndPermission(),
       };
 
       return cb(tx);
@@ -151,6 +183,8 @@ describe('AuthService.verifyEmail — F4: concurrent verification', () => {
   });
 
   it('creates the company and returns an onboarding token on a normal, uncontested request', async () => {
+    const roleAndPermissionMocks = mockRoleAndPermission();
+
     const txImpl = async (cb: (tx: unknown) => unknown) => {
       const tx = {
         user: {
@@ -159,6 +193,7 @@ describe('AuthService.verifyEmail — F4: concurrent verification', () => {
         },
         company: { create: jest.fn().mockResolvedValue({ id: 'company-1' }) },
         emailVerification: { update: jest.fn().mockResolvedValue({}) },
+        ...roleAndPermissionMocks,
       };
 
       return cb(tx);
@@ -171,5 +206,10 @@ describe('AuthService.verifyEmail — F4: concurrent verification', () => {
     expect(result.success).toBe(true);
     expect(typeof result.onboardingToken).toBe('string');
     expect(result.onboardingToken.length).toBeGreaterThan(0);
+
+    // Phase 2 RBAC: a newly-created company must get its 4 default
+    // roles seeded inside this same transaction — not a separate,
+    // unprotected follow-up call.
+    expect(roleAndPermissionMocks.role.upsert).toHaveBeenCalledTimes(4);
   });
 });

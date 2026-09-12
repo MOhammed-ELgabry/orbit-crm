@@ -17,6 +17,18 @@ export interface IUserRepository {
     data: CreateUserRepositoryDto,
   ): Promise<UserEntity>;
 
+  /**
+   * Race-safe create that also enforces a per-company user limit —
+   * see UserRepository.createWithinCompanyLimit for the concurrency
+   * mechanism. Throws ConflictException if the company is already at
+   * `limit`, or if the company's EMPLOYEE role cannot be resolved (the
+   * created user is never left with roleId: null).
+   */
+  createWithinCompanyLimit(
+    data: CreateUserRepositoryDto,
+    limit: number,
+  ): Promise<UserEntity>;
+
   findAll(
     query: PaginationQueryDto,
     companyId: string,

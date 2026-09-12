@@ -7,7 +7,10 @@ import {
 
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
-import { USER_REPOSITORY } from './constants/user.constants';
+import {
+  USER_REPOSITORY,
+  BASIC_PLAN_USER_LIMIT,
+} from './constants/user.constants';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserRepositoryDto } from './dto/update-user-repository.dto';
@@ -67,7 +70,10 @@ export class UserService {
       isEmailVerified: true,
     };
 
-    return this.userRepository.create(repositoryDto);
+    return this.userRepository.createWithinCompanyLimit(
+      repositoryDto,
+      BASIC_PLAN_USER_LIMIT,
+    );
   }
 
   async findAll(query: PaginationQueryDto, companyId: string) {

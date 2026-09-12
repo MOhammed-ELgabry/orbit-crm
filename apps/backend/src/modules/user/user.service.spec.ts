@@ -1,8 +1,13 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 
 import { UserService } from './user.service';
 import type { IUserRepository } from './repository/user.repository.interface';
 import { CreateUserDto } from './dto/create-user.dto';
+import { BASIC_PLAN_USER_LIMIT } from './constants/user.constants';
 import { PasswordService } from './services/password.service';
 import { RoleService } from '../role/role.service';
 import type { IAuthSessionRepository } from '../auth/repository/auth-session.repository.interface';
@@ -30,6 +35,7 @@ describe('UserService', () => {
     userRepository = {
       create: jest.fn(),
       createWithTransaction: jest.fn(),
+      createWithinCompanyLimit: jest.fn(),
       findAll: jest.fn(),
       findById: jest.fn(),
       findByIdAndCompany: jest.fn(),
@@ -90,28 +96,67 @@ describe('UserService', () => {
     };
 
     it('forces isActive: true, isEmailVerified: true, isOwner: false, and the caller company', async () => {
-      userRepository.create.mockResolvedValue({ id: 'new-user' } as never);
+      userRepository.createWithinCompanyLimit.mockResolvedValue({
+        id: 'new-user',
+      } as never);
 
       await service.create(dto, companyId);
 
-      expect(userRepository.create).toHaveBeenCalledWith(
+      expect(userRepository.createWithinCompanyLimit).toHaveBeenCalledWith(
         expect.objectContaining({
           companyId,
           isOwner: false,
           isActive: true,
           isEmailVerified: true,
         }),
+        BASIC_PLAN_USER_LIMIT,
       );
     });
 
     it('hashes the password before handing it to the repository', async () => {
-      userRepository.create.mockResolvedValue({ id: 'new-user' } as never);
+      userRepository.createWithinCompanyLimit.mockResolvedValue({
+        id: 'new-user',
+      } as never);
 
       await service.create(dto, companyId);
 
       expect(passwordService.hash).toHaveBeenCalledWith(dto.password);
-      expect(userRepository.create).toHaveBeenCalledWith(
+      expect(userRepository.createWithinCompanyLimit).toHaveBeenCalledWith(
         expect.objectContaining({ passwordHash: 'hashed-password' }),
+        BASIC_PLAN_USER_LIMIT,
+      );
+    });
+
+    it('always enforces the Basic plan limit (6) via BASIC_PLAN_USER_LIMIT, not a locally re-declared number', async () => {
+      // Guards against the limit silently drifting between the
+      // constant and the call site — asserts the actual imported
+      // constant's value, not a hardcoded 6 in this test.
+      expect(BASIC_PLAN_USER_LIMIT).toBe(6);
+
+      userRepository.createWithinCompanyLimit.mockResolvedValue({
+        id: 'new-user',
+      } as never);
+
+      await service.create(dto, companyId);
+
+      expect(userRepository.createWithinCompanyLimit).toHaveBeenCalledWith(
+        expect.anything(),
+        BASIC_PLAN_USER_LIMIT,
+      );
+    });
+
+    it('propagates ConflictException from the repository when the company is already at its user limit', async () => {
+      // The repository throws once its race-safe check finds the
+      // company already at the limit — the service must not swallow
+      // or reinterpret that, just let it propagate as-is.
+      userRepository.createWithinCompanyLimit.mockRejectedValue(
+        new ConflictException(
+          'This company has reached its plan limit of 6 users.',
+        ),
+      );
+
+      await expect(service.create(dto, companyId)).rejects.toBeInstanceOf(
+        ConflictException,
       );
     });
 
@@ -131,17 +176,20 @@ describe('UserService', () => {
         companyId: 'attacker-company',
       } as unknown as CreateUserDto;
 
-      userRepository.create.mockResolvedValue({ id: 'new-user' } as never);
+      userRepository.createWithinCompanyLimit.mockResolvedValue({
+        id: 'new-user',
+      } as never);
 
       await service.create(attackerDto, companyId);
 
-      expect(userRepository.create).toHaveBeenCalledWith(
+      expect(userRepository.createWithinCompanyLimit).toHaveBeenCalledWith(
         expect.objectContaining({
           companyId,
           isOwner: false,
           isActive: true,
           isEmailVerified: true,
         }),
+        BASIC_PLAN_USER_LIMIT,
       );
     });
   });
