@@ -209,29 +209,57 @@ export class UserRepository implements IUserRepository {
     // projection is left exactly as narrow as it already was:
     // `selectableFields` above has no relation entry, so that path
     // never gained new capability here.
+
+
+    // const entities: UserEntity[] = prismaQuery.select
+    //   ? (
+    //       await this.prisma.user.findMany({
+    //         where,
+    //         orderBy: prismaQuery.orderBy,
+    //         select: prismaQuery.select,
+    //         skip: prismaQuery.skip,
+    //         take: prismaQuery.take,
+    //       })
+    //     ).map((user) => new UserEntity(user))
+    //   : (
+    //       await this.prisma.user.findMany({
+    //         where,
+    //         orderBy: prismaQuery.orderBy,
+    //         include: {
+    //           role: {
+    //             select: { id: true, name: true },
+    //           },
+    //         },
+    //         skip: prismaQuery.skip,
+    //         take: prismaQuery.take,
+    //       })
+    //     ).map((user) => new UserEntity(user));
+
     const entities: UserEntity[] = prismaQuery.select
-      ? (
-          await this.prisma.user.findMany({
-            where,
-            orderBy: prismaQuery.orderBy,
-            select: prismaQuery.select,
-            skip: prismaQuery.skip,
-            take: prismaQuery.take,
-          })
-        ).map((user) => new UserEntity(user))
-      : (
-          await this.prisma.user.findMany({
-            where,
-            orderBy: prismaQuery.orderBy,
-            include: {
-              role: {
-                select: { id: true, name: true },
-              },
-            },
-            skip: prismaQuery.skip,
-            take: prismaQuery.take,
-          })
-        ).map((user) => new UserEntity(user));
+  ? (
+      await this.prisma.user.findMany({
+        where,
+        orderBy: prismaQuery.orderBy,
+        select: prismaQuery.select as Prisma.UserSelect,
+        skip: prismaQuery.skip,
+        take: prismaQuery.take,
+      })
+    ).map((user) => new UserEntity(user as Prisma.UserGetPayload<{
+      select: Prisma.UserSelect;
+    }>))
+  : (
+      await this.prisma.user.findMany({
+        where,
+        orderBy: prismaQuery.orderBy,
+        include: {
+          role: {
+            select: { id: true, name: true },
+          },
+        },
+        skip: prismaQuery.skip,
+        take: prismaQuery.take,
+      })
+    ).map((user) => new UserEntity(user));
 
     const total = await countPromise;
 
