@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import OtpInput from "react-otp-input";
 import { successAlert, errorAlert } from "../../../lib/swal";
 import { getErrorMessage } from "../../../lib/errors";
+import { trackEvent } from "../../../lib/posthog";
 
 export default function VerificationForm() {
   const { t } = useTranslation();
@@ -42,6 +43,8 @@ export default function VerificationForm() {
         email,
         code,
       });
+
+      trackEvent("email_verified");
 
       console.log("Email verified:", response);
 

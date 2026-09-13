@@ -21,6 +21,7 @@ import {
 import ContactFormModal from "../../Components/Contact/ContactFormModal";
 import { confirmAlert, errorAlert } from "../../lib/swal";
 import { getErrorMessage } from "../../lib/errors";
+import { trackEvent } from "../../lib/posthog";
 
 const PAGE_SIZE = 10;
 
@@ -77,11 +78,13 @@ export default function ContactsPage() {
   const handleCreateOrUpdate = async (input: CreateContactInput) => {
     if (modalMode && modalMode !== "create") {
       const updated = await updateContact(modalMode.id, input);
+      trackEvent("contact_updated", { status: updated.status });
       setContacts((prev) =>
         prev.map((c) => (c.id === updated.id ? updated : c)),
       );
     } else {
       const created = await createContact(input);
+      trackEvent("contact_created", { status: created.status });
       setContacts((prev) => [created, ...prev].slice(0, PAGE_SIZE));
       setTotal((prev) => prev + 1);
     }
@@ -101,6 +104,7 @@ export default function ContactsPage() {
 
     try {
       await deleteContact(contact.id);
+      trackEvent("contact_deleted");
       setTotal((prev) => Math.max(0, prev - 1));
     } catch (error) {
       setContacts(previous);

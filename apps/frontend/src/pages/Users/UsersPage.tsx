@@ -13,6 +13,7 @@ import { listAssignableRoles, type RoleSummary } from "../../services/roleServic
 import type { CreateTeamMemberInput, TeamMember } from "../../types/user";
 import { confirmAlert, errorAlert } from "../../lib/swal";
 import { getErrorMessage } from "../../lib/errors";
+import { trackEvent } from "../../lib/posthog";
 
 const inputClass =
   "h-[38px] w-full rounded-[10px] bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none";
@@ -67,6 +68,7 @@ function AddMemberModal({
       if (form.phone?.trim()) input.phone = form.phone.trim();
 
       const created = await createTeamMember(input);
+      trackEvent("team_member_created");
       onCreated(created);
       onClose();
     } catch (error) {
@@ -258,6 +260,12 @@ export default function UsersPage() {
     );
     try {
       await assignTeamMemberRole(member.id, nextRoleId);
+      // The raw role name (e.g. "MANAGER"), not formatRoleName()'s
+      // translated display text — an analytics property should be one
+      // consistent value regardless of the UI language the action was
+      // taken in, not "MANAGER" from an English session and "مدير"
+      // from an Arabic one for the same underlying role.
+      trackEvent("role_changed", { role_name: nextRole?.name ?? null });
     } catch (error) {
       setMembers(previous);
       errorAlert({

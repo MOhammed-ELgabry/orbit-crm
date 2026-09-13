@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -20,6 +21,7 @@ import ContactFormModal from "../../Components/Contact/ContactFormModal";
 import ActivityTimeline from "../../Components/Activity/ActivityTimeline";
 import { confirmAlert, errorAlert } from "../../lib/swal";
 import { getErrorMessage } from "../../lib/errors";
+import { trackEvent } from "../../lib/posthog";
 
 export default function ContactDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -30,9 +32,9 @@ export default function ContactDetailPage() {
   const contactLabel = t(businessCopy.contactSingular);
 
   const [contact, setContact] = useState<Contact | null>(null);
-  const [status, setStatus] = useState<"loading" | "ready" | "error" | "not-found">(
-    "loading",
-  );
+  const [status, setStatus] = useState<
+    "loading" | "ready" | "error" | "not-found"
+  >("loading");
   const [isEditing, setIsEditing] = useState(false);
 
   const load = useCallback(async () => {
@@ -70,6 +72,7 @@ export default function ContactDetailPage() {
   const handleUpdate = async (input: CreateContactInput) => {
     if (!contact) return;
     const updated = await updateContact(contact.id, input);
+    trackEvent("contact_updated", { status: updated.status });
     setContact(updated);
   };
 
@@ -86,6 +89,7 @@ export default function ContactDetailPage() {
 
     try {
       await deleteContact(contact.id);
+      trackEvent("contact_deleted");
       navigate("/dashboard/contacts", { replace: true });
     } catch (error) {
       errorAlert({
@@ -155,6 +159,7 @@ export default function ContactDetailPage() {
               {contact.firstName[0]}
               {contact.lastName[0]}
             </div>
+
             <div className="flex gap-1">
               <button
                 type="button"
@@ -164,6 +169,7 @@ export default function ContactDetailPage() {
               >
                 <FiEdit2 size={15} />
               </button>
+
               <button
                 type="button"
                 onClick={handleDelete}
@@ -190,21 +196,24 @@ export default function ContactDetailPage() {
           <span
             className={`mt-2 inline-block rounded-full px-2.5 py-1 text-xs font-medium ${contactStatusBadgeClass(contact.status)}`}
           >
-            {t(CONTACT_STATUS_LABEL_KEY[contact.status] ?? contact.status)}
+            {t(
+              CONTACT_STATUS_LABEL_KEY[contact.status] ?? contact.status,
+            )}
           </span>
 
           <div className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4 text-sm">
-           {contact.email && (
-  <a
-    href={`mailto:${contact.email}`}
-    className="flex items-center gap-2 text-slate-600 hover:text-blue-600"
-  >
+            {contact.email && (
+              <a
+                href={`mailto:${contact.email}`}
+                className="flex items-center gap-2 text-slate-600 hover:text-blue-600"
+              >
                 <FiMail size={14} className="shrink-0 text-slate-400" />
                 <span className="truncate">{contact.email}</span>
               </a>
             )}
+
             {contact.phone && (
-               <a
+              <a
                 href={`tel:${contact.phone}`}
                 className="flex items-center gap-2 text-slate-600 hover:text-blue-600"
               >
@@ -219,6 +228,7 @@ export default function ContactDetailPage() {
               <p className="text-xs font-semibold text-slate-500">
                 {t("notes")}
               </p>
+
               <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">
                 {contact.notes}
               </p>

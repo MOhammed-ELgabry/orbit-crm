@@ -14,6 +14,7 @@ import {
   type AuthUser,
 } from "../services/authService";
 import { getMyCompany, type Company } from "../services/companyService";
+import { identifyAnalyticsUser, resetAnalyticsIdentity } from "../lib/posthog";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -103,6 +104,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Covers both ways `user` can become non-null — a fresh login/social
+  // auth (via the `login` callback below) and an existing session
+  // restored on page load (the effect above, which sets it directly) —
+  // so every authenticated page load links events to the right person,
+  // not just ones that started at the login form. Intentionally does
+  // NOT reset() when `user` goes back to null, since that also happens
+  // transiently on initial mount before the session check resolves;
+  // an explicit logout (below) is the only thing that should start a
+  // fresh anonymous identity.
+  useEffect(() => {
+    if (user) {
+      identifyAnalyticsUser(user);
+    }
+  }, [user]);
+
   const login = useCallback((nextUser: AuthUser) => {
     setUser(nextUser);
   }, []);
@@ -117,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setUser(null);
       setCompany(null);
+      resetAnalyticsIdentity();
     }
   }, []);
 

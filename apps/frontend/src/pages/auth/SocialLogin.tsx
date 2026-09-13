@@ -10,6 +10,7 @@ import {
   type SocialProvider,
 } from "../../services/authService";
 import { errorAlert } from "../../lib/swal";
+import { trackEvent } from "../../lib/posthog";
 import { getErrorMessage } from "../../lib/errors";
 
 const socialButtonClass =
@@ -54,6 +55,9 @@ export default function SocialLogin() {
         await openSocialAuthPopup(provider);
 
       login(user);
+      trackEvent(isNewUser ? "user_registered" : "login", {
+        method: provider,
+      });
 
       // A brand-new social sign-up (backend Scenario 1) still needs to
       // pick a business type, exactly like a normal new user — they just

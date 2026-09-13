@@ -10,12 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@posthog/react": "^1.10.6",
     "@tailwindcss/vite": "^4.3.3",
     "axios": "^1.19.0",
     "date-fns": "^4.4.0",
     "formik": "^2.4.9",
     "framer-motion": "^11.18.2",
     "i18next": "^26.3.6",
+    "posthog-js": "^1.430.3",
     "react": "^19.2.7",
     "react-datepicker": "^9.1.0",
     "react-dom": "^19.2.7",

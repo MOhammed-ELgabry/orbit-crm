@@ -13,6 +13,7 @@ import SocialLogin from "../SocialLogin";
 import AuthDivider from "../AuthDivider";
 import { successAlert, errorAlert } from "../../../lib/swal";
 import { getErrorMessage } from "../../../lib/errors";
+import { trackEvent } from "../../../lib/posthog";
 
 interface RegisterValues {
   firstName: string;
@@ -72,6 +73,8 @@ export default function RegisterForm() {
       };
 
       const response = await registerUser(data);
+
+      trackEvent("user_registered", { method: "email" });
 
       console.log("Register successful:", response);
 

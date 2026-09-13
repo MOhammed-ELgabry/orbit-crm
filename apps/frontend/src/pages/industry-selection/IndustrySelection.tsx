@@ -7,6 +7,7 @@ import { industries } from "./industryData";
 import { setBusinessType, type BusinessType } from "../../services/authService";
 import { successAlert, errorAlert } from "../../lib/swal";
 import { getErrorMessage } from "../../lib/errors";
+import { trackEvent } from "../../lib/posthog";
 
 export default function IndustrySelection() {
   const { t } = useTranslation();
@@ -46,6 +47,8 @@ export default function IndustrySelection() {
         token: onboardingToken,
         businessType: selectedIndustry,
       });
+
+      trackEvent("onboarding_completed", { business_type: selectedIndustry });
 
       await successAlert({
         title: t("businessTypeSuccessTitle"),

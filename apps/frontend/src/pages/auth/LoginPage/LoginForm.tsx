@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { loginUser } from "../../../services/authService";
 import { useAuth } from "../../../context/AuthContext";
+import { trackEvent } from "../../../lib/posthog";
 import LoginHeader from "./LoginHeader";
 import LoginOptions from "./LoginOptions";
 import SocialLogin from "../SocialLogin";
@@ -50,6 +51,7 @@ export default function LoginForm() {
       });
 
       login(response.user);
+      trackEvent("login", { method: "email" });
 
       await successAlert({
         title: t("loginSuccessTitle"),
