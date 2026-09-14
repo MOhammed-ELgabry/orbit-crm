@@ -1,6 +1,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { Response } from 'express';
+import { captureException } from '@sentry/nestjs';
 
 /**
  * Registered globally (see main.ts) ahead of HttpExceptionFilter so a
@@ -25,6 +26,18 @@ export class PrismaExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<{ url?: string }>();
 
     const { status, message } = this.mapException(exception);
+
+    // Only the unmapped/unexpected case (falls through to the `default`
+    // branch below, status 500) is actually a bug worth an alert — a
+    // duplicate-email registration attempt (P2002) or a stale link to a
+    // deleted contact (P2025) is an expected, already-handled outcome,
+    // not something anyone needs paging for. This isn't an HttpException,
+    // so it doesn't get HttpExceptionFilter's automatic
+    // "don't report ordinary control flow" treatment — the same
+    // distinction is made by hand here instead.
+    if (status >= 500) {
+      captureException(exception);
+    }
 
     response.status(status).json({
       success: false,

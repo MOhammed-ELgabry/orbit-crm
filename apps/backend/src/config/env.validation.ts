@@ -64,4 +64,13 @@ export const envValidationSchema = Joi.object({
   MICROSOFT_CLIENT_SECRET: Joi.string().optional(),
   MICROSOFT_TENANT_ID: Joi.string().optional(),
   MICROSOFT_CALLBACK_URL: Joi.string().uri().optional(),
+
+  // Error monitoring — optional, same as the social-auth secrets above:
+  // existing deployments with nothing configured here keep booting
+  // exactly as before. instrument.ts reads SENTRY_DSN directly (Sentry
+  // must init before ConfigModule exists — see that file), so this
+  // entry exists for boot-time format validation and so this schema
+  // stays an accurate list of every env var the app recognizes, not
+  // because anything reads it via ConfigService.
+  SENTRY_DSN: Joi.string().uri().optional(),
 });

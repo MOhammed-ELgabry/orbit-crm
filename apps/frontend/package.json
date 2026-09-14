@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@posthog/react": "^1.10.6",
+    "@sentry/react": "^10.74.0",
+    "@sentry/vite-plugin": "^5.4.0",
     "@tailwindcss/vite": "^4.3.3",
     "axios": "^1.19.0",
     "date-fns": "^4.4.0",
