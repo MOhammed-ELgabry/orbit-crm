@@ -67,6 +67,17 @@ export interface ISafeAuthUser {
   lastName: string;
   avatar: string | null;
   isOwner: boolean;
+  /**
+   * "resource:action" strings this user is currently granted — the same
+   * decision PermissionsGuard makes on every protected request (Owner
+   * bypass, then the roleId-null legacy compatibility shim, then the
+   * role's actual granted permissions), computed once here so the
+   * frontend can use it for its own "should I show this button" UX
+   * without duplicating that request-time logic. Read-only and
+   * additive: PermissionsGuard remains the actual authority regardless
+   * of what this array says.
+   */
+  permissions: string[];
 }
 
 /**
@@ -552,6 +563,7 @@ export class AuthService implements OnModuleInit {
         lastName: user.lastName,
         avatar: user.avatar,
         isOwner: user.isOwner,
+        permissions: await this.resolveUserPermissions(user),
       },
     };
   }
@@ -816,8 +828,61 @@ export class AuthService implements OnModuleInit {
         lastName: user.lastName,
         avatar: user.avatar,
         isOwner: user.isOwner,
+        permissions: await this.resolveUserPermissions(user),
       },
     };
+  }
+
+  /**
+   * See ISafeAuthUser.permissions for what this is for. Mirrors
+   * PermissionsGuard's exact 3-branch decision (Owner / roleId:null
+   * legacy shim / role's granted permissions) so the array is always
+   * consistent with what that guard would actually allow — but this
+   * method never grants or denies a request itself; it only describes
+   * the outcome PermissionsGuard would already produce.
+   */
+  private async resolveUserPermissions(user: {
+    isOwner: boolean;
+    roleId: string | null;
+  }): Promise<string[]> {
+    // Owner bypasses PermissionsGuard entirely regardless of this array
+    // (see that guard, and AuthUser.isOwner on the frontend) — no need
+    // to populate it here too.
+    if (user.isOwner) {
+      return [];
+    }
+
+    if (!user.roleId) {
+      // Mirrors PermissionsGuard's roleId:null legacy rollout-
+      // compatibility shim exactly (see that guard for the full
+      // explanation) — a temporary full-access state, not a real role.
+      // Populated here (not left empty) so the frontend doesn't hide
+      // buttons this user can actually use; the guard, not this array,
+      // is what actually grants it.
+      const allPermissions = await this.prisma.permission.findMany({
+        select: { resource: true, action: true },
+      });
+
+      return allPermissions.map((p) => `${p.resource}:${p.action}`);
+    }
+
+    const role = await this.prisma.role.findUnique({
+      where: { id: user.roleId },
+      select: {
+        rolePermissions: {
+          select: {
+            permission: { select: { resource: true, action: true } },
+          },
+        },
+      },
+    });
+
+    // A dangling roleId (its Role was deleted) resolves to no
+    // permissions — the same fail-closed behavior PermissionsGuard
+    // itself applies.
+    return (role?.rolePermissions ?? []).map(
+      (rp) => `${rp.permission.resource}:${rp.permission.action}`,
+    );
   }
 
   private resolveSocialProvider(
@@ -1066,6 +1131,7 @@ export class AuthService implements OnModuleInit {
         lastName: user.lastName,
         avatar: user.avatar,
         isOwner: user.isOwner,
+        permissions: await this.resolveUserPermissions(user),
       },
     };
   }

@@ -33,6 +33,12 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (user: AuthUser) => void;
   logout: () => Promise<void>;
+  // UX-only convenience over user.permissions — mirrors the backend's own
+  // isOwner-bypass-first check (see AuthService.resolveUserPermissions),
+  // so a "resource:action" string like "lead:create" reads the same way
+  // here as it does server-side. The backend remains the sole authority;
+  // this only decides what the UI shows/hides.
+  hasPermission: (permission: string) => boolean;
   // Re-fetches /companies/me — called after an action that changes
   // company data the rest of the app has already cached here (e.g. a
   // Settings page edit), so every consumer sees the update without a
@@ -137,6 +143,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const hasPermission = useCallback(
+    (permission: string) =>
+      user !== null && (user.isOwner || user.permissions.includes(permission)),
+    [user],
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -145,9 +157,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       login,
       logout,
+      hasPermission,
       refetchCompany,
     }),
-    [user, company, isLoading, login, logout, refetchCompany],
+    [user, company, isLoading, login, logout, hasPermission, refetchCompany],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

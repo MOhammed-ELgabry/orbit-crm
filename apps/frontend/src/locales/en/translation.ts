@@ -231,6 +231,22 @@ const en = {
   contactStatusCustomer: "Customer",
   contactStatusArchived: "Archived",
 
+  // Leads page
+  lead: "Lead",
+  addLead: "Add Lead",
+  editLead: "Edit Lead",
+  searchLeadsPlaceholder: "Search by name, email, or organization...",
+  noLeadsFoundTitle: "No leads yet",
+  noLeadsFoundDescription: "Add your first lead to get started.",
+  deleteLeadConfirm: "Delete this lead? This cannot be undone.",
+  leadSource: "Source",
+  leadSourcePlaceholder: "e.g. website, referral, walk-in",
+  leadStatusNew: "New",
+  leadStatusContacted: "Contacted",
+  leadStatusQualified: "Qualified",
+  leadStatusUnqualified: "Unqualified",
+  leadStatusLost: "Lost",
+
   // Activity timeline
   activityTimelineTitle: "Timeline",
   logActivity: "Log Activity",

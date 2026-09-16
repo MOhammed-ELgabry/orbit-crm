@@ -24,6 +24,11 @@ export const PERMISSION_CATALOG = [
   { resource: 'contact', action: 'update' },
   { resource: 'contact', action: 'delete' },
 
+  { resource: 'lead', action: 'create' },
+  { resource: 'lead', action: 'read' },
+  { resource: 'lead', action: 'update' },
+  { resource: 'lead', action: 'delete' },
+
   { resource: 'activity', action: 'create' },
   { resource: 'activity', action: 'read' },
   { resource: 'activity', action: 'update' },

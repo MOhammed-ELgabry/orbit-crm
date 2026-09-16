@@ -33,6 +33,7 @@ model Company {
   users            User[]
   roles            Role[]
   contacts         Contact[]
+  leads            Lead[]
   onboardingTokens OnboardingToken[]
   activities       Activity[]
 
@@ -57,12 +58,12 @@ model User {
   passwordHash String?
 
   // Authentication Provider
-  provider   String @default("local")
+  provider   String  @default("local")
   providerId String?
 
   // Email Verification
-  isEmailVerified       Boolean   @default(false)
-  emailVerificationCode String?
+  isEmailVerified          Boolean   @default(false)
+  emailVerificationCode    String?
   emailVerificationExpires DateTime?
 
   // Refresh Token
@@ -88,7 +89,7 @@ model User {
 
   // RBAC
   roleId String?
-  role   Role? @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  role   Role?   @relation(fields: [roleId], references: [id], onDelete: SetNull)
 
   // Sessions & Password Reset
   authSessions        AuthSession[]
@@ -100,6 +101,10 @@ model User {
   // Contacts
   contactsCreated  Contact[] @relation("ContactCreatedBy")
   contactsAssigned Contact[] @relation("ContactAssignedTo")
+
+  // Leads
+  leadsCreated  Lead[] @relation("LeadCreatedBy")
+  leadsAssigned Lead[] @relation("LeadAssignedTo")
 
   // Activities
   activitiesCreated Activity[] @relation("ActivityCreatedBy")
@@ -128,7 +133,7 @@ model SocialAccount {
   email String?
 
   userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -141,7 +146,7 @@ model AuthSession {
   id String @id @default(cuid())
 
   userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   tokenHash String
 
@@ -283,17 +288,68 @@ model Contact {
   // CRM Information
   notes  String?
   source String?
-  status String @default("active")
+  status String  @default("active")
 
   // Ownership / Assignment
   createdById String
-  createdBy   User @relation("ContactCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdBy   User   @relation("ContactCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
 
   assignedToId String?
-  assignedTo   User? @relation("ContactAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  assignedTo   User?   @relation("ContactAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
 
   // Activities
   activities Activity[]
+
+  // Audit
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([companyId])
+  @@index([companyId, deletedAt])
+  @@index([companyId, email])
+  @@index([companyId, phone])
+  @@index([companyId, status])
+  @@index([companyId, assignedToId])
+  @@index([createdById])
+  @@index([assignedToId])
+  @@index([deletedAt])
+}
+
+// An unqualified prospective inquiry, tracked separately from Contact.
+// Deliberately has no conversion link to Contact yet — that's future
+// work, intentionally not implemented here (see the Leads spec this
+// model was built against). Every lead belongs to exactly one tenant
+// company.
+model Lead {
+  id String @id @default(cuid())
+
+  // Tenant
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Personal Information
+  firstName String
+  lastName  String
+
+  // Contact Information
+  email String?
+  phone String?
+
+  // Business Information
+  organizationName String?
+
+  // CRM Information
+  source String?
+  status String  @default("new")
+  notes  String?
+
+  // Ownership / Assignment
+  createdById String
+  createdBy   User   @relation("LeadCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  assignedToId String?
+  assignedTo   User?   @relation("LeadAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
 
   // Audit
   createdAt DateTime  @default(now())
@@ -333,7 +389,7 @@ model Activity {
 
   // User who performed/logged the activity
   createdById String
-  createdBy   User @relation("ActivityCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdBy   User   @relation("ActivityCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
 
   // Optional Contact association
   contactId String?
@@ -353,4 +409,3 @@ model Activity {
   @@index([contactId])
   @@index([deletedAt])
 }
-

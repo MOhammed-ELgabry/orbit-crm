@@ -14,5 +14,7 @@ export interface IAuthUser {
   isEmailVerified: boolean;
   isOwner: boolean;
 
+  roleId: string | null;
+
   companyId: string | null;
 }

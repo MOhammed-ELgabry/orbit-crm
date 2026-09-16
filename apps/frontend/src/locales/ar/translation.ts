@@ -223,6 +223,22 @@ const ar = {
   contactStatusCustomer: "عميل",
   contactStatusArchived: "مؤرشف",
 
+  // صفحة العملاء المحتملين (Leads)
+  lead: "عميل محتمل",
+  addLead: "إضافة عميل محتمل",
+  editLead: "تعديل عميل محتمل",
+  searchLeadsPlaceholder: "ابحث بالاسم أو البريد الإلكتروني أو الجهة...",
+  noLeadsFoundTitle: "لا يوجد عملاء محتملون بعد",
+  noLeadsFoundDescription: "أضف أول عميل محتمل للبدء.",
+  deleteLeadConfirm: "حذف هذا العميل المحتمل؟ لا يمكن التراجع عن ذلك.",
+  leadSource: "المصدر",
+  leadSourcePlaceholder: "مثال: الموقع الإلكتروني، إحالة، زيارة مباشرة",
+  leadStatusNew: "جديد",
+  leadStatusContacted: "تم التواصل",
+  leadStatusQualified: "مؤهل",
+  leadStatusUnqualified: "غير مؤهل",
+  leadStatusLost: "خسارة",
+
   // الخط الزمني للنشاط
   activityTimelineTitle: "الخط الزمني",
   logActivity: "تسجيل نشاط",
