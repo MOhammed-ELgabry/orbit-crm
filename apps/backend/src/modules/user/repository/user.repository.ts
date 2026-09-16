@@ -337,6 +337,7 @@ export class UserRepository implements IUserRepository {
         isEmailVerified: true,
         isOwner: true,
         companyId: true,
+        roleId: true,
       },
     });
 
