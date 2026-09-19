@@ -65,13 +65,25 @@ export default function RegisterOptions() {
           className="cursor-pointer text-[10px] leading-3.5 text-gray-500"
         >
           {t("termsText")}{" "}
-          <span className="font-medium text-[#643ed7] transition-colors duration-200 hover:text-[#514cf0]">
+          <Link
+            to="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="font-medium text-[#643ed7] transition-colors duration-200 hover:text-[#514cf0] hover:underline"
+          >
             {t("termsOfUse")}
-          </span>{" "}
+          </Link>{" "}
           {t("andOur")}{" "}
-          <span className="font-medium text-[#643ed7] transition-colors duration-200 hover:text-[#514cf0]">
+          <Link
+            to="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="font-medium text-[#643ed7] transition-colors duration-200 hover:text-[#514cf0] hover:underline"
+          >
             {t("privacyPolicy")}
-          </span>
+          </Link>
           .
         </label>
       </div>

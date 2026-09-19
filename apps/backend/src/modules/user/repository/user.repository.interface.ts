@@ -74,6 +74,18 @@ export interface IUserRepository {
     roleId: string | null,
   ): Promise<UserEntity>;
 
+  updateLanguage(
+    id: string,
+    companyId: string,
+    language: string,
+  ): Promise<UserEntity>;
+
+  updateAppearance(
+    id: string,
+    companyId: string,
+    backgroundColor: string,
+  ): Promise<UserEntity>;
+
   updatePassword(id: string, passwordHash: string): Promise<void>;
 
   delete(id: string, companyId: string): Promise<void>;

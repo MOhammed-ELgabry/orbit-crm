@@ -25,7 +25,22 @@ export default function DashboardLayout() {
           <DashboardHeader onOpenNavigation={() => setIsSidebarOpen(true)} />
         </header>
 
-        <main className="min-h-0 flex-1 overflow-y-auto">
+        {/*
+          Settings → Appearance applies only here (the main content
+          canvas), never to the sidebar or header above, which stay on
+          the product's own brand colors. --orbit-content-bg/-fg are set
+          on <html> by AuthContext (see applyUserPreferences) from the
+          signed-in user's saved backgroundColor, with a fallback to
+          today's default so this looks identical for anyone who hasn't
+          chosen a custom color.
+        */}
+        <main
+          className="min-h-0 flex-1 overflow-y-auto"
+          style={{
+            backgroundColor: "var(--orbit-content-bg, #f6f8fc)",
+            color: "var(--orbit-content-fg, #172033)",
+          }}
+        >
           <div className="mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
             <Outlet />
           </div>

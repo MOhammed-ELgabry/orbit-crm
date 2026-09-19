@@ -210,7 +210,6 @@ export class UserRepository implements IUserRepository {
     // `selectableFields` above has no relation entry, so that path
     // never gained new capability here.
 
-
     // const entities: UserEntity[] = prismaQuery.select
     //   ? (
     //       await this.prisma.user.findMany({
@@ -236,30 +235,35 @@ export class UserRepository implements IUserRepository {
     //     ).map((user) => new UserEntity(user));
 
     const entities: UserEntity[] = prismaQuery.select
-  ? (
-      await this.prisma.user.findMany({
-        where,
-        orderBy: prismaQuery.orderBy,
-        select: prismaQuery.select as Prisma.UserSelect,
-        skip: prismaQuery.skip,
-        take: prismaQuery.take,
-      })
-    ).map((user) => new UserEntity(user as Prisma.UserGetPayload<{
-      select: Prisma.UserSelect;
-    }>))
-  : (
-      await this.prisma.user.findMany({
-        where,
-        orderBy: prismaQuery.orderBy,
-        include: {
-          role: {
-            select: { id: true, name: true },
-          },
-        },
-        skip: prismaQuery.skip,
-        take: prismaQuery.take,
-      })
-    ).map((user) => new UserEntity(user));
+      ? (
+          await this.prisma.user.findMany({
+            where,
+            orderBy: prismaQuery.orderBy,
+            select: prismaQuery.select as Prisma.UserSelect,
+            skip: prismaQuery.skip,
+            take: prismaQuery.take,
+          })
+        ).map(
+          (user) =>
+            new UserEntity(
+              user as Prisma.UserGetPayload<{
+                select: Prisma.UserSelect;
+              }>,
+            ),
+        )
+      : (
+          await this.prisma.user.findMany({
+            where,
+            orderBy: prismaQuery.orderBy,
+            include: {
+              role: {
+                select: { id: true, name: true },
+              },
+            },
+            skip: prismaQuery.skip,
+            take: prismaQuery.take,
+          })
+        ).map((user) => new UserEntity(user));
 
     const total = await countPromise;
 
@@ -338,6 +342,8 @@ export class UserRepository implements IUserRepository {
         isOwner: true,
         companyId: true,
         roleId: true,
+        language: true,
+        backgroundColor: true,
       },
     });
 
@@ -403,6 +409,50 @@ export class UserRepository implements IUserRepository {
         },
         data: {
           roleId,
+        },
+      });
+
+      return new UserEntity(user);
+    } catch (error) {
+      PrismaExceptionMapper.map(error);
+    }
+  }
+
+  async updateLanguage(
+    id: string,
+    companyId: string,
+    language: string,
+  ): Promise<UserEntity> {
+    try {
+      const user = await this.prisma.user.update({
+        where: {
+          id,
+          companyId,
+        },
+        data: {
+          language,
+        },
+      });
+
+      return new UserEntity(user);
+    } catch (error) {
+      PrismaExceptionMapper.map(error);
+    }
+  }
+
+  async updateAppearance(
+    id: string,
+    companyId: string,
+    backgroundColor: string,
+  ): Promise<UserEntity> {
+    try {
+      const user = await this.prisma.user.update({
+        where: {
+          id,
+          companyId,
+        },
+        data: {
+          backgroundColor,
         },
       });
 

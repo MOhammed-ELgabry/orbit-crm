@@ -54,6 +54,22 @@ export class UserEntity implements IUser {
   avatar: string | null;
 
   @ApiProperty({
+    example: 'en',
+    description: 'Interface language preference.',
+  })
+  language: string;
+
+  @ApiPropertyOptional({
+    example: null,
+    description:
+      'Background color for the main content canvas (hex), or null if ' +
+      'the user has no custom preference and the application default ' +
+      'applies.',
+    nullable: true,
+  })
+  backgroundColor: string | null;
+
+  @ApiProperty({
     example: true,
     description: 'User active status',
   })
@@ -133,6 +149,8 @@ export class UserEntity implements IUser {
     this.email = data.email;
     this.phone = data.phone;
     this.avatar = data.avatar;
+    this.language = data.language;
+    this.backgroundColor = data.backgroundColor;
     this.isActive = data.isActive;
     this.isOwner = data.isOwner;
     this.isEmailVerified = data.isEmailVerified;

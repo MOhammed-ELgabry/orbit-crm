@@ -31,6 +31,8 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
+import { UpdateUserLanguageDto } from './dto/update-user-language.dto';
+import { UpdateUserAppearanceDto } from './dto/update-user-appearance.dto';
 import { UserEntity } from './entities/user.entity';
 import { UserService } from './user.service';
 
@@ -138,6 +140,75 @@ export class UserController {
     @Req() request: AuthenticatedRequest,
   ) {
     return this.userService.update(
+      id,
+      dto,
+      request.user.companyId,
+      request.user.sub,
+    );
+  }
+
+  @ApiOperation({
+    summary: 'Update own language preference',
+    description:
+      'Self-service Settings update. A caller may only update their ' +
+      'own language preference (the :id path parameter must match the ' +
+      "authenticated user's id) — this endpoint cannot be used to " +
+      "change another user's language, even within the same company.",
+  })
+  @ApiOkResponse({
+    description: 'Language preference updated successfully.',
+    type: UserEntity,
+  })
+  @ApiForbiddenResponse({
+    description: 'You can only update your own language preference.',
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found.',
+  })
+  @Patch(':id/language')
+  @UseGuards(CsrfGuard)
+  async updateLanguage(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserLanguageDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.userService.updateLanguage(
+      id,
+      dto,
+      request.user.companyId,
+      request.user.sub,
+    );
+  }
+
+  @ApiOperation({
+    summary: 'Update own appearance preference',
+    description:
+      'Self-service Settings update. A caller may only update their ' +
+      'own background color preference (the :id path parameter must ' +
+      "match the authenticated user's id) — this endpoint cannot be " +
+      "used to change another user's appearance, even within the " +
+      'same company. The foreground/text color is calculated ' +
+      'automatically and is never part of this request or its ' +
+      'response.',
+  })
+  @ApiOkResponse({
+    description: 'Appearance preference updated successfully.',
+    type: UserEntity,
+  })
+  @ApiForbiddenResponse({
+    description: 'You can only update your own appearance preference.',
+  })
+  @ApiNotFoundResponse({
+    description: 'User not found.',
+  })
+  @Patch(':id/appearance')
+  @UseGuards(CsrfGuard)
+  async updateAppearance(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserAppearanceDto,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.userService.updateAppearance(
       id,
       dto,
       request.user.companyId,

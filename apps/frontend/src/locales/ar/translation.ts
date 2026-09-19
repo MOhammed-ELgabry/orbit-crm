@@ -285,6 +285,30 @@ const ar = {
   websiteLabel: "الموقع الإلكتروني",
   ownerOnlyNotice: "يمكن لمالك الحساب فقط تعديل هذه الإعدادات.",
   settingsSaved: "تم حفظ الإعدادات بنجاح.",
+  saving: "جارٍ الحفظ...",
+
+  // الإعدادات — اللغة
+  languageSettingsTitle: "اللغة",
+  languageSettingsDescription: "اختر اللغة المستخدمة في جميع أنحاء التطبيق.",
+  currentLanguageLabel: "لغة الواجهة",
+  saveLanguage: "حفظ اللغة",
+
+  // الإعدادات — المظهر
+  appearanceSettingsTitle: "المظهر",
+  appearanceSettingsDescription: "اختر لون خلفية منطقة المحتوى الرئيسية. سيتم تطبيق لون نص مناسب للقراءة تلقائيًا.",
+  backgroundColorLabel: "لون الخلفية",
+  backgroundColorHexLabel: "القيمة السداسية عشرية",
+  backgroundColorInvalid: "أدخل لونًا صالحًا مكوّنًا من 6 خانات، مثل ‎#F6F8FC.",
+  previewLabel: "معاينة",
+  previewSampleText: "هكذا ستبدو منطقة المحتوى الخاصة بك.",
+  saveAppearance: "حفظ المظهر",
+
+  // الإعدادات — قانوني
+  legalSettingsTitle: "الشؤون القانونية",
+  termsOfServiceNavLabel: "شروط الخدمة",
+  privacyPolicyNavLabel: "سياسة الخصوصية",
+  backToSettings: "العودة إلى الإعدادات",
+  backToHome: "رجوع",
 
   // تسميات القائمة الجانبية
   dashboardNavLabel: "لوحة التحكم",

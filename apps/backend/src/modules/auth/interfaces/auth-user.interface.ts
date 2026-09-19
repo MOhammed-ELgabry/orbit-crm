@@ -17,4 +17,8 @@ export interface IAuthUser {
   roleId: string | null;
 
   companyId: string | null;
+
+  language: string;
+
+  backgroundColor: string | null;
 }

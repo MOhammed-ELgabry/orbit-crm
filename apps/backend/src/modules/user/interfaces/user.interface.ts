@@ -22,6 +22,17 @@ export interface IUser {
   phone: string | null;
   avatar: string | null;
 
+  /** Interface language preference — see LANGUAGES for allowed values. */
+  language: string;
+
+  /**
+   * User-chosen background color for the main content canvas (hex), or
+   * null when the user has no custom preference and the application's
+   * built-in default should be used. The matching foreground/text
+   * color is never stored — see UpdateUserAppearanceDto.
+   */
+  backgroundColor: string | null;
+
   isActive: boolean;
   isOwner: boolean;
   isEmailVerified: boolean;

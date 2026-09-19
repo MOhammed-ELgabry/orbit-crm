@@ -17,6 +17,8 @@ import { UpdateUserRepositoryDto } from './dto/update-user-repository.dto';
 import { CreateUserRepositoryDto } from './dto/create-user-repository.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import { UpdateUserLanguageDto } from './dto/update-user-language.dto';
+import { UpdateUserAppearanceDto } from './dto/update-user-appearance.dto';
 
 import type { IUserRepository } from './repository/user.repository.interface';
 
@@ -167,6 +169,50 @@ export class UserService {
     await this.findById(id, companyId);
 
     return this.userRepository.updateStatus(id, companyId, dto.isActive);
+  }
+
+  async updateLanguage(
+    id: string,
+    dto: UpdateUserLanguageDto,
+    companyId: string,
+    callerId: string,
+  ) {
+    // Self-service, same reasoning and ordering as update() above: a
+    // caller may only ever change their own language preference, checked
+    // before any lookup so a probed id that belongs to someone else (or
+    // doesn't exist at all) always gets the same generic 403.
+    if (id !== callerId) {
+      throw new ForbiddenException(
+        'You can only update your own language preference.',
+      );
+    }
+
+    await this.findById(id, companyId);
+
+    return this.userRepository.updateLanguage(id, companyId, dto.language);
+  }
+
+  async updateAppearance(
+    id: string,
+    dto: UpdateUserAppearanceDto,
+    companyId: string,
+    callerId: string,
+  ) {
+    // Self-service, same reasoning and ordering as update() above: a
+    // caller may only ever change their own appearance preference.
+    if (id !== callerId) {
+      throw new ForbiddenException(
+        'You can only update your own appearance preference.',
+      );
+    }
+
+    await this.findById(id, companyId);
+
+    return this.userRepository.updateAppearance(
+      id,
+      companyId,
+      dto.backgroundColor,
+    );
   }
 
   async assignRole(id: string, roleId: string | null, companyId: string) {

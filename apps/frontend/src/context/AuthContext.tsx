@@ -15,6 +15,43 @@ import {
 } from "../services/authService";
 import { getMyCompany, type Company } from "../services/companyService";
 import { identifyAnalyticsUser, resetAnalyticsIdentity } from "../lib/posthog";
+import i18n from "i18next";
+import { getForegroundColor } from "../lib/contrast";
+
+/**
+ * Applies a user's saved language and appearance to the document —
+ * shared by both the session-restore effect below and every Settings
+ * save handler, so "switch language/appearance right now" and "restore
+ * it on next load" can never drift apart into two different code paths.
+ *
+ * Sets `dir` on <html> here (not just per-page, as the old floating
+ * LanguageSwitcher used to) so it's correct for every route, including
+ * on a hard refresh, before any component has rendered.
+ */
+function applyUserPreferences(preferences: {
+  language: AuthUser["language"];
+  backgroundColor: AuthUser["backgroundColor"];
+}) {
+  i18n.changeLanguage(preferences.language);
+  document.documentElement.dir = preferences.language === "ar" ? "rtl" : "ltr";
+  document.documentElement.lang = preferences.language;
+
+  const root = document.documentElement;
+
+  if (preferences.backgroundColor) {
+    root.style.setProperty("--orbit-content-bg", preferences.backgroundColor);
+    root.style.setProperty(
+      "--orbit-content-fg",
+      getForegroundColor(preferences.backgroundColor),
+    );
+  } else {
+    // No custom preference — fall back to the application's built-in
+    // default by removing the override rather than hardcoding it here,
+    // so that default can keep evolving in index.css independently.
+    root.style.removeProperty("--orbit-content-bg");
+    root.style.removeProperty("--orbit-content-fg");
+  }
+}
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -44,6 +81,15 @@ interface AuthContextValue {
   // Settings page edit), so every consumer sees the update without a
   // full page reload.
   refetchCompany: () => Promise<void>;
+  // Merges a successful Settings → Language/Appearance save into the
+  // already-loaded user, without refetching /auth/me. Deliberately a
+  // partial merge (not setUser(fullResponse)) — the language/appearance
+  // endpoints return the same user record PATCH /users/:id does, which
+  // has no `permissions` field, unlike this context's AuthUser; merging
+  // only the field that changed can never drop it.
+  updateUserSettings: (
+    settings: Partial<Pick<AuthUser, "language" | "backgroundColor">>,
+  ) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -125,6 +171,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  // Runs whenever `user` becomes available or its language/appearance
+  // changes — covers session restore on load, a fresh login, and a
+  // Settings save, all through the same applyUserPreferences() path.
+  // ProtectedRoute already withholds the authenticated app behind
+  // isLoading until the session-restore effect above resolves, so by
+  // the time a protected page actually renders, this has already run —
+  // no separate loading gate is needed here for a flash-free apply.
+  useEffect(() => {
+    if (user) {
+      applyUserPreferences({
+        language: user.language,
+        backgroundColor: user.backgroundColor,
+      });
+    }
+  }, [user]);
+
   const login = useCallback((nextUser: AuthUser) => {
     setUser(nextUser);
   }, []);
@@ -149,6 +211,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user],
   );
 
+  const updateUserSettings = useCallback(
+    (settings: Partial<Pick<AuthUser, "language" | "backgroundColor">>) => {
+      setUser((prev) => (prev ? { ...prev, ...settings } : prev));
+    },
+    [],
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -159,8 +228,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       hasPermission,
       refetchCompany,
+      updateUserSettings,
     }),
-    [user, company, isLoading, login, logout, hasPermission, refetchCompany],
+    [
+      user,
+      company,
+      isLoading,
+      login,
+      logout,
+      hasPermission,
+      refetchCompany,
+      updateUserSettings,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

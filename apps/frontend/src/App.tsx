@@ -5,7 +5,6 @@ import LoginPage from "./pages/auth/LoginPage/LoginPage";
 import VerifyEmail from "./pages/auth/VerifyEmail/VerifyEmail";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage/ResetPasswordPage";
-import LanguageSwitcher from "./Components/shared/LanguageSwitcher";
 import IndustrySelection from "./pages/industry-selection/IndustrySelection";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import { ProtectedRoute } from "./Components/ProtectedRoute";
@@ -19,6 +18,8 @@ import DealsPage from "./pages/Deals/DealsPage";
 import TasksPage from "./pages/Tasks/TasksPage";
 import CalendarPage from "./pages/Calendar/CalendarPage";
 import SettingsPage from "./pages/Settings/SettingsPage";
+import TermsOfServicePage from "./pages/Settings/TermsOfServicePage";
+import PrivacyPolicyPage from "./pages/Settings/PrivacyPolicyPage";
 import ReportsPage from "./pages/Reports/ReportsPage";
 
 function App() {
@@ -26,10 +27,6 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <div className="relative min-h-screen">
-          <div className="absolute top-6 end-6 z-50">
-            <LanguageSwitcher />
-          </div>
-
           <Routes>
             <Route path="/" element={<RegisterPage />} />
             <Route path="/register" element={<RegisterPage />} />
@@ -68,6 +65,16 @@ function App() {
 
               <Route path="settings" element={<SettingsPage />} />
             </Route>
+
+            {/*
+              Public — outside ProtectedRoute on purpose: legal pages must
+              be reachable before sign-in/registration, not just from
+              Settings. Still inside AuthProvider (which wraps the whole
+              <Routes> tree below), so LegalDocumentView can read
+              isAuthenticated for its back-link without requiring it.
+            */}
+            <Route path="/terms" element={<TermsOfServicePage />} />
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
           </Routes>
         </div>
       </AuthProvider>

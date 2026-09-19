@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { FaChevronRight } from "react-icons/fa";
 
 import { useAuth } from "../../context/AuthContext";
 import { updateCompany, type UpdateCompanyInput } from "../../services/companyService";
@@ -7,6 +9,8 @@ import { BUSINESS_TYPE_COPY } from "../../config/businessType";
 import { successAlert, errorAlert } from "../../lib/swal";
 import { getErrorMessage } from "../../lib/errors";
 import type { BusinessType } from "../../services/authService";
+import LanguageSettings from "./LanguageSettings";
+import AppearanceSettings from "./AppearanceSettings";
 
 const inputClass =
   "h-[38px] w-full rounded-[10px] bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none disabled:opacity-60";
@@ -18,7 +22,7 @@ const BUSINESS_TYPE_LABEL: Record<BusinessType, string> = {
   auto_spare_parts: "autoSpareParts",
 };
 
-export default function SettingsPage() {
+function CompanySettingsSection() {
   const { t } = useTranslation();
   const { user, company, refetchCompany } = useAuth();
   const isOwner = user?.isOwner ?? false;
@@ -78,95 +82,137 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-2xl">
-      <div className="rounded-2xl border border-slate-100 bg-white p-5 sm:p-6">
-        <h2 className="font-nunito text-base font-semibold text-slate-800">
-          {t("companySettingsTitle")}
-        </h2>
+    <div className="rounded-2xl border border-slate-100 bg-white p-5 sm:p-6">
+      <h2 className="font-nunito text-base font-semibold text-slate-800">
+        {t("companySettingsTitle")}
+      </h2>
 
-        {!isOwner && (
-          <p className="mt-1 text-xs text-amber-600">{t("ownerOnlyNotice")}</p>
+      {!isOwner && (
+        <p className="mt-1 text-xs text-amber-600">{t("ownerOnlyNotice")}</p>
+      )}
+
+      <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3">
+        <fieldset disabled={!isOwner} className="contents">
+          <div className="flex flex-col gap-0.5">
+            <label className={labelClass}>{t("companyNameLabel")}</label>
+            <input
+              className={inputClass}
+              value={form.name}
+              onChange={(e) => set("name", e.target.value)}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-0.5">
+              <label className={labelClass}>{t("contactEmailLabel")}</label>
+              <input
+                type="email"
+                className={inputClass}
+                value={form.contactEmail}
+                onChange={(e) => set("contactEmail", e.target.value)}
+              />
+            </div>
+
+            <div className="flex flex-col gap-0.5">
+              <label className={labelClass}>{t("phone")}</label>
+              <input
+                className={inputClass}
+                value={form.phone}
+                onChange={(e) => set("phone", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-0.5">
+            <label className={labelClass}>{t("addressLabel")}</label>
+            <input
+              className={inputClass}
+              value={form.address}
+              onChange={(e) => set("address", e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-col gap-0.5">
+            <label className={labelClass}>{t("websiteLabel")}</label>
+            <input
+              className={inputClass}
+              value={form.website}
+              onChange={(e) => set("website", e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-col gap-0.5">
+            <label className={labelClass}>{t("businessTypeLabel")}</label>
+            <select
+              className={inputClass}
+              value={form.businessType ?? ""}
+              onChange={(e) => set("businessType", e.target.value as BusinessType)}
+            >
+              {(Object.keys(BUSINESS_TYPE_COPY) as BusinessType[]).map((type) => (
+                <option key={type} value={type}>
+                  {t(BUSINESS_TYPE_LABEL[type])}
+                </option>
+              ))}
+            </select>
+          </div>
+        </fieldset>
+
+        {isOwner && (
+          <div className="mt-2 flex justify-end">
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="rounded-lg bg-[#605BFF] px-5 py-2 text-sm font-semibold text-white hover:bg-[#514cf0] disabled:opacity-50"
+            >
+              {t("saveChanges")}
+            </button>
+          </div>
         )}
+      </form>
+    </div>
+  );
+}
 
-        <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3">
-          <fieldset disabled={!isOwner} className="contents">
-            <div className="flex flex-col gap-0.5">
-              <label className={labelClass}>{t("companyNameLabel")}</label>
-              <input
-                className={inputClass}
-                value={form.name}
-                onChange={(e) => set("name", e.target.value)}
-              />
-            </div>
+function LegalSection() {
+  const { t } = useTranslation();
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="flex flex-col gap-0.5">
-                <label className={labelClass}>{t("contactEmailLabel")}</label>
-                <input
-                  type="email"
-                  className={inputClass}
-                  value={form.contactEmail}
-                  onChange={(e) => set("contactEmail", e.target.value)}
-                />
-              </div>
+  const links = [
+    { to: "/terms", label: t("termsOfServiceNavLabel") },
+    { to: "/privacy", label: t("privacyPolicyNavLabel") },
+  ];
 
-              <div className="flex flex-col gap-0.5">
-                <label className={labelClass}>{t("phone")}</label>
-                <input
-                  className={inputClass}
-                  value={form.phone}
-                  onChange={(e) => set("phone", e.target.value)}
-                />
-              </div>
-            </div>
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-white p-5 sm:p-6">
+      <h2 className="font-nunito text-base font-semibold text-slate-800">
+        {t("legalSettingsTitle")}
+      </h2>
 
-            <div className="flex flex-col gap-0.5">
-              <label className={labelClass}>{t("addressLabel")}</label>
-              <input
-                className={inputClass}
-                value={form.address}
-                onChange={(e) => set("address", e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col gap-0.5">
-              <label className={labelClass}>{t("websiteLabel")}</label>
-              <input
-                className={inputClass}
-                value={form.website}
-                onChange={(e) => set("website", e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-col gap-0.5">
-              <label className={labelClass}>{t("businessTypeLabel")}</label>
-              <select
-                className={inputClass}
-                value={form.businessType ?? ""}
-                onChange={(e) => set("businessType", e.target.value as BusinessType)}
-              >
-                {(Object.keys(BUSINESS_TYPE_COPY) as BusinessType[]).map((type) => (
-                  <option key={type} value={type}>
-                    {t(BUSINESS_TYPE_LABEL[type])}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </fieldset>
-
-          {isOwner && (
-            <div className="mt-2 flex justify-end">
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="rounded-lg bg-[#605BFF] px-5 py-2 text-sm font-semibold text-white hover:bg-[#514cf0] disabled:opacity-50"
-              >
-                {t("saveChanges")}
-              </button>
-            </div>
-          )}
-        </form>
+      <div className="mt-4 flex flex-col divide-y divide-slate-100">
+        {links.map((link) => (
+          <Link
+            key={link.to}
+            to={link.to}
+            className="flex items-center justify-between py-3 text-sm font-medium text-slate-700 hover:text-[#605BFF]"
+          >
+            {link.label}
+            <FaChevronRight
+              className="rtl:rotate-180 text-xs text-slate-400"
+              aria-hidden="true"
+            />
+          </Link>
+        ))}
       </div>
+    </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <div className="flex max-w-2xl flex-col gap-4">
+      <CompanySettingsSection />
+      <LanguageSettings />
+      <AppearanceSettings />
+      <LegalSection />
     </div>
   );
 }

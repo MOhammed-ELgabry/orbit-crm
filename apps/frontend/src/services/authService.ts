@@ -60,6 +60,16 @@ export interface AuthUser {
   avatar: string | null;
   isOwner: boolean;
   /**
+   * Interface language preference ("ar" | "en") and main-content
+   * background color (hex, or null for "use the application default").
+   * Populated on every response that returns this shape (login, social
+   * auth, /auth/me) so AuthContext can apply both immediately on
+   * session restore, before the authenticated app renders. See
+   * Settings → Language / Appearance for how these are changed.
+   */
+  language: "ar" | "en";
+  backgroundColor: string | null;
+  /**
    * "resource:action" strings (e.g. "lead:create") the backend currently
    * grants this user — see ISafeAuthUser.permissions on the backend for
    * exactly how it's resolved (Owner bypass / legacy roleId:null shim /

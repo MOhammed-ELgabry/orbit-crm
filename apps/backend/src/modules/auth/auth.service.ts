@@ -68,6 +68,18 @@ export interface ISafeAuthUser {
   avatar: string | null;
   isOwner: boolean;
   /**
+   * Interface language preference ("ar" | "en") and main-content
+   * background color (hex, or null for "use the application default").
+   * Populated on every endpoint that returns this shape (login, social
+   * callback, /auth/me) so the frontend can apply both immediately on
+   * session restore, before the authenticated app shell renders — see
+   * AuthContext for where that happens. Kept on this same safe-user
+   * shape rather than a separate settings fetch, since it's needed at
+   * exactly the same moment "who am I" is already being resolved.
+   */
+  language: string;
+  backgroundColor: string | null;
+  /**
    * "resource:action" strings this user is currently granted — the same
    * decision PermissionsGuard makes on every protected request (Owner
    * bypass, then the roleId-null legacy compatibility shim, then the
@@ -563,6 +575,8 @@ export class AuthService implements OnModuleInit {
         lastName: user.lastName,
         avatar: user.avatar,
         isOwner: user.isOwner,
+        language: user.language,
+        backgroundColor: user.backgroundColor,
         permissions: await this.resolveUserPermissions(user),
       },
     };
@@ -828,6 +842,8 @@ export class AuthService implements OnModuleInit {
         lastName: user.lastName,
         avatar: user.avatar,
         isOwner: user.isOwner,
+        language: user.language,
+        backgroundColor: user.backgroundColor,
         permissions: await this.resolveUserPermissions(user),
       },
     };
@@ -1131,6 +1147,8 @@ export class AuthService implements OnModuleInit {
         lastName: user.lastName,
         avatar: user.avatar,
         isOwner: user.isOwner,
+        language: user.language,
+        backgroundColor: user.backgroundColor,
         permissions: await this.resolveUserPermissions(user),
       },
     };

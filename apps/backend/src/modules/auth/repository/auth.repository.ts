@@ -29,6 +29,8 @@ export class AuthRepository implements IAuthRepository {
         isOwner: true,
         roleId: true,
         companyId: true,
+        language: true,
+        backgroundColor: true,
       },
     });
 

@@ -293,6 +293,30 @@ const en = {
   websiteLabel: "Website",
   ownerOnlyNotice: "Only the account owner can edit these settings.",
   settingsSaved: "Settings saved successfully.",
+  saving: "Saving...",
+
+  // Settings — Language
+  languageSettingsTitle: "Language",
+  languageSettingsDescription: "Choose the language used throughout the application.",
+  currentLanguageLabel: "Interface language",
+  saveLanguage: "Save Language",
+
+  // Settings — Appearance
+  appearanceSettingsTitle: "Appearance",
+  appearanceSettingsDescription: "Choose a background color for the main content area. A readable text color is applied automatically.",
+  backgroundColorLabel: "Background color",
+  backgroundColorHexLabel: "Hex value",
+  backgroundColorInvalid: "Enter a valid 6-digit hex color, e.g. #F6F8FC.",
+  previewLabel: "Preview",
+  previewSampleText: "This is how your content area will look.",
+  saveAppearance: "Save Appearance",
+
+  // Settings — Legal
+  legalSettingsTitle: "Legal",
+  termsOfServiceNavLabel: "Terms of Service",
+  privacyPolicyNavLabel: "Privacy Policy",
+  backToSettings: "Back to Settings",
+  backToHome: "Back",
 
   // Sidebar nav labels
   dashboardNavLabel: "Dashboard",

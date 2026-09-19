@@ -73,6 +73,22 @@ model User {
   phone  String?
   avatar String?
 
+  // Settings
+  // language: interface language preference ("ar" | "en"), validated at
+  // the DTO layer (UpdateUserLanguageDto) — see LANGUAGES in
+  // user/constants/language.constants.ts. Defaults to "en" to match the
+  // frontend's i18next fallbackLng, so every existing row already has a
+  // valid value with no backfill required.
+  // backgroundColor: user-chosen background color for the main content
+  // canvas (hex string, e.g. "#F6F8FC"). Nullable — null means "no
+  // custom preference, use the application's built-in default" rather
+  // than freezing one default into every row. The matching foreground
+  // text color is intentionally never stored: it's derived
+  // deterministically from this value at render time (WCAG contrast),
+  // so it can never drift out of sync with it.
+  language        String  @default("en")
+  backgroundColor String?
+
   // Status
   isActive Boolean @default(true)
   isOwner  Boolean @default(false)
