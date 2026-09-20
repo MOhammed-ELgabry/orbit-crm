@@ -22,7 +22,10 @@ export interface ILeadRepository {
     dto: CreateLeadDto,
   ): Promise<LeadEntity>;
 
-  findAll(companyId: string, query: LeadQueryDto): Promise<LeadRepositoryResult>;
+  findAll(
+    companyId: string,
+    query: LeadQueryDto,
+  ): Promise<LeadRepositoryResult>;
 
   findById(companyId: string, leadId: string): Promise<LeadEntity | null>;
 

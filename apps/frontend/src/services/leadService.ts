@@ -1,5 +1,9 @@
 import api from "./api";
-import type { ApiEnvelope, PaginatedEnvelope, PaginationMeta } from "../types/api";
+import type {
+  ApiEnvelope,
+  PaginatedEnvelope,
+  PaginationMeta,
+} from "../types/api";
 import type {
   CreateLeadInput,
   Lead,

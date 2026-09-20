@@ -36,14 +36,14 @@ export const termsOfService: LegalDocument = {
   templateNotice:
     "This is a general product/legal template for a SaaS CRM product. It does not constitute legal advice and must be reviewed by qualified legal counsel, and completed with your company's actual legal name, address, and governing jurisdiction, before being relied on in production.",
   intro: [
-    "These Terms of Service (\"Terms\") govern access to and use of Orbit CRM (the \"Service\"), provided by [Company Legal Name] (\"we\", \"us\", or \"our\"). By creating an account or otherwise using the Service, you agree to these Terms.",
+    'These Terms of Service ("Terms") govern access to and use of Orbit CRM (the "Service"), provided by [Company Legal Name] ("we", "us", or "our"). By creating an account or otherwise using the Service, you agree to these Terms.',
   ],
   sections: [
     {
       id: "introduction",
       heading: "1. Introduction",
       body: [
-        "Orbit CRM is a multi-tenant customer relationship management platform that lets a company (a \"Customer\") and its authorized users manage contacts, leads, and related business data. These Terms form a binding agreement between you and us for your use of the Service.",
+        'Orbit CRM is a multi-tenant customer relationship management platform that lets a company (a "Customer") and its authorized users manage contacts, leads, and related business data. These Terms form a binding agreement between you and us for your use of the Service.',
       ],
     },
     {
@@ -99,7 +99,7 @@ export const termsOfService: LegalDocument = {
       id: "customer-data",
       heading: "9. Customer Data",
       body: [
-        "\"Customer Data\" means the contacts, leads, activities, and other business data your company submits to the Service. As between you and us, you retain all rights to your Customer Data. You grant us a limited right to host, process, and display Customer Data solely to provide and support the Service.",
+        '"Customer Data" means the contacts, leads, activities, and other business data your company submits to the Service. As between you and us, you retain all rights to your Customer Data. You grant us a limited right to host, process, and display Customer Data solely to provide and support the Service.',
         "Each company's Customer Data is logically isolated from every other company's data. You are responsible for ensuring you have the necessary rights and permissions to submit any personal or business data of third parties (such as your own contacts and leads) to the Service.",
       ],
     },
@@ -149,7 +149,7 @@ export const termsOfService: LegalDocument = {
       id: "disclaimer-warranties",
       heading: "16. Disclaimer of Warranties",
       body: [
-        "The Service is provided \"as is\" and \"as available\" without warranties of any kind, whether express or implied, including implied warranties of merchantability, fitness for a particular purpose, and non-infringement, to the fullest extent permitted by applicable law.",
+        'The Service is provided "as is" and "as available" without warranties of any kind, whether express or implied, including implied warranties of merchantability, fitness for a particular purpose, and non-infringement, to the fullest extent permitted by applicable law.',
       ],
     },
     {
@@ -195,7 +195,7 @@ export const privacyPolicy: LegalDocument = {
   templateNotice:
     "This is a general privacy policy template describing Orbit CRM's actual current architecture (authentication, cookies, analytics, and error monitoring) as implemented at the time this template was written. It does not constitute legal advice and must be reviewed by qualified legal counsel, and completed with your company's actual legal name, address, and contact details, before being relied on in production.",
   intro: [
-    "This Privacy Policy explains how [Company Legal Name] (\"we\", \"us\", or \"our\") collects, uses, and protects information in connection with Orbit CRM (the \"Service\").",
+    'This Privacy Policy explains how [Company Legal Name] ("we", "us", or "our") collects, uses, and protects information in connection with Orbit CRM (the "Service").',
   ],
   sections: [
     {

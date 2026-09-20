@@ -24,14 +24,23 @@ import { AuthService } from './auth.service';
  * tx mock below that reaches company creation needs tx.permission and
  * tx.role too, or that call throws. mockPermissions/mockTx below give
  * a minimal, realistic stand-in — this file still only asserts F4's
- * own claim/company-creation behavior; role-seeding itself is covered
- * separately by ensure-default-roles.util.spec.ts.
+ * own claim/company-creation behavior; role-seeding itself (including
+ * its Permission-catalog self-heal) is covered separately by
+ * ensure-default-roles.util.spec.ts. mockPermissions here mirrors the
+ * real PERMISSION_CATALOG's contact/lead/activity entries (the only
+ * ones any DEFAULT_ROLE_DEFINITIONS role currently needs) so that
+ * ensureDefaultRolesForCompany's real, non-mocked lookup logic finds
+ * every permission it looks for and never needs to self-heal here.
  */
 const mockPermissions = [
   { id: 'perm-contact-create', resource: 'contact', action: 'create' },
   { id: 'perm-contact-read', resource: 'contact', action: 'read' },
   { id: 'perm-contact-update', resource: 'contact', action: 'update' },
   { id: 'perm-contact-delete', resource: 'contact', action: 'delete' },
+  { id: 'perm-lead-create', resource: 'lead', action: 'create' },
+  { id: 'perm-lead-read', resource: 'lead', action: 'read' },
+  { id: 'perm-lead-update', resource: 'lead', action: 'update' },
+  { id: 'perm-lead-delete', resource: 'lead', action: 'delete' },
   { id: 'perm-activity-create', resource: 'activity', action: 'create' },
   { id: 'perm-activity-read', resource: 'activity', action: 'read' },
   { id: 'perm-activity-update', resource: 'activity', action: 'update' },
@@ -42,6 +51,10 @@ function mockRoleAndPermission() {
   return {
     permission: {
       findMany: jest.fn().mockResolvedValue(mockPermissions),
+      // Not expected to be called while mockPermissions above is
+      // complete — mocked anyway so this stays a realistic stand-in
+      // for the real Prisma client shape.
+      upsert: jest.fn().mockResolvedValue({ id: 'perm-unexpected-upsert' }),
     },
     role: {
       upsert: jest.fn().mockResolvedValue({ id: 'role-x' }),

@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FiArrowLeft, FiEdit2, FiTrash2, FiMail, FiPhone } from "react-icons/fi";
+import {
+  FiArrowLeft,
+  FiEdit2,
+  FiTrash2,
+  FiMail,
+  FiPhone,
+} from "react-icons/fi";
 
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -31,9 +37,9 @@ export default function LeadDetailPage() {
   const canDelete = hasPermission("lead:delete");
 
   const [lead, setLead] = useState<Lead | null>(null);
-  const [status, setStatus] = useState<"loading" | "ready" | "error" | "not-found">(
-    "loading",
-  );
+  const [status, setStatus] = useState<
+    "loading" | "ready" | "error" | "not-found"
+  >("loading");
   const [isEditing, setIsEditing] = useState(false);
 
   // Only for showing the assignee's name — see LeadsPage for the same
@@ -259,9 +265,7 @@ export default function LeadDetailPage() {
 
         {lead.notes && (
           <div className="mt-4 border-t border-slate-100 pt-4">
-            <p className="text-xs font-semibold text-slate-500">
-              {t("notes")}
-            </p>
+            <p className="text-xs font-semibold text-slate-500">{t("notes")}</p>
             <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">
               {lead.notes}
             </p>
@@ -279,4 +283,3 @@ export default function LeadDetailPage() {
     </div>
   );
 }
-

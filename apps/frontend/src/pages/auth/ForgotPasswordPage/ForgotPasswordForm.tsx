@@ -73,7 +73,10 @@ export default function ForgotPasswordForm() {
 
         {/* Lock Icon */}
         <div className="mb-5 flex h-[60px] w-[60px] items-center justify-center rounded-full bg-[#F0EDFF] sm:h-[70px] sm:w-[70px]">
-          <FaLock size={24} className="text-[#605BFF] sm:h-[28px] sm:w-[28px]" />
+          <FaLock
+            size={24}
+            className="text-[#605BFF] sm:h-[28px] sm:w-[28px]"
+          />
         </div>
 
         <p className="max-w-[360px] px-2 text-center text-xs leading-5 text-gray-500 sm:text-sm">

@@ -17,5 +17,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export function contactStatusBadgeClass(status: string): string {
-  return STATUS_STYLES[status as ContactStatus] ?? "bg-slate-100 text-slate-500";
+  return (
+    STATUS_STYLES[status as ContactStatus] ?? "bg-slate-100 text-slate-500"
+  );
 }

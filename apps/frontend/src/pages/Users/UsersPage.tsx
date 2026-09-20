@@ -9,7 +9,10 @@ import {
   updateTeamMemberStatus,
   assignTeamMemberRole,
 } from "../../services/userService";
-import { listAssignableRoles, type RoleSummary } from "../../services/roleService";
+import {
+  listAssignableRoles,
+  type RoleSummary,
+} from "../../services/roleService";
 import type { CreateTeamMemberInput, TeamMember } from "../../types/user";
 import { confirmAlert, errorAlert } from "../../lib/swal";
 import { getErrorMessage } from "../../lib/errors";
@@ -99,7 +102,9 @@ function AddMemberModal({
                 required
                 className={inputClass}
                 value={form.firstName}
-                onChange={(e) => setForm((p) => ({ ...p, firstName: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, firstName: e.target.value }))
+                }
               />
             </div>
             <div className="flex flex-col gap-0.5">
@@ -108,7 +113,9 @@ function AddMemberModal({
                 required
                 className={inputClass}
                 value={form.lastName}
-                onChange={(e) => setForm((p) => ({ ...p, lastName: e.target.value }))}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, lastName: e.target.value }))
+                }
               />
             </div>
           </div>
@@ -120,7 +127,9 @@ function AddMemberModal({
               required
               className={inputClass}
               value={form.email}
-              onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, email: e.target.value }))
+              }
             />
           </div>
 
@@ -132,7 +141,9 @@ function AddMemberModal({
               minLength={8}
               className={inputClass}
               value={form.password}
-              onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, password: e.target.value }))
+              }
             />
           </div>
 
@@ -141,7 +152,9 @@ function AddMemberModal({
             <input
               className={inputClass}
               value={form.phone}
-              onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, phone: e.target.value }))
+              }
             />
           </div>
 
@@ -173,7 +186,9 @@ export default function UsersPage() {
 
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [roles, setRoles] = useState<RoleSummary[]>([]);
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [status, setStatus] = useState<"loading" | "ready" | "error">(
+    "loading",
+  );
   const [showAddModal, setShowAddModal] = useState(false);
 
   const load = useCallback(async () => {
@@ -227,7 +242,9 @@ export default function UsersPage() {
 
     const previous = members;
     setMembers((prev) =>
-      prev.map((m) => (m.id === member.id ? { ...m, isActive: !m.isActive } : m)),
+      prev.map((m) =>
+        m.id === member.id ? { ...m, isActive: !m.isActive } : m,
+      ),
     );
     try {
       await updateTeamMemberStatus(member.id, !member.isActive);
@@ -298,7 +315,10 @@ export default function UsersPage() {
         {status === "loading" && (
           <div className="space-y-3 p-5">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-12 animate-pulse rounded-xl bg-slate-50" />
+              <div
+                key={i}
+                className="h-12 animate-pulse rounded-xl bg-slate-50"
+              />
             ))}
           </div>
         )}
@@ -343,7 +363,9 @@ export default function UsersPage() {
                         </span>
                       )}
                     </p>
-                    <p className="truncate text-xs text-slate-400">{member.email}</p>
+                    <p className="truncate text-xs text-slate-400">
+                      {member.email}
+                    </p>
                   </div>
                 </div>
 
@@ -395,14 +417,20 @@ export default function UsersPage() {
                     <button
                       type="button"
                       onClick={() => handleToggleStatus(member)}
-                      aria-label={t(member.isActive ? "deactivate" : "activateAction")}
+                      aria-label={t(
+                        member.isActive ? "deactivate" : "activateAction",
+                      )}
                       className={`rounded-lg p-2 ${
                         member.isActive
                           ? "text-slate-400 hover:bg-red-50 hover:text-red-500"
                           : "text-slate-400 hover:bg-emerald-50 hover:text-emerald-600"
                       }`}
                     >
-                      {member.isActive ? <FiUserX size={15} /> : <FiUserCheck size={15} />}
+                      {member.isActive ? (
+                        <FiUserX size={15} />
+                      ) : (
+                        <FiUserCheck size={15} />
+                      )}
                     </button>
                   )}
                 </div>

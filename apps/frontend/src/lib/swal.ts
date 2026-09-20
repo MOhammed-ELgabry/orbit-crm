@@ -32,11 +32,7 @@ interface AlertOptions {
   confirmButtonText?: string;
 }
 
-export function successAlert({
-  title,
-  text,
-  confirmButtonText,
-}: AlertOptions) {
+export function successAlert({ title, text, confirmButtonText }: AlertOptions) {
   return orbitSwal.fire({
     icon: "success",
     title,
@@ -54,11 +50,7 @@ export function errorAlert({ title, text, confirmButtonText }: AlertOptions) {
   });
 }
 
-export function warningAlert({
-  title,
-  text,
-  confirmButtonText,
-}: AlertOptions) {
+export function warningAlert({ title, text, confirmButtonText }: AlertOptions) {
   return orbitSwal.fire({
     icon: "warning",
     title,

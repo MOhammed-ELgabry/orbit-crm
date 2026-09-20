@@ -1,12 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import {
-  FiMenu,
-  FiHome,
-  FiUsers,
-  FiSettings,
-  FiLogOut,
-} from "react-icons/fi";
+import { FiMenu, FiHome, FiUsers, FiSettings, FiLogOut } from "react-icons/fi";
 import {
   FaBullseye,
   FaHandshake,

@@ -140,7 +140,10 @@ export class LeadRepository implements ILeadRepository {
     };
   }
 
-  async findById(companyId: string, leadId: string): Promise<LeadEntity | null> {
+  async findById(
+    companyId: string,
+    leadId: string,
+  ): Promise<LeadEntity | null> {
     const lead = await this.prisma.lead.findFirst({
       where: {
         id: leadId,

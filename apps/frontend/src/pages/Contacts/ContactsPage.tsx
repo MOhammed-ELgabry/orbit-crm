@@ -165,7 +165,10 @@ export default function ContactsPage() {
         {status === "loading" && (
           <div className="space-y-3 p-5">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="h-12 animate-pulse rounded-xl bg-slate-50" />
+              <div
+                key={i}
+                className="h-12 animate-pulse rounded-xl bg-slate-50"
+              />
             ))}
           </div>
         )}
@@ -213,7 +216,9 @@ export default function ContactsPage() {
                 {contacts.map((contact) => (
                   <tr
                     key={contact.id}
-                    onClick={() => navigate(`/dashboard/contacts/${contact.id}`)}
+                    onClick={() =>
+                      navigate(`/dashboard/contacts/${contact.id}`)
+                    }
                     className="cursor-pointer border-b border-slate-50 text-sm last:border-0 hover:bg-slate-50"
                   >
                     <td className="px-5 py-3 font-medium text-slate-700">
@@ -229,7 +234,10 @@ export default function ContactsPage() {
                       <span
                         className={`rounded-full px-2.5 py-1 text-xs font-medium ${contactStatusBadgeClass(contact.status)}`}
                       >
-                        {t(CONTACT_STATUS_LABEL_KEY[contact.status] ?? contact.status)}
+                        {t(
+                          CONTACT_STATUS_LABEL_KEY[contact.status] ??
+                            contact.status,
+                        )}
                       </span>
                     </td>
                     <td className="px-5 py-3">
@@ -282,7 +290,10 @@ export default function ContactsPage() {
                   <span
                     className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-medium ${contactStatusBadgeClass(contact.status)}`}
                   >
-                    {t(CONTACT_STATUS_LABEL_KEY[contact.status] ?? contact.status)}
+                    {t(
+                      CONTACT_STATUS_LABEL_KEY[contact.status] ??
+                        contact.status,
+                    )}
                   </span>
                 </div>
               ))}
@@ -291,7 +302,9 @@ export default function ContactsPage() {
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-xs text-slate-500">
-                <span>{total} {contactsLabel.toLowerCase()}</span>
+                <span>
+                  {total} {contactsLabel.toLowerCase()}
+                </span>
                 <div className="flex gap-2">
                   <button
                     type="button"

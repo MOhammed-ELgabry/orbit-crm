@@ -230,7 +230,9 @@ export default function ContactFormModal({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !form.firstName.trim() || !form.lastName.trim()}
+              disabled={
+                isSubmitting || !form.firstName.trim() || !form.lastName.trim()
+              }
               className="rounded-lg bg-[#605BFF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#514cf0] disabled:opacity-50"
             >
               {t("save")}

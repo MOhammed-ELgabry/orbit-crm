@@ -70,10 +70,7 @@ export default function LoginFields() {
     <>
       {/* Email */}
       <div className="flex flex-col gap-1">
-        <label
-          htmlFor="email"
-          className="text-xs font-semibold text-gray-700"
-        >
+        <label htmlFor="email" className="text-xs font-semibold text-gray-700">
           {t("email")}
         </label>
 

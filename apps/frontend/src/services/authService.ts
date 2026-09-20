@@ -91,7 +91,8 @@ export type SocialProvider = "google" | "facebook" | "microsoft";
  * Must stay in sync with the backend's BUSINESS_TYPES constant
  * (backend/src/modules/company/constants/business-type.constants.ts).
  */
-export type BusinessType = "medical_clinics" | "real_estate" | "auto_spare_parts";
+export type BusinessType =
+  "medical_clinics" | "real_estate" | "auto_spare_parts";
 
 export interface SetBusinessTypeData {
   token: string;
@@ -133,9 +134,7 @@ export const setBusinessType = async (
   return response.data;
 };
 
-export const loginUser = async (
-  data: LoginData,
-): Promise<LoginResponse> => {
+export const loginUser = async (data: LoginData): Promise<LoginResponse> => {
   const response = await api.post("/auth/login", data);
 
   return response.data;
@@ -225,8 +224,7 @@ export function openSocialAuthPopup(
       return;
     }
 
-    const popupUrl =
-      `${baseURL}/auth/social/${provider}/start`;
+    const popupUrl = `${baseURL}/auth/social/${provider}/start`;
 
     const popup = window.open(
       popupUrl,
@@ -243,9 +241,7 @@ export function openSocialAuthPopup(
 
     if (!popup) {
       reject(
-        new Error(
-          "Popup was blocked. Please allow popups for this site.",
-        ),
+        new Error("Popup was blocked. Please allow popups for this site."),
       );
       return;
     }
@@ -331,9 +327,7 @@ export function openSocialAuthPopup(
             : undefined;
 
         if (!payload?.user || typeof payload.user !== "object") {
-          finishError(
-            new Error("Invalid authentication response."),
-          );
+          finishError(new Error("Invalid authentication response."));
 
           return;
         }
@@ -355,8 +349,7 @@ export function openSocialAuthPopup(
        */
       if (data.type === ERROR_MESSAGE_TYPE) {
         const payload =
-          data.payload &&
-          typeof data.payload === "object"
+          data.payload && typeof data.payload === "object"
             ? (data.payload as {
                 message?: unknown;
               })
@@ -371,10 +364,7 @@ export function openSocialAuthPopup(
       }
     };
 
-    window.addEventListener(
-      "message",
-      handleMessage,
-    );
+    window.addEventListener("message", handleMessage);
 
     /**
      * OAuth timeout.
@@ -385,9 +375,7 @@ export function openSocialAuthPopup(
      */
     timeoutId = window.setTimeout(() => {
       finishError(
-        new Error(
-          "Authentication timed out. Please try signing in again.",
-        ),
+        new Error("Authentication timed out. Please try signing in again."),
       );
     }, SOCIAL_AUTH_TIMEOUT);
   });

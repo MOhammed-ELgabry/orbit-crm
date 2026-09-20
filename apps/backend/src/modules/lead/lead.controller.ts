@@ -52,10 +52,7 @@ export class LeadController {
     status: 201,
     description: 'Lead created successfully.',
   })
-  async create(
-    @Req() req: AuthenticatedRequest,
-    @Body() dto: CreateLeadDto,
-  ) {
+  async create(@Req() req: AuthenticatedRequest, @Body() dto: CreateLeadDto) {
     return this.leadService.create(req.user.companyId, req.user.sub, dto);
   }
 
@@ -128,7 +125,8 @@ export class LeadController {
   @RequirePermissions({ resource: 'lead', action: 'delete' })
   @ApiOperation({
     summary: 'Delete lead',
-    description: 'Soft deletes a lead scoped to the authenticated tenant company.',
+    description:
+      'Soft deletes a lead scoped to the authenticated tenant company.',
   })
   @ApiResponse({
     status: 200,

@@ -12,11 +12,9 @@ export interface DefaultRoleDefinition {
  * Owner-level privilege is carried entirely by User.isOwner (see
  * OwnerGuard), never by a Role row. See ensureDefaultRolesForCompany
  * (role/utils/ensure-default-roles.util.ts) for how this list is turned
- * into idempotent Role/RolePermission rows for brand-new companies, and
- * prisma/backfill-lead-permissions.ts for how the lead:* grants below
- * were additively backfilled onto already-existing companies' default
- * roles (ensureDefaultRolesForCompany's own upsert intentionally never
- * touches an already-existing role's permissions — see that file).
+ * into idempotent Role/RolePermission rows for a brand-new company —
+ * that function's own upsert intentionally never touches an
+ * already-existing role's permissions.
  *
  * User/Role/Company administration (the user/company/role permissions
  * below) is intentionally Owner-only in this phase — none of these 4

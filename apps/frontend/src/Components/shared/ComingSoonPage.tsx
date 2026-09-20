@@ -16,7 +16,10 @@ interface ComingSoonPageProps {
  * inventing frontend-only fake business logic for a backend that
  * doesn't exist yet.
  */
-export default function ComingSoonPage({ icon: Icon, titleKey }: ComingSoonPageProps) {
+export default function ComingSoonPage({
+  icon: Icon,
+  titleKey,
+}: ComingSoonPageProps) {
   const { t } = useTranslation();
 
   return (

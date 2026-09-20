@@ -4,7 +4,10 @@ import { useTranslation } from "react-i18next";
 import { FaChevronRight } from "react-icons/fa";
 
 import { useAuth } from "../../context/AuthContext";
-import { updateCompany, type UpdateCompanyInput } from "../../services/companyService";
+import {
+  updateCompany,
+  type UpdateCompanyInput,
+} from "../../services/companyService";
 import { BUSINESS_TYPE_COPY } from "../../config/businessType";
 import { successAlert, errorAlert } from "../../lib/swal";
 import { getErrorMessage } from "../../lib/errors";
@@ -39,9 +42,7 @@ function CompanySettingsSection() {
   const [isSaving, setIsSaving] = useState(false);
 
   if (!company) {
-    return (
-      <div className="h-40 animate-pulse rounded-2xl bg-slate-100" />
-    );
+    return <div className="h-40 animate-pulse rounded-2xl bg-slate-100" />;
   }
 
   const set = <K extends keyof UpdateCompanyInput>(
@@ -146,13 +147,17 @@ function CompanySettingsSection() {
             <select
               className={inputClass}
               value={form.businessType ?? ""}
-              onChange={(e) => set("businessType", e.target.value as BusinessType)}
+              onChange={(e) =>
+                set("businessType", e.target.value as BusinessType)
+              }
             >
-              {(Object.keys(BUSINESS_TYPE_COPY) as BusinessType[]).map((type) => (
-                <option key={type} value={type}>
-                  {t(BUSINESS_TYPE_LABEL[type])}
-                </option>
-              ))}
+              {(Object.keys(BUSINESS_TYPE_COPY) as BusinessType[]).map(
+                (type) => (
+                  <option key={type} value={type}>
+                    {t(BUSINESS_TYPE_LABEL[type])}
+                  </option>
+                ),
+              )}
             </select>
           </div>
         </fieldset>

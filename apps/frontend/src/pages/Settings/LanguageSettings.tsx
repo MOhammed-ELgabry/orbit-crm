@@ -24,9 +24,7 @@ const LANGUAGE_OPTIONS: { value: "ar" | "en"; nativeLabel: string }[] = [
 export default function LanguageSettings() {
   const { t } = useTranslation();
   const { user, updateUserSettings } = useAuth();
-  const [selected, setSelected] = useState<"ar" | "en">(
-    user?.language ?? "en",
-  );
+  const [selected, setSelected] = useState<"ar" | "en">(user?.language ?? "en");
   const [isSaving, setIsSaving] = useState(false);
 
   if (!user) {

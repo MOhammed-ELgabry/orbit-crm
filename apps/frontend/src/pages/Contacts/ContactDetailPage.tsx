@@ -1,8 +1,13 @@
-
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FiArrowLeft, FiEdit2, FiTrash2, FiMail, FiPhone } from "react-icons/fi";
+import {
+  FiArrowLeft,
+  FiEdit2,
+  FiTrash2,
+  FiMail,
+  FiPhone,
+} from "react-icons/fi";
 
 import { useAuth } from "../../context/AuthContext";
 import { getBusinessTypeCopy } from "../../config/businessType";
@@ -196,9 +201,7 @@ export default function ContactDetailPage() {
           <span
             className={`mt-2 inline-block rounded-full px-2.5 py-1 text-xs font-medium ${contactStatusBadgeClass(contact.status)}`}
           >
-            {t(
-              CONTACT_STATUS_LABEL_KEY[contact.status] ?? contact.status,
-            )}
+            {t(CONTACT_STATUS_LABEL_KEY[contact.status] ?? contact.status)}
           </span>
 
           <div className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4 text-sm">

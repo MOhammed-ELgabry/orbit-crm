@@ -1,5 +1,9 @@
 import api from "./api";
-import type { ApiEnvelope, PaginatedEnvelope, PaginationMeta } from "../types/api";
+import type {
+  ApiEnvelope,
+  PaginatedEnvelope,
+  PaginationMeta,
+} from "../types/api";
 import type {
   Activity,
   ActivityQuery,
@@ -31,10 +35,7 @@ export const getActivity = async (id: string): Promise<Activity> => {
 export const createActivity = async (
   input: CreateActivityInput,
 ): Promise<Activity> => {
-  const response = await api.post<ApiEnvelope<Activity>>(
-    "/activities",
-    input,
-  );
+  const response = await api.post<ApiEnvelope<Activity>>("/activities", input);
 
   return response.data.data;
 };
@@ -60,4 +61,9 @@ export const listContactTimeline = async (
   contactId: string,
   query: Omit<ActivityQuery, "contactId"> = {},
 ): Promise<ActivityListResult> =>
-  listActivities({ ...query, contactId, sortBy: "occurredAt", sortOrder: "desc" });
+  listActivities({
+    ...query,
+    contactId,
+    sortBy: "occurredAt",
+    sortOrder: "desc",
+  });

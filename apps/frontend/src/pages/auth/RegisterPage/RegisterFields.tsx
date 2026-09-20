@@ -248,10 +248,7 @@ export default function RegisterFields() {
 
       {/* Email */}
       <div className="flex w-full flex-col gap-1">
-        <label
-          htmlFor="email"
-          className="text-xs font-semibold text-gray-700"
-        >
+        <label htmlFor="email" className="text-xs font-semibold text-gray-700">
           {t("email")}
         </label>
 
@@ -326,9 +323,7 @@ export default function RegisterFields() {
             className="text-xs font-semibold text-gray-700"
           >
             {t("avatar")}{" "}
-            <span className="font-normal text-gray-400">
-              ({t("optional")})
-            </span>
+            <span className="font-normal text-gray-400">({t("optional")})</span>
           </label>
 
           <Field
@@ -352,9 +347,7 @@ export default function RegisterFields() {
             className="text-xs font-semibold text-gray-700"
           >
             {t("phone")}{" "}
-            <span className="font-normal text-gray-400">
-              ({t("optional")})
-            </span>
+            <span className="font-normal text-gray-400">({t("optional")})</span>
           </label>
 
           <Field

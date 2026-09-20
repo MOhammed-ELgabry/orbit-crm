@@ -37,7 +37,10 @@ export default function IndustryCard({
           selected ? "bg-[#605BFF]" : "bg-[#F0EDFF]"
         }`}
       >
-        <Icon size={22} className={selected ? "text-white" : "text-[#605BFF]"} />
+        <Icon
+          size={22}
+          className={selected ? "text-white" : "text-[#605BFF]"}
+        />
       </div>
 
       <div>

@@ -14,16 +14,26 @@ interface RoleUpsertArgs {
   };
 }
 
+interface PermissionUpsertArgs {
+  where: { resource_action: { resource: string; action: string } };
+  update: Record<string, never>;
+  create: { resource: string; action: string };
+}
+
 describe('ensureDefaultRolesForCompany', () => {
   const companyId = 'company-1';
 
-  // Mirrors the real Permission catalog shape closely enough for this
-  // function's purposes: id + resource + action.
+  // Mirrors the real Permission catalog (PERMISSION_CATALOG) exactly:
+  // id + resource + action, contact/lead/activity/user/company/role.
   const mockPermissions = [
     { id: 'perm-contact-create', resource: 'contact', action: 'create' },
     { id: 'perm-contact-read', resource: 'contact', action: 'read' },
     { id: 'perm-contact-update', resource: 'contact', action: 'update' },
     { id: 'perm-contact-delete', resource: 'contact', action: 'delete' },
+    { id: 'perm-lead-create', resource: 'lead', action: 'create' },
+    { id: 'perm-lead-read', resource: 'lead', action: 'read' },
+    { id: 'perm-lead-update', resource: 'lead', action: 'update' },
+    { id: 'perm-lead-delete', resource: 'lead', action: 'delete' },
     { id: 'perm-activity-create', resource: 'activity', action: 'create' },
     { id: 'perm-activity-read', resource: 'activity', action: 'read' },
     { id: 'perm-activity-update', resource: 'activity', action: 'update' },
@@ -40,6 +50,13 @@ describe('ensureDefaultRolesForCompany', () => {
   const makePrismaMock = () => ({
     permission: {
       findMany: jest.fn().mockResolvedValue(mockPermissions),
+      // Not expected to be called at all while mockPermissions above is
+      // complete (see "never calls permission.upsert..." below) — mocked
+      // anyway so any test that does trigger the self-heal path doesn't
+      // crash with "not a function".
+      upsert: jest
+        .fn<Promise<{ id: string }>, [PermissionUpsertArgs]>()
+        .mockResolvedValue({ id: 'perm-unexpected-upsert' }),
     },
     role: {
       upsert: jest
@@ -86,7 +103,7 @@ describe('ensureDefaultRolesForCompany', () => {
     }
   });
 
-  it("MANAGER's create payload attaches exactly its 8 default permission ids", async () => {
+  it("MANAGER's create payload attaches exactly its 12 default permission ids (contact + lead + activity CRUD)", async () => {
     const prisma = makePrismaMock();
 
     await ensureDefaultRolesForCompany(prisma as never, companyId);
@@ -108,6 +125,10 @@ describe('ensureDefaultRolesForCompany', () => {
         'perm-contact-read',
         'perm-contact-update',
         'perm-contact-delete',
+        'perm-lead-create',
+        'perm-lead-read',
+        'perm-lead-update',
+        'perm-lead-delete',
         'perm-activity-create',
         'perm-activity-read',
         'perm-activity-update',
@@ -116,7 +137,7 @@ describe('ensureDefaultRolesForCompany', () => {
     );
   });
 
-  it("EMPLOYEE's create payload is read-only (contact:read + activity:read)", async () => {
+  it("EMPLOYEE's create payload is read-only (contact:read + lead:read + activity:read)", async () => {
     const prisma = makePrismaMock();
 
     await ensureDefaultRolesForCompany(prisma as never, companyId);
@@ -133,7 +154,7 @@ describe('ensureDefaultRolesForCompany', () => {
     );
 
     expect(grantedIds.sort()).toEqual(
-      ['perm-contact-read', 'perm-activity-read'].sort(),
+      ['perm-contact-read', 'perm-lead-read', 'perm-activity-read'].sort(),
     );
   });
 
@@ -158,15 +179,78 @@ describe('ensureDefaultRolesForCompany', () => {
     }
   });
 
-  it('throws a clear error if a required permission is missing from the catalog (seed-ordering bug), instead of silently seeding an incomplete role', async () => {
+  it('never calls permission.upsert when the catalog already has everything a default role needs (steady-state cost is unchanged)', async () => {
     const prisma = makePrismaMock();
-    // Simulate the permission seed not having run yet.
+
+    await ensureDefaultRolesForCompany(prisma as never, companyId);
+
+    expect(prisma.permission.upsert).not.toHaveBeenCalled();
+    expect(prisma.permission.findMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('self-heals: upserts only the permissions actually missing from an incomplete catalog, then proceeds normally', async () => {
+    const prisma = makePrismaMock();
+
+    // The exact production scenario this fix targets: a catalog seeded
+    // before the Lead feature shipped — every non-lead permission is
+    // present, but all 4 lead:* rows are missing.
+    const catalogMissingLead = mockPermissions.filter(
+      (permission) => permission.resource !== 'lead',
+    );
+
+    prisma.permission.findMany
+      .mockResolvedValueOnce(catalogMissingLead) // first read: lead:* missing
+      .mockResolvedValueOnce(mockPermissions); // re-read after healing: complete
+
+    prisma.permission.upsert.mockImplementation(({ create }) =>
+      Promise.resolve({ id: `perm-${create.resource}-${create.action}` }),
+    );
+
+    await ensureDefaultRolesForCompany(prisma as never, companyId);
+
+    // Only the 4 missing lead:* rows were upserted — nothing already
+    // present (contact/activity/user/company/role) was touched.
+    expect(prisma.permission.upsert).toHaveBeenCalledTimes(4);
+
+    const upsertedKeys = new Set(
+      prisma.permission.upsert.mock.calls.map(
+        ([args]) => `${args.create.resource}:${args.create.action}`,
+      ),
+    );
+    expect(upsertedKeys).toEqual(
+      new Set(['lead:create', 'lead:read', 'lead:update', 'lead:delete']),
+    );
+
+    // Every upsert used the schema's own (resource, action) natural
+    // key, and a genuine no-op update — never overwrites an existing row.
+    for (const [args] of prisma.permission.upsert.mock.calls) {
+      expect(args.where.resource_action.resource).toBe(args.create.resource);
+      expect(args.where.resource_action.action).toBe(args.create.action);
+      expect(args.update).toEqual({});
+    }
+
+    // And role creation still proceeded normally afterward, with all 4
+    // roles correctly granted their lead:* permissions.
+    expect(prisma.role.upsert).toHaveBeenCalledTimes(4);
+  });
+
+  it('throws a clear error if a required permission is still missing even after attempting to self-heal the catalog', async () => {
+    const prisma = makePrismaMock();
+    // Simulate a catalog that can never be healed (e.g. a deeper
+    // database problem) — findMany reports nothing, before or after
+    // the self-heal's upsert attempts.
     prisma.permission.findMany.mockResolvedValue([]);
 
     await expect(
       ensureDefaultRolesForCompany(prisma as never, companyId),
-    ).rejects.toThrow(/permission "contact:create".*not found/);
+    ).rejects.toThrow(
+      /permission "contact:create".*could not be created or found.*self-heal/,
+    );
 
+    // It did attempt to self-heal before giving up — this is a "still
+    // broken after trying" failure, not the old "nobody ran the seed"
+    // failure.
+    expect(prisma.permission.upsert).toHaveBeenCalled();
     expect(prisma.role.upsert).not.toHaveBeenCalled();
   });
 });

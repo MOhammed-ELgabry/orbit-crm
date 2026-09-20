@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import {
-  FiUsers,
-  FiActivity,
-  FiCalendar,
-  FiArrowRight,
-} from "react-icons/fi";
+import { FiUsers, FiActivity, FiCalendar, FiArrowRight } from "react-icons/fi";
 
 import { useAuth } from "../../context/AuthContext";
 import { getBusinessTypeCopy } from "../../config/businessType";
-import { getDashboardStats, type DashboardStats } from "../../services/dashboardService";
-import { listContacts, contactDisplayName } from "../../services/contactService";
+import {
+  getDashboardStats,
+  type DashboardStats,
+} from "../../services/dashboardService";
+import {
+  listContacts,
+  contactDisplayName,
+} from "../../services/contactService";
 import type { Contact } from "../../types/contact";
 import StatCard from "./StatCard";
 import ActivityTimeline from "../Activity/ActivityTimeline";
@@ -45,9 +46,9 @@ export default function BusinessDashboard() {
     "loading",
   );
   const [recentContacts, setRecentContacts] = useState<Contact[]>([]);
- const [contactsStatus, setContactsStatus] = useState<
-  "loading" | "ready" | "error"
->("loading");
+  const [contactsStatus, setContactsStatus] = useState<
+    "loading" | "ready" | "error"
+  >("loading");
 
   useEffect(() => {
     let cancelled = false;
@@ -151,7 +152,10 @@ export default function BusinessDashboard() {
             {contactsStatus === "loading" && (
               <div className="space-y-3">
                 {[0, 1, 2].map((i) => (
-                  <div key={i} className="h-10 animate-pulse rounded-lg bg-slate-50" />
+                  <div
+                    key={i}
+                    className="h-10 animate-pulse rounded-lg bg-slate-50"
+                  />
                 ))}
               </div>
             )}
