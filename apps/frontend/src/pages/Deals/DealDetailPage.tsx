@@ -30,9 +30,9 @@ export default function DealDetailPage() {
   const canDelete = hasPermission("deal:delete");
 
   const [deal, setDeal] = useState<Deal | null>(null);
-  const [status, setStatus] = useState
-    "loading" | "ready" | "error" | "not-found"
-  >("loading");
+const [status, setStatus] = useState<
+  "loading" | "ready" | "error" | "not-found"
+>("loading");
   const [isEditing, setIsEditing] = useState(false);
 
   // Only for showing the assignee's name — see DealsPage for the same
