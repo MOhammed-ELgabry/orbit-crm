@@ -9,6 +9,7 @@ import { UpdateActivityDto } from './dto/update-activity.dto';
 import { ActivityEntity } from './entities/activity.entity';
 import type {
   ActivityRepositoryResult,
+  DealActivityEventInput,
   IActivityRepository,
 } from './repository/activity.repository.interface';
 
@@ -54,6 +55,32 @@ export class ActivityService {
     }
 
     return this.activityRepository.create(companyId, createdById, dto);
+  }
+
+  /**
+   * Logs a system-generated activity for a deal — DealService calls
+   * this after create/update/delete so a deal's lifecycle shows up in
+   * the same Activity model everything else uses (ACTIVITY_TYPES
+   * already had 'SYSTEM' and 'STATUS_CHANGE' before Deal existed).
+   *
+   * Deliberately not reachable from ActivityController / the public
+   * CreateActivityDto: `input.dealId` is trusted here precisely because
+   * the only caller is DealService, which has already loaded/confirmed
+   * that exact deal within `companyId` as part of the same request —
+   * unlike CreateActivityDto.contactId above, there is no untrusted
+   * client input to re-validate. Never call this with a dealId that
+   * didn't come from a DealService lookup already scoped to `companyId`.
+   */
+  async logDealEvent(
+    companyId: string,
+    createdById: string,
+    input: DealActivityEventInput,
+  ): Promise<ActivityEntity> {
+    return this.activityRepository.createDealEvent(
+      companyId,
+      createdById,
+      input,
+    );
   }
 
   async findAll(

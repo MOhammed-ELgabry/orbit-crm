@@ -81,7 +81,7 @@ export class UserRepository implements IUserRepository {
     limit: number,
   ): Promise<UserEntity> {
     return this.prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${data.companyId})::bigint)`;
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${data.companyId})::bigint)`;
 
       const currentUserCount = await tx.user.count({
         where: {

@@ -15,11 +15,31 @@ export interface ActivityRepositoryResult {
   };
 }
 
+/**
+ * Shape for a Deal-originated system activity — deliberately not
+ * CreateActivityDto: dealId here is trusted (the only caller,
+ * DealService, has already confirmed it belongs to the company), while
+ * CreateActivityDto's fields are all still validated from an untrusted
+ * HTTP body. See ActivityService.logDealEvent.
+ */
+export interface DealActivityEventInput {
+  type: string;
+  title: string;
+  description?: string;
+  dealId: string;
+}
+
 export interface IActivityRepository {
   create(
     companyId: string,
     createdById: string,
     dto: CreateActivityDto,
+  ): Promise<ActivityEntity>;
+
+  createDealEvent(
+    companyId: string,
+    createdById: string,
+    input: DealActivityEventInput,
   ): Promise<ActivityEntity>;
 
   findAll(

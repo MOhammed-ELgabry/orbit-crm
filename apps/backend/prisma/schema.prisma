@@ -34,6 +34,7 @@ model Company {
   roles            Role[]
   contacts         Contact[]
   leads            Lead[]
+  deals            Deal[]
   onboardingTokens OnboardingToken[]
   activities       Activity[]
 
@@ -121,6 +122,10 @@ model User {
   // Leads
   leadsCreated  Lead[] @relation("LeadCreatedBy")
   leadsAssigned Lead[] @relation("LeadAssignedTo")
+
+  // Deals
+  dealsCreated  Deal[] @relation("DealCreatedBy")
+  dealsAssigned Deal[] @relation("DealAssignedTo")
 
   // Activities
   activitiesCreated Activity[] @relation("ActivityCreatedBy")
@@ -316,6 +321,9 @@ model Contact {
   // Activities
   activities Activity[]
 
+  // Deals
+  deals Deal[]
+
   // Audit
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -367,6 +375,9 @@ model Lead {
   assignedToId String?
   assignedTo   User?   @relation("LeadAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
 
+  // Deals
+  deals Deal[]
+
   // Audit
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -411,6 +422,14 @@ model Activity {
   contactId String?
   contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
 
+  // Optional Deal association — added alongside the Deal model so a
+  // deal's lifecycle events (see DealService) have somewhere to live,
+  // mirroring the Contact association above exactly. 'SYSTEM' and
+  // 'STATUS_CHANGE' already existed in ACTIVITY_TYPES before Deal did —
+  // this reuses that existing vocabulary rather than adding a new one.
+  dealId String?
+  deal   Deal?   @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
   // Audit
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -421,7 +440,81 @@ model Activity {
   @@index([companyId, occurredAt])
   @@index([companyId, type])
   @@index([companyId, contactId])
+  @@index([companyId, dealId])
   @@index([createdById])
   @@index([contactId])
+  @@index([dealId])
+  @@index([deletedAt])
+}
+
+// A sales opportunity, optionally linked to a Contact and/or a Lead.
+// Both links are independent and nullable — creating a Deal never
+// requires converting a Lead into a Contact first, and this schema
+// deliberately doesn't implement Lead -> Contact conversion (see the
+// comment on Lead above for why); a Deal may reference either, both, or
+// neither. Every deal belongs to exactly one tenant company.
+//
+// stage doubles as the outcome (CLOSED_WON/CLOSED_LOST are stages, not
+// a separate status field) — the same one-field-per-lifecycle choice
+// already made for Lead.status/Contact.status, and it avoids a second
+// field that could contradict the first (e.g. stage: negotiation but
+// status: closed_lost). See DEAL_STAGES (deal/constants/deal.constants.ts)
+// for the actual whitelist, enforced at the application layer exactly
+// like LEAD_STATUSES/CONTACT_STATUSES — adjusting it never requires a
+// migration.
+//
+// No currency field: nothing else in this schema has a monetary/
+// currency concept yet (no Company-level currency, no conversion
+// logic), so amount is a plain, single-currency Decimal rather than a
+// half-built multi-currency system with no display or conversion logic
+// anywhere to back it.
+model Deal {
+  id String @id @default(cuid())
+
+  // Tenant
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Core Information
+  title  String
+  amount Decimal @default(0) @db.Decimal(12, 2)
+
+  // CRM Information
+  stage             String    @default("new")
+  notes             String?
+  expectedCloseDate DateTime?
+
+  // Associations — independent and optional, see model comment above
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  leadId String?
+  lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  // Ownership / Assignment
+  createdById String
+  createdBy   User   @relation("DealCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  assignedToId String?
+  assignedTo   User?   @relation("DealAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  // Activities
+  activities Activity[]
+
+  // Audit
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([companyId])
+  @@index([companyId, deletedAt])
+  @@index([companyId, stage])
+  @@index([companyId, assignedToId])
+  @@index([companyId, contactId])
+  @@index([companyId, expectedCloseDate])
+  @@index([createdById])
+  @@index([assignedToId])
+  @@index([contactId])
+  @@index([leadId])
   @@index([deletedAt])
 }

@@ -98,7 +98,8 @@ const en = {
   realEstateDescription: "Manage properties, leads, clients and deals.",
 
   autoSpareParts: "Auto Spare Parts",
-  autoSparePartsDescription: "Manage inventory, suppliers, orders and sales.",
+  autoSparePartsDescription:
+    "Manage inventory, suppliers, orders and sales.",
 
   continue: "Continue",
 
@@ -145,7 +146,8 @@ const en = {
     "We couldn't resend the verification code. Please try again.",
 
   businessTypeSuccessTitle: "Business Type Saved",
-  businessTypeSuccessMessage: "Your business type has been saved successfully.",
+  businessTypeSuccessMessage:
+    "Your business type has been saved successfully.",
   businessTypeFailedTitle: "Couldn't Save Business Type",
   businessTypeFailedMessage:
     "We couldn't save your business type. Please try again.",
@@ -245,6 +247,29 @@ const en = {
   leadStatusUnqualified: "Unqualified",
   leadStatusLost: "Lost",
 
+  // Deals page
+  deal: "Deal",
+  addDeal: "Add Deal",
+  editDeal: "Edit Deal",
+  dealTitle: "Title",
+  dealAmount: "Amount",
+  dealStage: "Stage",
+  dealExpectedCloseDate: "Expected Close Date",
+  dealContact: "Contact",
+  dealLead: "Lead",
+  dealNoneOption: "None",
+  searchDealsPlaceholder: "Search by deal title...",
+  allStages: "All Stages",
+  noDealsFoundTitle: "No deals yet",
+  noDealsFoundDescription: "Add your first deal to get started.",
+  deleteDealConfirm: "Delete this deal? This cannot be undone.",
+  dealStageNew: "New",
+  dealStageQualification: "Qualification",
+  dealStageProposal: "Proposal",
+  dealStageNegotiation: "Negotiation",
+  dealStageClosedWon: "Closed Won",
+  dealStageClosedLost: "Closed Lost",
+
   // Activity timeline
   activityTimelineTitle: "Timeline",
   logActivity: "Log Activity",
@@ -278,8 +303,7 @@ const en = {
   roleNameSupport: "Support",
   roleNameEmployee: "Employee",
   teamMemberAdded: "Team member added",
-  addTeamMemberDescription:
-    "New members can sign in immediately with the password you set here.",
+  addTeamMemberDescription: "New members can sign in immediately with the password you set here.",
   noTeamMembersYet: "No team members yet",
   you: "You",
 
@@ -296,15 +320,13 @@ const en = {
 
   // Settings — Language
   languageSettingsTitle: "Language",
-  languageSettingsDescription:
-    "Choose the language used throughout the application.",
+  languageSettingsDescription: "Choose the language used throughout the application.",
   currentLanguageLabel: "Interface language",
   saveLanguage: "Save Language",
 
   // Settings — Appearance
   appearanceSettingsTitle: "Appearance",
-  appearanceSettingsDescription:
-    "Choose a background color for the main content area. A readable text color is applied automatically.",
+  appearanceSettingsDescription: "Choose a background color for the main content area. A readable text color is applied automatically.",
   backgroundColorLabel: "Background color",
   backgroundColorHexLabel: "Hex value",
   backgroundColorInvalid: "Enter a valid 6-digit hex color, e.g. #F6F8FC.",
@@ -329,8 +351,7 @@ const en = {
   reportsNavLabel: "Reports",
   settingsNavLabel: "Settings",
   logoutConfirmTitle: "Log out?",
-  logoutConfirmMessage:
-    "You'll need to sign in again to access your dashboard.",
+  logoutConfirmMessage: "You'll need to sign in again to access your dashboard.",
   loadMore: "Load more",
 };
 

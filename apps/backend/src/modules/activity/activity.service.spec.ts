@@ -44,6 +44,7 @@ describe('ActivityService', () => {
   beforeEach(() => {
     activityRepository = {
       create: jest.fn(),
+      createDealEvent: jest.fn(),
       findAll: jest.fn(),
       findById: jest.fn(),
       update: jest.fn(),
@@ -196,7 +197,7 @@ describe('ActivityService', () => {
       activityRepository.update.mockResolvedValue({
         ...activity,
         title: 'Updated',
-      } as ActivityEntity);
+      });
 
       const result = await service.update(companyId, activityId, {
         title: 'Updated',
@@ -216,6 +217,25 @@ describe('ActivityService', () => {
       await expect(
         service.remove(companyId, activityId),
       ).resolves.toBeUndefined();
+    });
+  });
+
+  describe('logDealEvent', () => {
+    it('delegates straight to the repository with a trusted dealId — no contactService lookup involved', async () => {
+      activityRepository.createDealEvent.mockResolvedValue(activity);
+
+      await service.logDealEvent(companyId, 'user-1', {
+        type: 'SYSTEM',
+        title: 'Deal created: Acme renewal',
+        dealId: 'deal-1',
+      });
+
+      expect(activityRepository.createDealEvent).toHaveBeenCalledWith(
+        companyId,
+        'user-1',
+        expect.objectContaining({ dealId: 'deal-1' }),
+      );
+      expect(contactService.findById).not.toHaveBeenCalled();
     });
   });
 });

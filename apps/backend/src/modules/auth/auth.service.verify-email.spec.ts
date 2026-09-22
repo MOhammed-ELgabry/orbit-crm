@@ -41,6 +41,10 @@ const mockPermissions = [
   { id: 'perm-lead-read', resource: 'lead', action: 'read' },
   { id: 'perm-lead-update', resource: 'lead', action: 'update' },
   { id: 'perm-lead-delete', resource: 'lead', action: 'delete' },
+  { id: 'perm-deal-create', resource: 'deal', action: 'create' },
+  { id: 'perm-deal-read', resource: 'deal', action: 'read' },
+  { id: 'perm-deal-update', resource: 'deal', action: 'update' },
+  { id: 'perm-deal-delete', resource: 'deal', action: 'delete' },
   { id: 'perm-activity-create', resource: 'activity', action: 'create' },
   { id: 'perm-activity-read', resource: 'activity', action: 'read' },
   { id: 'perm-activity-update', resource: 'activity', action: 'update' },
@@ -162,9 +166,7 @@ describe('AuthService.verifyEmail — F4: concurrent verification', () => {
 
     expect(fulfilled).toHaveLength(1);
     expect(rejected).toHaveLength(1);
-    expect((rejected[0] as PromiseRejectedResult).reason).toBeInstanceOf(
-      BadRequestException,
-    );
+    expect(rejected[0].reason).toBeInstanceOf(BadRequestException);
 
     // The core "no orphan Company" guarantee.
     expect(companyCreate).toHaveBeenCalledTimes(1);

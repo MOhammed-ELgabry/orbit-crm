@@ -15,6 +15,7 @@ import UsersPage from "./pages/Users/UsersPage";
 import LeadsPage from "./pages/Leads/LeadsPage";
 import LeadDetailPage from "./pages/Leads/LeadDetailPage";
 import DealsPage from "./pages/Deals/DealsPage";
+import DealDetailPage from "./pages/Deals/DealDetailPage";
 import TasksPage from "./pages/Tasks/TasksPage";
 import CalendarPage from "./pages/Calendar/CalendarPage";
 import SettingsPage from "./pages/Settings/SettingsPage";
@@ -56,6 +57,7 @@ function App() {
               <Route path="leads/:id" element={<LeadDetailPage />} />
 
               <Route path="deals" element={<DealsPage />} />
+              <Route path="deals/:id" element={<DealDetailPage />} />
 
               <Route path="tasks" element={<TasksPage />} />
 

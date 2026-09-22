@@ -88,7 +88,8 @@ const ar = {
   // (medical_clinics / real_estate / auto_spare_parts).
   welcomeToOrbit: "مرحبًا بك في Orbit CRM",
   chooseBusinessIndustry: "اختر مجال عملك",
-  chooseWorkspaceDescription: "اختر مساحة العمل التي تناسب نشاطك التجاري.",
+  chooseWorkspaceDescription:
+    "اختر مساحة العمل التي تناسب نشاطك التجاري.",
 
   medicalClinics: "العيادات الطبية",
   medicalClinicsDescription: "إدارة المرضى والمواعيد والعلاجات.",
@@ -118,8 +119,7 @@ const ar = {
   genericErrorMessage: "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
 
   loginFailedTitle: "فشل تسجيل الدخول",
-  loginFailedMessage:
-    "البريد الإلكتروني أو كلمة المرور غير صحيحة. حاول مرة أخرى.",
+  loginFailedMessage: "البريد الإلكتروني أو كلمة المرور غير صحيحة. حاول مرة أخرى.",
   loginSuccessTitle: "مرحبًا بعودتك",
   loginSuccessMessage: "تم تسجيل دخولك بنجاح.",
 
@@ -139,14 +139,12 @@ const ar = {
   resendCodeSuccessTitle: "تم إعادة إرسال الرمز",
   resendCodeSuccessMessage: "تم إرسال رمز تحقق جديد إلى بريدك الإلكتروني.",
   resendCodeFailedTitle: "تعذر إعادة إرسال الرمز",
-  resendCodeFailedMessage:
-    "تعذر إعادة إرسال رمز التحقق. يرجى المحاولة مرة أخرى.",
+  resendCodeFailedMessage: "تعذر إعادة إرسال رمز التحقق. يرجى المحاولة مرة أخرى.",
 
   businessTypeSuccessTitle: "تم حفظ نوع النشاط",
   businessTypeSuccessMessage: "تم حفظ نوع نشاطك التجاري بنجاح.",
   businessTypeFailedTitle: "تعذر حفظ نوع النشاط",
-  businessTypeFailedMessage:
-    "تعذر حفظ نوع نشاطك التجاري. يرجى المحاولة مرة أخرى.",
+  businessTypeFailedMessage: "تعذر حفظ نوع نشاطك التجاري. يرجى المحاولة مرة أخرى.",
 
   forgotPasswordSuccessTitle: "تحقق من بريدك الإلكتروني",
   forgotPasswordSuccessMessage:
@@ -241,6 +239,29 @@ const ar = {
   leadStatusUnqualified: "غير مؤهل",
   leadStatusLost: "خسارة",
 
+  // صفحة الصفقات (Deals)
+  deal: "صفقة",
+  addDeal: "إضافة صفقة",
+  editDeal: "تعديل صفقة",
+  dealTitle: "العنوان",
+  dealAmount: "القيمة",
+  dealStage: "المرحلة",
+  dealExpectedCloseDate: "تاريخ الإغلاق المتوقع",
+  dealContact: "جهة الاتصال",
+  dealLead: "العميل المحتمل",
+  dealNoneOption: "بدون",
+  searchDealsPlaceholder: "ابحث بعنوان الصفقة...",
+  allStages: "كل المراحل",
+  noDealsFoundTitle: "لا توجد صفقات بعد",
+  noDealsFoundDescription: "أضف أول صفقة للبدء.",
+  deleteDealConfirm: "حذف هذه الصفقة؟ لا يمكن التراجع عن ذلك.",
+  dealStageNew: "جديدة",
+  dealStageQualification: "التأهيل",
+  dealStageProposal: "العرض",
+  dealStageNegotiation: "التفاوض",
+  dealStageClosedWon: "مغلقة - ربح",
+  dealStageClosedLost: "مغلقة - خسارة",
+
   // الخط الزمني للنشاط
   activityTimelineTitle: "الخط الزمني",
   logActivity: "تسجيل نشاط",
@@ -274,8 +295,7 @@ const ar = {
   roleNameSupport: "دعم",
   roleNameEmployee: "موظف",
   teamMemberAdded: "تمت إضافة عضو الفريق",
-  addTeamMemberDescription:
-    "يمكن للأعضاء الجدد تسجيل الدخول فورًا باستخدام كلمة المرور التي تحددها هنا.",
+  addTeamMemberDescription: "يمكن للأعضاء الجدد تسجيل الدخول فورًا باستخدام كلمة المرور التي تحددها هنا.",
   noTeamMembersYet: "لا يوجد أعضاء فريق بعد",
   you: "أنت",
 
@@ -298,8 +318,7 @@ const ar = {
 
   // الإعدادات — المظهر
   appearanceSettingsTitle: "المظهر",
-  appearanceSettingsDescription:
-    "اختر لون خلفية منطقة المحتوى الرئيسية. سيتم تطبيق لون نص مناسب للقراءة تلقائيًا.",
+  appearanceSettingsDescription: "اختر لون خلفية منطقة المحتوى الرئيسية. سيتم تطبيق لون نص مناسب للقراءة تلقائيًا.",
   backgroundColorLabel: "لون الخلفية",
   backgroundColorHexLabel: "القيمة السداسية عشرية",
   backgroundColorInvalid: "أدخل لونًا صالحًا مكوّنًا من 6 خانات، مثل ‎#F6F8FC.",
@@ -324,8 +343,7 @@ const ar = {
   reportsNavLabel: "التقارير",
   settingsNavLabel: "الإعدادات",
   logoutConfirmTitle: "تسجيل الخروج؟",
-  logoutConfirmMessage:
-    "ستحتاج إلى تسجيل الدخول مرة أخرى للوصول إلى لوحة التحكم.",
+  logoutConfirmMessage: "ستحتاج إلى تسجيل الدخول مرة أخرى للوصول إلى لوحة التحكم.",
   loadMore: "عرض المزيد",
 };
 

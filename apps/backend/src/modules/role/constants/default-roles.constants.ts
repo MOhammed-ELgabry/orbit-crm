@@ -7,20 +7,20 @@ export interface DefaultRoleDefinition {
 /**
  * The 4 default staff roles every company gets — MANAGER, SALES,
  * SUPPORT, EMPLOYEE — and the permission grant each starts with,
- * exactly as agreed in the Phase 2 spec (contact/activity) and the
- * Leads spec (lead). There is deliberately no OWNER entry here:
- * Owner-level privilege is carried entirely by User.isOwner (see
- * OwnerGuard), never by a Role row. See ensureDefaultRolesForCompany
- * (role/utils/ensure-default-roles.util.ts) for how this list is turned
- * into idempotent Role/RolePermission rows for a brand-new company —
- * that function's own upsert intentionally never touches an
- * already-existing role's permissions.
+ * exactly as agreed in the Phase 2 spec (contact/activity), the Leads
+ * spec (lead), and the Deals spec (deal). There is deliberately no
+ * OWNER entry here: Owner-level privilege is carried entirely by
+ * User.isOwner (see OwnerGuard), never by a Role row. See
+ * ensureDefaultRolesForCompany (role/utils/ensure-default-roles.util.ts)
+ * for how this list is turned into idempotent Role/RolePermission rows
+ * for a brand-new company — that function's own upsert intentionally
+ * never touches an already-existing role's permissions.
  *
  * User/Role/Company administration (the user/company/role permissions
  * below) is intentionally Owner-only in this phase — none of these 4
  * roles are granted user:create/read/update/delete, company:read/update,
- * or role:manage. Only the contact, lead, and activity permissions are
- * in active use by any of them; the others would currently have no
+ * or role:manage. Only the contact, lead, deal, and activity permissions
+ * are in active use by any of them; the others would currently have no
  * effect even if granted, since UserController/RoleController/
  * CompanyController mutations check OwnerGuard only, not
  * PermissionsGuard — granting them here would be misleading dead
@@ -30,9 +30,10 @@ export const DEFAULT_ROLE_DEFINITIONS: readonly DefaultRoleDefinition[] = [
   {
     name: 'MANAGER',
     description:
-      'Full operational access to contacts, leads, and activities for ' +
-      'the company. The highest normal staff role — still cannot ' +
-      'manage users, roles, company settings, or become Owner.',
+      'Full operational access to contacts, leads, deals, and ' +
+      'activities for the company. The highest normal staff role — ' +
+      'still cannot manage users, roles, company settings, or become ' +
+      'Owner.',
     permissions: [
       { resource: 'contact', action: 'create' },
       { resource: 'contact', action: 'read' },
@@ -42,6 +43,10 @@ export const DEFAULT_ROLE_DEFINITIONS: readonly DefaultRoleDefinition[] = [
       { resource: 'lead', action: 'read' },
       { resource: 'lead', action: 'update' },
       { resource: 'lead', action: 'delete' },
+      { resource: 'deal', action: 'create' },
+      { resource: 'deal', action: 'read' },
+      { resource: 'deal', action: 'update' },
+      { resource: 'deal', action: 'delete' },
       { resource: 'activity', action: 'create' },
       { resource: 'activity', action: 'read' },
       { resource: 'activity', action: 'update' },
@@ -51,8 +56,8 @@ export const DEFAULT_ROLE_DEFINITIONS: readonly DefaultRoleDefinition[] = [
   {
     name: 'SALES',
     description:
-      'Sales-focused access: can create and work contacts, leads, and ' +
-      'activities, but cannot delete them.',
+      'Sales-focused access: can create and work contacts, leads, ' +
+      'deals, and activities, but cannot delete any of them.',
     permissions: [
       { resource: 'contact', action: 'create' },
       { resource: 'contact', action: 'read' },
@@ -60,6 +65,9 @@ export const DEFAULT_ROLE_DEFINITIONS: readonly DefaultRoleDefinition[] = [
       { resource: 'lead', action: 'create' },
       { resource: 'lead', action: 'read' },
       { resource: 'lead', action: 'update' },
+      { resource: 'deal', action: 'create' },
+      { resource: 'deal', action: 'read' },
+      { resource: 'deal', action: 'update' },
       { resource: 'activity', action: 'create' },
       { resource: 'activity', action: 'read' },
       { resource: 'activity', action: 'update' },
@@ -69,7 +77,7 @@ export const DEFAULT_ROLE_DEFINITIONS: readonly DefaultRoleDefinition[] = [
     name: 'SUPPORT',
     description:
       'Support-focused access: can create and work contacts, leads, ' +
-      'and activities, but cannot delete them.',
+      'deals, and activities, but cannot delete any of them.',
     permissions: [
       { resource: 'contact', action: 'create' },
       { resource: 'contact', action: 'read' },
@@ -77,6 +85,9 @@ export const DEFAULT_ROLE_DEFINITIONS: readonly DefaultRoleDefinition[] = [
       { resource: 'lead', action: 'create' },
       { resource: 'lead', action: 'read' },
       { resource: 'lead', action: 'update' },
+      { resource: 'deal', action: 'create' },
+      { resource: 'deal', action: 'read' },
+      { resource: 'deal', action: 'update' },
       { resource: 'activity', action: 'create' },
       { resource: 'activity', action: 'read' },
       { resource: 'activity', action: 'update' },
@@ -86,10 +97,11 @@ export const DEFAULT_ROLE_DEFINITIONS: readonly DefaultRoleDefinition[] = [
     name: 'EMPLOYEE',
     description:
       'Least-privilege standard staff role: read-only access to ' +
-      'contacts, leads, and activities.',
+      'contacts, leads, deals, and activities.',
     permissions: [
       { resource: 'contact', action: 'read' },
       { resource: 'lead', action: 'read' },
+      { resource: 'deal', action: 'read' },
       { resource: 'activity', action: 'read' },
     ],
   },

@@ -18,6 +18,7 @@ export class ActivityEntity {
 
   // Association
   contactId: string | null;
+  dealId: string | null;
 
   // Audit
   createdAt: Date;

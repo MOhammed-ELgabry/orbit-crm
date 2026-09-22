@@ -10,6 +10,7 @@ import { CompanyModule } from '../company/company.module';
 import { UserModule } from '../user/user.module';
 import { ContactModule } from '../contact/contact.module';
 import { LeadModule } from '../lead/lead.module';
+import { DealModule } from '../deal/deal.module';
 import { ActivityModule } from '../activity/activity.module';
 import { RoleModule } from '../role/role.module';
 import { PermissionModule } from '../permission/permission.module';
@@ -49,6 +50,8 @@ import { AuthModule } from '../auth/auth.module';
     ContactModule,
 
     LeadModule,
+
+    DealModule,
 
     ActivityModule,
 
