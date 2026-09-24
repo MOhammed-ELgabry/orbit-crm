@@ -11,6 +11,7 @@ import { UserModule } from '../user/user.module';
 import { ContactModule } from '../contact/contact.module';
 import { LeadModule } from '../lead/lead.module';
 import { DealModule } from '../deal/deal.module';
+import { TaskModule } from '../task/task.module';
 import { ActivityModule } from '../activity/activity.module';
 import { RoleModule } from '../role/role.module';
 import { PermissionModule } from '../permission/permission.module';
@@ -52,6 +53,8 @@ import { AuthModule } from '../auth/auth.module';
     LeadModule,
 
     DealModule,
+
+    TaskModule,
 
     ActivityModule,
 
