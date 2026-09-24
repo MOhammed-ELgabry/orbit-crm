@@ -4,21 +4,18 @@ import {
   IsDateString,
   IsIn,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
   Length,
-  Max,
   MaxLength,
-  Min,
 } from 'class-validator';
 
-import { DEAL_STAGES } from '../constants/deal.constants';
+import { TASK_PRIORITIES, TASK_STATUSES } from '../constants/task.constants';
 
-export class UpdateDealDto {
+export class UpdateTaskDto {
   @ApiPropertyOptional({
-    example: 'Acme Corp — annual license renewal',
-    description: 'Deal title',
+    example: 'Call customer about renewal',
+    description: 'Task title',
   })
   @Transform(({ value }) => value?.trim())
   @IsOptional()
@@ -27,51 +24,50 @@ export class UpdateDealDto {
   title?: string;
 
   @ApiPropertyOptional({
-    example: 18000,
-    description: 'Deal value',
-  })
-  @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  @Max(9_999_999_999.99)
-  amount?: number;
-
-  @ApiPropertyOptional({
-    example: 'negotiation',
-    description:
-      'Pipeline stage. Also used for marking a deal won/lost — there is ' +
-      'no separate close endpoint, matching how Lead uses its own ' +
-      'update endpoint for status changes.',
-    enum: DEAL_STAGES,
-  })
-  @IsOptional()
-  @IsIn(DEAL_STAGES)
-  stage?: string;
-
-  @ApiPropertyOptional({
-    example: 'Champion is the IT director; budget confirmed for Q3.',
-    description: 'Internal notes about the deal',
+    example: 'Confirm the new seat count before sending the quote.',
+    description: 'What needs to be done',
   })
   @Transform(({ value }) => value?.trim())
   @IsOptional()
   @IsString()
   @MaxLength(5000)
-  notes?: string;
+  description?: string;
+
+  @ApiPropertyOptional({
+    example: 'in_progress',
+    description:
+      'Task status. Also used for marking a task complete/cancelled — ' +
+      'there is no separate complete/cancel endpoint, matching how Deal ' +
+      'uses its own update endpoint for stage (won/lost) changes.',
+    enum: TASK_STATUSES,
+  })
+  @IsOptional()
+  @IsIn(TASK_STATUSES)
+  status?: string;
+
+  @ApiPropertyOptional({
+    example: 'high',
+    description: 'Task priority',
+    enum: TASK_PRIORITIES,
+  })
+  @IsOptional()
+  @IsIn(TASK_PRIORITIES)
+  priority?: string;
 
   @ApiPropertyOptional({
     example: '2026-12-01',
     nullable: true,
-    description: 'Expected close date (ISO 8601). Pass null to clear it.',
+    description: 'Due date (ISO 8601). Pass null to clear it.',
   })
   @IsOptional()
   @IsDateString()
-  expectedCloseDate?: string | null;
+  dueDate?: string | null;
 
   @ApiPropertyOptional({
     example: 'cm123contactid',
     nullable: true,
     description:
-      'ID of the contact this deal is associated with. Must belong to ' +
+      'ID of the contact this task is associated with. Must belong to ' +
       'the same company as the authenticated user. Pass null to clear it.',
   })
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
@@ -84,7 +80,7 @@ export class UpdateDealDto {
     example: 'cm123leadid',
     nullable: true,
     description:
-      'ID of the lead this deal originated from. Must belong to the ' +
+      'ID of the lead this task is associated with. Must belong to the ' +
       'same company as the authenticated user. Pass null to clear it.',
   })
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
@@ -94,10 +90,23 @@ export class UpdateDealDto {
   leadId?: string | null;
 
   @ApiPropertyOptional({
+    example: 'cm123dealid',
+    nullable: true,
+    description:
+      'ID of the deal this task is associated with. Must belong to the ' +
+      'same company as the authenticated user. Pass null to clear it.',
+  })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  dealId?: string | null;
+
+  @ApiPropertyOptional({
     example: 'cm123assigneduser',
     nullable: true,
     description:
-      'ID of the user this deal is assigned to. Must belong to the ' +
+      'ID of the user this task is assigned to. Must belong to the ' +
       'same company as the authenticated user. Pass null to unassign.',
   })
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))

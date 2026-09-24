@@ -22,7 +22,10 @@ export interface IDealRepository {
     dto: CreateDealDto,
   ): Promise<DealEntity>;
 
-  findAll(companyId: string, query: DealQueryDto): Promise<DealRepositoryResult>;
+  findAll(
+    companyId: string,
+    query: DealQueryDto,
+  ): Promise<DealRepositoryResult>;
 
   findById(companyId: string, dealId: string): Promise<DealEntity | null>;
 

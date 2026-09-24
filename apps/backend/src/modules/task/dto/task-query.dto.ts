@@ -10,9 +10,13 @@ import {
   Min,
 } from 'class-validator';
 
-import { DEAL_SORTABLE_FIELDS, DEAL_STAGES } from '../constants/deal.constants';
+import {
+  TASK_PRIORITIES,
+  TASK_SORTABLE_FIELDS,
+  TASK_STATUSES,
+} from '../constants/task.constants';
 
-export class DealQueryDto {
+export class TaskQueryDto {
   @ApiPropertyOptional({
     type: Number,
     example: 1,
@@ -37,8 +41,8 @@ export class DealQueryDto {
   limit = 20;
 
   @ApiPropertyOptional({
-    example: 'Acme',
-    description: 'Search by deal title or notes',
+    example: 'renewal',
+    description: 'Search by task title or description',
   })
   @IsOptional()
   @IsString()
@@ -46,18 +50,18 @@ export class DealQueryDto {
   search?: string;
 
   @ApiPropertyOptional({
-    example: 'createdAt',
+    example: 'dueDate',
     description: 'Field used for sorting',
-    enum: DEAL_SORTABLE_FIELDS,
+    enum: TASK_SORTABLE_FIELDS,
   })
   @IsOptional()
   @IsString()
-  @IsIn(DEAL_SORTABLE_FIELDS)
+  @IsIn(TASK_SORTABLE_FIELDS)
   sortBy?: string;
 
   @ApiPropertyOptional({
     enum: ['asc', 'desc'],
-    example: 'desc',
+    example: 'asc',
     description: 'Sorting direction',
   })
   @IsOptional()
@@ -65,17 +69,26 @@ export class DealQueryDto {
   sortOrder: 'asc' | 'desc' = 'desc';
 
   @ApiPropertyOptional({
-    example: 'negotiation',
-    description: 'Filter deals by pipeline stage',
-    enum: DEAL_STAGES,
+    example: 'todo',
+    description: 'Filter tasks by status',
+    enum: TASK_STATUSES,
   })
   @IsOptional()
-  @IsIn(DEAL_STAGES)
-  stage?: string;
+  @IsIn(TASK_STATUSES)
+  status?: string;
+
+  @ApiPropertyOptional({
+    example: 'high',
+    description: 'Filter tasks by priority',
+    enum: TASK_PRIORITIES,
+  })
+  @IsOptional()
+  @IsIn(TASK_PRIORITIES)
+  priority?: string;
 
   @ApiPropertyOptional({
     example: 'cm123assigneduser',
-    description: 'Filter deals assigned to a specific user',
+    description: 'Filter tasks assigned to a specific user',
   })
   @IsOptional()
   @IsString()
@@ -83,7 +96,7 @@ export class DealQueryDto {
 
   @ApiPropertyOptional({
     example: 'cm123contactid',
-    description: 'Filter deals associated with a specific contact',
+    description: 'Filter tasks associated with a specific contact',
   })
   @IsOptional()
   @IsString()
@@ -91,14 +104,22 @@ export class DealQueryDto {
 
   @ApiPropertyOptional({
     example: 'cm123leadid',
-    description: 'Filter deals originating from a specific lead',
+    description: 'Filter tasks associated with a specific lead',
   })
   @IsOptional()
   @IsString()
   leadId?: string;
 
   @ApiPropertyOptional({
-    example: 'id,title,amount,stage,expectedCloseDate',
+    example: 'cm123dealid',
+    description: 'Filter tasks associated with a specific deal',
+  })
+  @IsOptional()
+  @IsString()
+  dealId?: string;
+
+  @ApiPropertyOptional({
+    example: 'id,title,status,priority,dueDate',
     description: 'Comma-separated list of fields to return',
   })
   @IsOptional()

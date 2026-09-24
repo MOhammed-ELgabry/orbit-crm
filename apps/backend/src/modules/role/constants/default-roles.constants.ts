@@ -8,8 +8,8 @@ export interface DefaultRoleDefinition {
  * The 4 default staff roles every company gets — MANAGER, SALES,
  * SUPPORT, EMPLOYEE — and the permission grant each starts with,
  * exactly as agreed in the Phase 2 spec (contact/activity), the Leads
- * spec (lead), and the Deals spec (deal). There is deliberately no
- * OWNER entry here: Owner-level privilege is carried entirely by
+ * spec (lead), the Deals spec (deal), and the Tasks spec (task). There
+ * is deliberately no OWNER entry here: Owner-level privilege is carried entirely by
  * User.isOwner (see OwnerGuard), never by a Role row. See
  * ensureDefaultRolesForCompany (role/utils/ensure-default-roles.util.ts)
  * for how this list is turned into idempotent Role/RolePermission rows
@@ -19,11 +19,11 @@ export interface DefaultRoleDefinition {
  * User/Role/Company administration (the user/company/role permissions
  * below) is intentionally Owner-only in this phase — none of these 4
  * roles are granted user:create/read/update/delete, company:read/update,
- * or role:manage. Only the contact, lead, deal, and activity permissions
- * are in active use by any of them; the others would currently have no
- * effect even if granted, since UserController/RoleController/
- * CompanyController mutations check OwnerGuard only, not
- * PermissionsGuard — granting them here would be misleading dead
+ * or role:manage. Only the contact, lead, deal, task, and activity
+ * permissions are in active use by any of them; the others would
+ * currently have no effect even if granted, since UserController/
+ * RoleController/CompanyController mutations check OwnerGuard only,
+ * not PermissionsGuard — granting them here would be misleading dead
  * configuration, not a functional capability, so they're left out.
  */
 export const DEFAULT_ROLE_DEFINITIONS: readonly DefaultRoleDefinition[] = [
@@ -47,6 +47,10 @@ export const DEFAULT_ROLE_DEFINITIONS: readonly DefaultRoleDefinition[] = [
       { resource: 'deal', action: 'read' },
       { resource: 'deal', action: 'update' },
       { resource: 'deal', action: 'delete' },
+      { resource: 'task', action: 'create' },
+      { resource: 'task', action: 'read' },
+      { resource: 'task', action: 'update' },
+      { resource: 'task', action: 'delete' },
       { resource: 'activity', action: 'create' },
       { resource: 'activity', action: 'read' },
       { resource: 'activity', action: 'update' },
@@ -57,7 +61,7 @@ export const DEFAULT_ROLE_DEFINITIONS: readonly DefaultRoleDefinition[] = [
     name: 'SALES',
     description:
       'Sales-focused access: can create and work contacts, leads, ' +
-      'deals, and activities, but cannot delete any of them.',
+      'deals, tasks, and activities, but cannot delete any of them.',
     permissions: [
       { resource: 'contact', action: 'create' },
       { resource: 'contact', action: 'read' },
@@ -68,6 +72,9 @@ export const DEFAULT_ROLE_DEFINITIONS: readonly DefaultRoleDefinition[] = [
       { resource: 'deal', action: 'create' },
       { resource: 'deal', action: 'read' },
       { resource: 'deal', action: 'update' },
+      { resource: 'task', action: 'create' },
+      { resource: 'task', action: 'read' },
+      { resource: 'task', action: 'update' },
       { resource: 'activity', action: 'create' },
       { resource: 'activity', action: 'read' },
       { resource: 'activity', action: 'update' },
@@ -77,7 +84,7 @@ export const DEFAULT_ROLE_DEFINITIONS: readonly DefaultRoleDefinition[] = [
     name: 'SUPPORT',
     description:
       'Support-focused access: can create and work contacts, leads, ' +
-      'deals, and activities, but cannot delete any of them.',
+      'deals, tasks, and activities, but cannot delete any of them.',
     permissions: [
       { resource: 'contact', action: 'create' },
       { resource: 'contact', action: 'read' },
@@ -88,6 +95,9 @@ export const DEFAULT_ROLE_DEFINITIONS: readonly DefaultRoleDefinition[] = [
       { resource: 'deal', action: 'create' },
       { resource: 'deal', action: 'read' },
       { resource: 'deal', action: 'update' },
+      { resource: 'task', action: 'create' },
+      { resource: 'task', action: 'read' },
+      { resource: 'task', action: 'update' },
       { resource: 'activity', action: 'create' },
       { resource: 'activity', action: 'read' },
       { resource: 'activity', action: 'update' },
@@ -97,11 +107,12 @@ export const DEFAULT_ROLE_DEFINITIONS: readonly DefaultRoleDefinition[] = [
     name: 'EMPLOYEE',
     description:
       'Least-privilege standard staff role: read-only access to ' +
-      'contacts, leads, deals, and activities.',
+      'contacts, leads, deals, tasks, and activities.',
     permissions: [
       { resource: 'contact', action: 'read' },
       { resource: 'lead', action: 'read' },
       { resource: 'deal', action: 'read' },
+      { resource: 'task', action: 'read' },
       { resource: 'activity', action: 'read' },
     ],
   },

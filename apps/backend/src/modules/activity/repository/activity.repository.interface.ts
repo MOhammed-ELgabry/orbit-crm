@@ -29,6 +29,19 @@ export interface DealActivityEventInput {
   dealId: string;
 }
 
+/**
+ * Same trust shape as DealActivityEventInput, for a Task-originated
+ * system activity — taskId here is trusted (the only caller,
+ * TaskService, has already confirmed it belongs to the company). See
+ * ActivityService.logTaskEvent.
+ */
+export interface TaskActivityEventInput {
+  type: string;
+  title: string;
+  description?: string;
+  taskId: string;
+}
+
 export interface IActivityRepository {
   create(
     companyId: string,
@@ -40,6 +53,12 @@ export interface IActivityRepository {
     companyId: string,
     createdById: string,
     input: DealActivityEventInput,
+  ): Promise<ActivityEntity>;
+
+  createTaskEvent(
+    companyId: string,
+    createdById: string,
+    input: TaskActivityEventInput,
   ): Promise<ActivityEntity>;
 
   findAll(

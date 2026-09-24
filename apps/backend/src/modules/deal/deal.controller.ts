@@ -131,7 +131,8 @@ export class DealController {
   @RequirePermissions({ resource: 'deal', action: 'delete' })
   @ApiOperation({
     summary: 'Delete deal',
-    description: 'Soft deletes a deal scoped to the authenticated tenant company.',
+    description:
+      'Soft deletes a deal scoped to the authenticated tenant company.',
   })
   @ApiResponse({
     status: 200,

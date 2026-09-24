@@ -11,7 +11,10 @@ import { DealQueryDto } from '../dto/deal-query.dto';
 import { UpdateDealDto } from '../dto/update-deal.dto';
 import { DealEntity } from '../entities/deal.entity';
 
-import { IDealRepository, DealRepositoryResult } from './deal.repository.interface';
+import {
+  IDealRepository,
+  DealRepositoryResult,
+} from './deal.repository.interface';
 
 // Local shape for whatever Prisma hands back from deal.create/findFirst/
 // findMany/update — just enough to convert amount (Prisma.Decimal) to
@@ -163,7 +166,10 @@ export class DealRepository implements IDealRepository {
     };
   }
 
-  async findById(companyId: string, dealId: string): Promise<DealEntity | null> {
+  async findById(
+    companyId: string,
+    dealId: string,
+  ): Promise<DealEntity | null> {
     const deal = await this.prisma.deal.findFirst({
       where: {
         id: dealId,

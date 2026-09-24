@@ -72,8 +72,13 @@ describe('DealService', () => {
 
   describe('create', () => {
     it('creates directly when no contact/lead/assignedTo are supplied', async () => {
-      const { service, dealRepository, contactService, leadService, userService } =
-        buildService();
+      const {
+        service,
+        dealRepository,
+        contactService,
+        leadService,
+        userService,
+      } = buildService();
 
       await service.create(companyId, createdById, { title: 'New deal' });
 
@@ -88,8 +93,13 @@ describe('DealService', () => {
     });
 
     it('validates contactId, leadId, and assignedToId against the caller company before creating', async () => {
-      const { service, dealRepository, contactService, leadService, userService } =
-        buildService();
+      const {
+        service,
+        dealRepository,
+        contactService,
+        leadService,
+        userService,
+      } = buildService();
 
       await service.create(companyId, createdById, {
         title: 'New deal',
@@ -98,7 +108,10 @@ describe('DealService', () => {
         assignedToId: 'user-2',
       });
 
-      expect(contactService.findById).toHaveBeenCalledWith(companyId, 'contact-1');
+      expect(contactService.findById).toHaveBeenCalledWith(
+        companyId,
+        'contact-1',
+      );
       expect(leadService.findById).toHaveBeenCalledWith(companyId, 'lead-1');
       expect(userService.findById).toHaveBeenCalledWith('user-2', companyId);
       expect(dealRepository.create).toHaveBeenCalled();
@@ -170,9 +183,9 @@ describe('DealService', () => {
       const { service, dealRepository } = buildService();
       dealRepository.findById.mockResolvedValue(null);
 
-      await expect(
-        service.findById(otherCompanyId, dealId),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.findById(otherCompanyId, dealId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -182,7 +195,12 @@ describe('DealService', () => {
       dealRepository.findById.mockResolvedValue(null);
 
       await expect(
-        service.update(companyId, dealId, { contactId: 'contact-1' }, createdById),
+        service.update(
+          companyId,
+          dealId,
+          { contactId: 'contact-1' },
+          createdById,
+        ),
       ).rejects.toThrow(NotFoundException);
 
       // Never even got to checking the contact — the deal lookup fails first.
@@ -209,7 +227,12 @@ describe('DealService', () => {
     it('updates once the deal exists and any supplied relations are valid', async () => {
       const { service, dealRepository } = buildService();
 
-      await service.update(companyId, dealId, { title: 'Renamed' }, createdById);
+      await service.update(
+        companyId,
+        dealId,
+        { title: 'Renamed' },
+        createdById,
+      );
 
       expect(dealRepository.update).toHaveBeenCalledWith(companyId, dealId, {
         title: 'Renamed',
@@ -222,7 +245,12 @@ describe('DealService', () => {
         new DealEntity({ ...baseDeal, stage: 'closed_won' }),
       );
 
-      await service.update(companyId, dealId, { stage: 'closed_won' }, createdById);
+      await service.update(
+        companyId,
+        dealId,
+        { stage: 'closed_won' },
+        createdById,
+      );
 
       expect(activityService.logDealEvent).toHaveBeenCalledWith(
         companyId,
@@ -240,7 +268,12 @@ describe('DealService', () => {
         new DealEntity({ ...baseDeal, stage: 'closed_lost' }),
       );
 
-      await service.update(companyId, dealId, { stage: 'closed_lost' }, createdById);
+      await service.update(
+        companyId,
+        dealId,
+        { stage: 'closed_lost' },
+        createdById,
+      );
 
       expect(activityService.logDealEvent).toHaveBeenCalledWith(
         companyId,
@@ -258,7 +291,12 @@ describe('DealService', () => {
         new DealEntity({ ...baseDeal, stage: 'proposal' }),
       );
 
-      await service.update(companyId, dealId, { stage: 'proposal' }, createdById);
+      await service.update(
+        companyId,
+        dealId,
+        { stage: 'proposal' },
+        createdById,
+      );
 
       expect(activityService.logDealEvent).toHaveBeenCalledWith(
         companyId,
@@ -290,7 +328,12 @@ describe('DealService', () => {
     it('does not log anything when neither stage nor assignedToId actually changed', async () => {
       const { service, activityService } = buildService();
 
-      await service.update(companyId, dealId, { title: 'Renamed' }, createdById);
+      await service.update(
+        companyId,
+        dealId,
+        { title: 'Renamed' },
+        createdById,
+      );
 
       expect(activityService.logDealEvent).not.toHaveBeenCalled();
     });

@@ -24,7 +24,7 @@ describe('ensureDefaultRolesForCompany', () => {
   const companyId = 'company-1';
 
   // Mirrors the real Permission catalog (PERMISSION_CATALOG) exactly:
-  // id + resource + action, contact/lead/deal/activity/user/company/role.
+  // id + resource + action, contact/lead/deal/task/activity/user/company/role.
   const mockPermissions = [
     { id: 'perm-contact-create', resource: 'contact', action: 'create' },
     { id: 'perm-contact-read', resource: 'contact', action: 'read' },
@@ -38,6 +38,10 @@ describe('ensureDefaultRolesForCompany', () => {
     { id: 'perm-deal-read', resource: 'deal', action: 'read' },
     { id: 'perm-deal-update', resource: 'deal', action: 'update' },
     { id: 'perm-deal-delete', resource: 'deal', action: 'delete' },
+    { id: 'perm-task-create', resource: 'task', action: 'create' },
+    { id: 'perm-task-read', resource: 'task', action: 'read' },
+    { id: 'perm-task-update', resource: 'task', action: 'update' },
+    { id: 'perm-task-delete', resource: 'task', action: 'delete' },
     { id: 'perm-activity-create', resource: 'activity', action: 'create' },
     { id: 'perm-activity-read', resource: 'activity', action: 'read' },
     { id: 'perm-activity-update', resource: 'activity', action: 'update' },
@@ -107,7 +111,7 @@ describe('ensureDefaultRolesForCompany', () => {
     }
   });
 
-  it("MANAGER's create payload attaches exactly its 16 default permission ids (contact + lead + deal + activity CRUD)", async () => {
+  it("MANAGER's create payload attaches exactly its 20 default permission ids (contact + lead + deal + task + activity CRUD)", async () => {
     const prisma = makePrismaMock();
 
     await ensureDefaultRolesForCompany(prisma, companyId);
@@ -137,6 +141,10 @@ describe('ensureDefaultRolesForCompany', () => {
         'perm-deal-read',
         'perm-deal-update',
         'perm-deal-delete',
+        'perm-task-create',
+        'perm-task-read',
+        'perm-task-update',
+        'perm-task-delete',
         'perm-activity-create',
         'perm-activity-read',
         'perm-activity-update',
@@ -145,7 +153,7 @@ describe('ensureDefaultRolesForCompany', () => {
     );
   });
 
-  it("EMPLOYEE's create payload is read-only (contact:read + lead:read + deal:read + activity:read)", async () => {
+  it("EMPLOYEE's create payload is read-only (contact:read + lead:read + deal:read + task:read + activity:read)", async () => {
     const prisma = makePrismaMock();
 
     await ensureDefaultRolesForCompany(prisma, companyId);
@@ -166,6 +174,7 @@ describe('ensureDefaultRolesForCompany', () => {
         'perm-contact-read',
         'perm-lead-read',
         'perm-deal-read',
+        'perm-task-read',
         'perm-activity-read',
       ].sort(),
     );

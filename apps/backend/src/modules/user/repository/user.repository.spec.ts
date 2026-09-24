@@ -42,19 +42,20 @@ describe('UserRepository.createWithinCompanyLimit', () => {
         : { id: employeeRoleId, deletedAt: null };
 
     const tx = {
-      $queryRaw: jest.fn().mockResolvedValue(undefined),
-      user: {
-        count: jest.fn().mockResolvedValue(overrides?.userCount ?? 0),
-        create: jest
-          .fn()
-          .mockImplementation(({ data }: { data: Record<string, unknown> }) =>
-            Promise.resolve({ id: 'new-user', ...data }),
-          ),
-      },
-      role: {
-        findUnique: jest.fn().mockResolvedValue(employeeRole),
-      },
-    };
+  $queryRaw: jest.fn().mockResolvedValue(undefined),
+  $executeRaw: jest.fn().mockResolvedValue(undefined),
+  user: {
+    count: jest.fn().mockResolvedValue(overrides?.userCount ?? 0),
+    create: jest
+      .fn()
+      .mockImplementation(({ data }: { data: Record<string, unknown> }) =>
+        Promise.resolve({ id: 'new-user', ...data }),
+      ),
+  },
+  role: {
+    findUnique: jest.fn().mockResolvedValue(employeeRole),
+  },
+};
 
     // this.prisma.$transaction(cb) is mocked to actually invoke the
     // callback with the mocked tx above, mirroring how Prisma's real
@@ -142,7 +143,7 @@ describe('UserRepository.createWithinCompanyLimit', () => {
 
     await repository.createWithinCompanyLimit(baseData, 6);
 
-    const lockOrder = tx.$queryRaw.mock.invocationCallOrder[0];
+    const lockOrder = tx.$executeRaw.mock.invocationCallOrder[0];
     const countOrder = tx.user.count.mock.invocationCallOrder[0];
     const roleOrder = tx.role.findUnique.mock.invocationCallOrder[0];
 

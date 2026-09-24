@@ -11,6 +11,7 @@ import type {
   ActivityRepositoryResult,
   DealActivityEventInput,
   IActivityRepository,
+  TaskActivityEventInput,
 } from './repository/activity.repository.interface';
 
 @Injectable()
@@ -77,6 +78,26 @@ export class ActivityService {
     input: DealActivityEventInput,
   ): Promise<ActivityEntity> {
     return this.activityRepository.createDealEvent(
+      companyId,
+      createdById,
+      input,
+    );
+  }
+
+  /**
+   * Logs a system-generated activity for a task — TaskService calls
+   * this after create/update/delete, exactly mirroring logDealEvent
+   * above (including the same trust boundary: `input.taskId` is never
+   * re-validated here because the only caller, TaskService, has already
+   * confirmed that exact task within `companyId`). See logDealEvent's
+   * own comment for the full rationale.
+   */
+  async logTaskEvent(
+    companyId: string,
+    createdById: string,
+    input: TaskActivityEventInput,
+  ): Promise<ActivityEntity> {
+    return this.activityRepository.createTaskEvent(
       companyId,
       createdById,
       input,

@@ -16,6 +16,7 @@ import {
   ActivityRepositoryResult,
   DealActivityEventInput,
   IActivityRepository,
+  TaskActivityEventInput,
 } from './activity.repository.interface';
 
 type ActivitySortableField = (typeof ACTIVITY_SORTABLE_FIELDS)[number];
@@ -78,6 +79,31 @@ export class ActivityRepository implements IActivityRepository {
     }
   }
 
+  async createTaskEvent(
+    companyId: string,
+    createdById: string,
+    input: TaskActivityEventInput,
+  ): Promise<ActivityEntity> {
+    try {
+      const activity = await this.prisma.activity.create({
+        data: {
+          companyId,
+          createdById,
+
+          type: input.type,
+          title: input.title,
+          description: input.description ?? null,
+
+          taskId: input.taskId,
+        },
+      });
+
+      return new ActivityEntity(activity);
+    } catch (error) {
+      PrismaExceptionMapper.map(error);
+    }
+  }
+
   async findAll(
     companyId: string,
     query: ActivityQueryDto,
@@ -103,6 +129,7 @@ export class ActivityRepository implements IActivityRepository {
           'createdById',
           'contactId',
           'dealId',
+          'taskId',
           'createdAt',
           'updatedAt',
           'deletedAt',

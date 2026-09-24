@@ -35,6 +35,7 @@ model Company {
   contacts         Contact[]
   leads            Lead[]
   deals            Deal[]
+  tasks            Task[]
   onboardingTokens OnboardingToken[]
   activities       Activity[]
 
@@ -126,6 +127,10 @@ model User {
   // Deals
   dealsCreated  Deal[] @relation("DealCreatedBy")
   dealsAssigned Deal[] @relation("DealAssignedTo")
+
+  // Tasks
+  tasksCreated  Task[] @relation("TaskCreatedBy")
+  tasksAssigned Task[] @relation("TaskAssignedTo")
 
   // Activities
   activitiesCreated Activity[] @relation("ActivityCreatedBy")
@@ -324,6 +329,9 @@ model Contact {
   // Deals
   deals Deal[]
 
+  // Tasks
+  tasks Task[]
+
   // Audit
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -378,6 +386,9 @@ model Lead {
   // Deals
   deals Deal[]
 
+  // Tasks
+  tasks Task[]
+
   // Audit
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -430,6 +441,17 @@ model Activity {
   dealId String?
   deal   Deal?   @relation(fields: [dealId], references: [id], onDelete: SetNull)
 
+  // Optional Task association — added alongside the Task model for the
+  // same reason as the Deal association above: a task's lifecycle
+  // events (see TaskService) need somewhere to live. Reuses the
+  // existing 'SYSTEM'/'STATUS_CHANGE' vocabulary, not the separate
+  // pre-existing 'TASK' ACTIVITY_TYPES value — that value is an
+  // unrelated, manually-chosen activity *kind* (like 'CALL'/'EMAIL')
+  // a user can pick when logging a generic activity, not reserved for
+  // this model.
+  taskId String?
+  task   Task?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
   // Audit
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -441,9 +463,11 @@ model Activity {
   @@index([companyId, type])
   @@index([companyId, contactId])
   @@index([companyId, dealId])
+  @@index([companyId, taskId])
   @@index([createdById])
   @@index([contactId])
   @@index([dealId])
+  @@index([taskId])
   @@index([deletedAt])
 }
 
@@ -501,6 +525,9 @@ model Deal {
   // Activities
   activities Activity[]
 
+  // Tasks
+  tasks Task[]
+
   // Audit
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -516,5 +543,92 @@ model Deal {
   @@index([assignedToId])
   @@index([contactId])
   @@index([leadId])
+  @@index([deletedAt])
+}
+
+// A CRM to-do item: something a person needs to do, optionally in the
+// context of a Contact, a Lead, and/or a Deal (all three independent
+// and optional, exactly like Deal's own contactId/leadId — see the
+// comment on Deal above for why unrelated-and-nullable is the right
+// shape here too; a Task may stand alone, or be linked to any subset
+// of the three). Every task belongs to exactly one tenant company.
+//
+// status doubles as the lifecycle outcome (COMPLETED/CANCELLED are
+// statuses, not a separate boolean "done" flag) — the same
+// one-field-per-lifecycle choice already made for Lead.status/
+// Contact.status/Deal.stage. See TASK_STATUSES
+// (task/constants/task.constants.ts) for the whitelist, enforced at
+// the application layer exactly like DEAL_STAGES — adjusting it never
+// requires a migration. Same treatment for TASK_PRIORITIES.
+//
+// completedAt is deliberately not client-writable (see CreateTaskDto/
+// UpdateTaskDto — it isn't a field on either): TaskService derives it
+// from `status` on every write, so it can never contradict `status`
+// the way two independently-editable fields could.
+//
+// Designed so Calendar/Notifications/Automations (all explicitly out
+// of scope for this phase — see the Tasks Phase 1 spec) can be built
+// against this model later without a redesign: dueDate is a plain
+// DateTime a future Calendar can read directly, and status/priority
+// are already whitelisted, filterable strings a future Automation
+// engine can key off (e.g. a `task.status_changed` event) with no
+// schema change.
+model Task {
+  id String @id @default(cuid())
+
+  // Tenant
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Core Information
+  title       String
+  description String?
+
+  // CRM Information
+  status   String    @default("todo")
+  priority String    @default("medium")
+  dueDate  DateTime?
+
+  // When the task was marked completed. Null unless status ==
+  // "completed" — see the model comment above for why this is
+  // service-derived rather than independently writable.
+  completedAt DateTime?
+
+  // Associations — independent and optional, see model comment above
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  leadId String?
+  lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  dealId String?
+  deal   Deal?   @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  // Ownership / Assignment
+  createdById String
+  createdBy   User   @relation("TaskCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  assignedToId String?
+  assignedTo   User?   @relation("TaskAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  // Activities
+  activities Activity[]
+
+  // Audit
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([companyId])
+  @@index([companyId, deletedAt])
+  @@index([companyId, status])
+  @@index([companyId, assignedToId])
+  @@index([companyId, dueDate])
+  @@index([companyId, contactId])
+  @@index([createdById])
+  @@index([assignedToId])
+  @@index([contactId])
+  @@index([leadId])
+  @@index([dealId])
   @@index([deletedAt])
 }
