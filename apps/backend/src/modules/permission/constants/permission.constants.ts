@@ -39,6 +39,11 @@ export const PERMISSION_CATALOG = [
   { resource: 'task', action: 'update' },
   { resource: 'task', action: 'delete' },
 
+  { resource: 'calendar', action: 'create' },
+  { resource: 'calendar', action: 'read' },
+  { resource: 'calendar', action: 'update' },
+  { resource: 'calendar', action: 'delete' },
+
   { resource: 'activity', action: 'create' },
   { resource: 'activity', action: 'read' },
   { resource: 'activity', action: 'update' },

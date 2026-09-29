@@ -179,6 +179,13 @@ export async function ensureDefaultRolesForCompany(
         companyId,
         name: roleDefinition.name,
         description: roleDefinition.description,
+        // Marks this row as genuinely system-provisioned — see the
+        // isSystemRole doc comment on the Role model. Never set
+        // anywhere else in RoleService/RoleRepository, so a role
+        // created or renamed through the ordinary Role API — even to
+        // one of these exact 4 names — can never end up with this
+        // flag true.
+        isSystemRole: true,
         rolePermissions: {
           createMany: {
             data: permissionIds.map((permissionId) => ({ permissionId })),

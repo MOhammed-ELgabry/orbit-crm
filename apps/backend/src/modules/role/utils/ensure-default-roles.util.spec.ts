@@ -8,6 +8,7 @@ interface RoleUpsertArgs {
     companyId: string;
     name: string;
     description: string;
+    isSystemRole: boolean;
     rolePermissions: {
       createMany: { data: { permissionId: string }[] };
     };
@@ -24,7 +25,8 @@ describe('ensureDefaultRolesForCompany', () => {
   const companyId = 'company-1';
 
   // Mirrors the real Permission catalog (PERMISSION_CATALOG) exactly:
-  // id + resource + action, contact/lead/deal/task/activity/user/company/role.
+  // id + resource + action, contact/lead/deal/task/calendar/activity/
+  // user/company/role.
   const mockPermissions = [
     { id: 'perm-contact-create', resource: 'contact', action: 'create' },
     { id: 'perm-contact-read', resource: 'contact', action: 'read' },
@@ -42,6 +44,10 @@ describe('ensureDefaultRolesForCompany', () => {
     { id: 'perm-task-read', resource: 'task', action: 'read' },
     { id: 'perm-task-update', resource: 'task', action: 'update' },
     { id: 'perm-task-delete', resource: 'task', action: 'delete' },
+    { id: 'perm-calendar-create', resource: 'calendar', action: 'create' },
+    { id: 'perm-calendar-read', resource: 'calendar', action: 'read' },
+    { id: 'perm-calendar-update', resource: 'calendar', action: 'update' },
+    { id: 'perm-calendar-delete', resource: 'calendar', action: 'delete' },
     { id: 'perm-activity-create', resource: 'activity', action: 'create' },
     { id: 'perm-activity-read', resource: 'activity', action: 'read' },
     { id: 'perm-activity-update', resource: 'activity', action: 'update' },
@@ -111,7 +117,7 @@ describe('ensureDefaultRolesForCompany', () => {
     }
   });
 
-  it("MANAGER's create payload attaches exactly its 20 default permission ids (contact + lead + deal + task + activity CRUD)", async () => {
+  it("MANAGER's create payload attaches exactly its 24 default permission ids (contact + lead + deal + task + calendar + activity CRUD)", async () => {
     const prisma = makePrismaMock();
 
     await ensureDefaultRolesForCompany(prisma, companyId);
@@ -145,6 +151,10 @@ describe('ensureDefaultRolesForCompany', () => {
         'perm-task-read',
         'perm-task-update',
         'perm-task-delete',
+        'perm-calendar-create',
+        'perm-calendar-read',
+        'perm-calendar-update',
+        'perm-calendar-delete',
         'perm-activity-create',
         'perm-activity-read',
         'perm-activity-update',
@@ -153,7 +163,7 @@ describe('ensureDefaultRolesForCompany', () => {
     );
   });
 
-  it("EMPLOYEE's create payload is read-only (contact:read + lead:read + deal:read + task:read + activity:read)", async () => {
+  it("EMPLOYEE's create payload is read-only (contact:read + lead:read + deal:read + task:read + calendar:read + activity:read)", async () => {
     const prisma = makePrismaMock();
 
     await ensureDefaultRolesForCompany(prisma, companyId);
@@ -175,9 +185,21 @@ describe('ensureDefaultRolesForCompany', () => {
         'perm-lead-read',
         'perm-deal-read',
         'perm-task-read',
+        'perm-calendar-read',
         'perm-activity-read',
       ].sort(),
     );
+  });
+
+  it('sets isSystemRole: true on every default role it creates — this is the only place in the codebase that ever does', async () => {
+    const prisma = makePrismaMock();
+
+    await ensureDefaultRolesForCompany(prisma, companyId);
+
+    expect(prisma.role.upsert).toHaveBeenCalledTimes(4);
+    for (const [args] of prisma.role.upsert.mock.calls) {
+      expect(args.create.isSystemRole).toBe(true);
+    }
   });
 
   it('none of the 4 default roles are granted user:create/read/update/delete, company:read/update, or role:manage', () => {

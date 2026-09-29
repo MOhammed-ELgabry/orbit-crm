@@ -186,6 +186,61 @@ describe('TaskService', () => {
       expect(taskRepository.create).not.toHaveBeenCalled();
     });
 
+    // Regression coverage for the assertXInCompany bug fix: the catch
+    // around each relation lookup used to convert *any* error —
+    // including a genuine infrastructure failure — into a
+    // NotFoundException. It now only does that for the specific,
+    // expected NotFoundException ContactService/LeadService/
+    // DealService/UserService.findById themselves throw for a missing
+    // or cross-company id; anything else must propagate unchanged so
+    // it surfaces as the real error it is (and reaches Sentry) instead
+    // of being misreported as "bad contactId". One relation
+    // (contactId) plus assignedToId (whose underlying service call has
+    // the reversed (id, companyId) argument order) is enough to prove
+    // the shared mechanism is correct — leadId/dealId go through the
+    // exact same assertRelations \u2192 assertXInCompany shape.
+    it('still 404s — the existing, expected behavior — when a relation lookup throws NotFoundException (Case A)', async () => {
+      const { service, contactService } = buildService();
+      contactService.findById.mockRejectedValue(
+        new NotFoundException('Contact with ID "contact-x" not found.'),
+      );
+
+      await expect(
+        service.create(companyId, createdById, {
+          title: 'New task',
+          contactId: 'contact-x',
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('does NOT convert an unexpected error from a relation lookup into a 404 — it propagates unchanged (Case B, the bug fix)', async () => {
+      const { service, taskRepository, contactService } = buildService();
+      const infraError = new Error('connection reset by peer');
+      contactService.findById.mockRejectedValue(infraError);
+
+      await expect(
+        service.create(companyId, createdById, {
+          title: 'New task',
+          contactId: 'contact-1',
+        }),
+      ).rejects.toThrow(infraError);
+
+      expect(taskRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('does NOT convert an unexpected error from the assignedToId lookup into a 404 either (reversed-argument-order call site)', async () => {
+      const { service, userService } = buildService();
+      const infraError = new Error('connection reset by peer');
+      userService.findById.mockRejectedValue(infraError);
+
+      await expect(
+        service.create(companyId, createdById, {
+          title: 'New task',
+          assignedToId: 'user-2',
+        }),
+      ).rejects.toThrow(infraError);
+    });
+
     it('derives completedAt as a Date when created directly with status "completed"', async () => {
       const { service, taskRepository } = buildService();
 

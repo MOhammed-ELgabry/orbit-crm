@@ -46,10 +46,21 @@ export class TaskService {
   ): Promise<void> {
     try {
       await this.userService.findById(assignedToId, companyId);
-    } catch {
-      throw new NotFoundException(
-        `assignedToId "${assignedToId}" does not reference a user in this company.`,
-      );
+    } catch (error) {
+      // UserService.findById throws NotFoundException for both a
+      // nonexistent id and a cross-company one (indistinguishable by
+      // design). Only that specific, expected failure is converted to
+      // Task's own not-found message; anything else — a transient DB
+      // error, a bug elsewhere — is a genuine infrastructure failure
+      // and must propagate so it surfaces as the 500 it actually is
+      // (and reaches Sentry), rather than being silently reported to
+      // the caller as "bad assignedToId".
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(
+          `assignedToId "${assignedToId}" does not reference a user in this company.`,
+        );
+      }
+      throw error;
     }
   }
 
@@ -60,10 +71,15 @@ export class TaskService {
   ): Promise<void> {
     try {
       await this.contactService.findById(companyId, contactId);
-    } catch {
-      throw new NotFoundException(
-        `contactId "${contactId}" does not reference a contact in this company.`,
-      );
+    } catch (error) {
+      // See assertUserAssignableInCompany above for why only
+      // NotFoundException is converted here.
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(
+          `contactId "${contactId}" does not reference a contact in this company.`,
+        );
+      }
+      throw error;
     }
   }
 
@@ -74,10 +90,15 @@ export class TaskService {
   ): Promise<void> {
     try {
       await this.leadService.findById(companyId, leadId);
-    } catch {
-      throw new NotFoundException(
-        `leadId "${leadId}" does not reference a lead in this company.`,
-      );
+    } catch (error) {
+      // See assertUserAssignableInCompany above for why only
+      // NotFoundException is converted here.
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(
+          `leadId "${leadId}" does not reference a lead in this company.`,
+        );
+      }
+      throw error;
     }
   }
 
@@ -88,10 +109,15 @@ export class TaskService {
   ): Promise<void> {
     try {
       await this.dealService.findById(companyId, dealId);
-    } catch {
-      throw new NotFoundException(
-        `dealId "${dealId}" does not reference a deal in this company.`,
-      );
+    } catch (error) {
+      // See assertUserAssignableInCompany above for why only
+      // NotFoundException is converted here.
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(
+          `dealId "${dealId}" does not reference a deal in this company.`,
+        );
+      }
+      throw error;
     }
   }
 

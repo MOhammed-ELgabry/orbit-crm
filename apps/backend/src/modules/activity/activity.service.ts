@@ -9,6 +9,7 @@ import { UpdateActivityDto } from './dto/update-activity.dto';
 import { ActivityEntity } from './entities/activity.entity';
 import type {
   ActivityRepositoryResult,
+  CalendarEventActivityEventInput,
   DealActivityEventInput,
   IActivityRepository,
   TaskActivityEventInput,
@@ -98,6 +99,18 @@ export class ActivityService {
     input: TaskActivityEventInput,
   ): Promise<ActivityEntity> {
     return this.activityRepository.createTaskEvent(
+      companyId,
+      createdById,
+      input,
+    );
+  }
+
+  async logCalendarEvent(
+    companyId: string,
+    createdById: string,
+    input: CalendarEventActivityEventInput,
+  ): Promise<ActivityEntity> {
+    return this.activityRepository.createCalendarEvent(
       companyId,
       createdById,
       input,

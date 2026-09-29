@@ -14,6 +14,7 @@ import { ActivityEntity } from '../entities/activity.entity';
 
 import {
   ActivityRepositoryResult,
+  CalendarEventActivityEventInput,
   DealActivityEventInput,
   IActivityRepository,
   TaskActivityEventInput,
@@ -104,6 +105,31 @@ export class ActivityRepository implements IActivityRepository {
     }
   }
 
+  async createCalendarEvent(
+    companyId: string,
+    createdById: string,
+    input: CalendarEventActivityEventInput,
+  ): Promise<ActivityEntity> {
+    try {
+      const activity = await this.prisma.activity.create({
+        data: {
+          companyId,
+          createdById,
+
+          type: input.type,
+          title: input.title,
+          description: input.description ?? null,
+
+          calendarEventId: input.calendarEventId,
+        },
+      });
+
+      return new ActivityEntity(activity);
+    } catch (error) {
+      PrismaExceptionMapper.map(error);
+    }
+  }
+
   async findAll(
     companyId: string,
     query: ActivityQueryDto,
@@ -130,6 +156,7 @@ export class ActivityRepository implements IActivityRepository {
           'contactId',
           'dealId',
           'taskId',
+          'calendarEventId',
           'createdAt',
           'updatedAt',
           'deletedAt',

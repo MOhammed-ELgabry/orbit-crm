@@ -27,10 +27,11 @@ import { AuthService } from './auth.service';
  * own claim/company-creation behavior; role-seeding itself (including
  * its Permission-catalog self-heal) is covered separately by
  * ensure-default-roles.util.spec.ts. mockPermissions here mirrors the
- * real PERMISSION_CATALOG's contact/lead/activity entries (the only
- * ones any DEFAULT_ROLE_DEFINITIONS role currently needs) so that
- * ensureDefaultRolesForCompany's real, non-mocked lookup logic finds
- * every permission it looks for and never needs to self-heal here.
+ * real PERMISSION_CATALOG's contact/lead/deal/task/calendar/activity
+ * entries (the only ones any DEFAULT_ROLE_DEFINITIONS role currently
+ * needs) so that ensureDefaultRolesForCompany's real, non-mocked
+ * lookup logic finds every permission it looks for and never needs to
+ * self-heal here.
  */
 const mockPermissions = [
   { id: 'perm-contact-create', resource: 'contact', action: 'create' },
@@ -49,6 +50,10 @@ const mockPermissions = [
   { id: 'perm-task-read', resource: 'task', action: 'read' },
   { id: 'perm-task-update', resource: 'task', action: 'update' },
   { id: 'perm-task-delete', resource: 'task', action: 'delete' },
+  { id: 'perm-calendar-create', resource: 'calendar', action: 'create' },
+  { id: 'perm-calendar-read', resource: 'calendar', action: 'read' },
+  { id: 'perm-calendar-update', resource: 'calendar', action: 'update' },
+  { id: 'perm-calendar-delete', resource: 'calendar', action: 'delete' },
   { id: 'perm-activity-create', resource: 'activity', action: 'create' },
   { id: 'perm-activity-read', resource: 'activity', action: 'read' },
   { id: 'perm-activity-update', resource: 'activity', action: 'update' },

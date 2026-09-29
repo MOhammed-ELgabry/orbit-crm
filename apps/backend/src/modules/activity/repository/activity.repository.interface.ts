@@ -42,6 +42,19 @@ export interface TaskActivityEventInput {
   taskId: string;
 }
 
+/**
+ * Same trust shape as DealActivityEventInput/TaskActivityEventInput,
+ * for a CalendarEvent-originated system activity — calendarEventId
+ * here is trusted (the only caller, CalendarService, has already
+ * confirmed it belongs to the company). See ActivityService.logCalendarEvent.
+ */
+export interface CalendarEventActivityEventInput {
+  type: string;
+  title: string;
+  description?: string;
+  calendarEventId: string;
+}
+
 export interface IActivityRepository {
   create(
     companyId: string,
@@ -59,6 +72,12 @@ export interface IActivityRepository {
     companyId: string,
     createdById: string,
     input: TaskActivityEventInput,
+  ): Promise<ActivityEntity>;
+
+  createCalendarEvent(
+    companyId: string,
+    createdById: string,
+    input: CalendarEventActivityEventInput,
   ): Promise<ActivityEntity>;
 
   findAll(

@@ -36,6 +36,7 @@ model Company {
   leads            Lead[]
   deals            Deal[]
   tasks            Task[]
+  calendarEvents   CalendarEvent[]
   onboardingTokens OnboardingToken[]
   activities       Activity[]
 
@@ -131,6 +132,10 @@ model User {
   // Tasks
   tasksCreated  Task[] @relation("TaskCreatedBy")
   tasksAssigned Task[] @relation("TaskAssignedTo")
+
+  // Calendar Events
+  calendarEventsCreated  CalendarEvent[] @relation("CalendarEventCreatedBy")
+  calendarEventsAssigned CalendarEvent[] @relation("CalendarEventAssignedTo")
 
   // Activities
   activitiesCreated Activity[] @relation("ActivityCreatedBy")
@@ -240,6 +245,23 @@ model Role {
   name        String
   description String?
 
+  // True only for the 4 built-in staff roles (MANAGER/SALES/SUPPORT/
+  // EMPLOYEE) created by ensureDefaultRolesForCompany
+  // (role/utils/ensure-default-roles.util.ts) at company-creation time.
+  // Always false for a role a human created or renamed through the
+  // ordinary Role API — including one that happens to share a default
+  // role's name. This is the only reliable signal for "is this a
+  // system-managed role", and it exists specifically so a future
+  // feature's permission backfill can find genuine default roles
+  // without ever matching on name alone (name is not immutable — see
+  // UpdateRoleDto — and RoleRepository.update replaces a role's entire
+  // permission set on every edit, so a name-based match could silently
+  // re-grant a permission an Owner deliberately removed). Never set
+  // outside ensureDefaultRolesForCompany's create branch and the
+  // one-time historical backfill in the add_role_is_system_role
+  // migration; RoleService/RoleRepository never read or write it.
+  isSystemRole Boolean @default(false)
+
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
@@ -332,6 +354,9 @@ model Contact {
   // Tasks
   tasks Task[]
 
+  // Calendar Events
+  calendarEvents CalendarEvent[]
+
   // Audit
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -388,6 +413,9 @@ model Lead {
 
   // Tasks
   tasks Task[]
+
+  // Calendar Events
+  calendarEvents CalendarEvent[]
 
   // Audit
   createdAt DateTime  @default(now())
@@ -452,6 +480,14 @@ model Activity {
   taskId String?
   task   Task?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
 
+  // Optional CalendarEvent association — added alongside the
+  // CalendarEvent model for the same reason as the Deal/Task
+  // associations above: a calendar event's lifecycle events (see
+  // CalendarService) need somewhere to live. Reuses the existing
+  // 'SYSTEM'/'STATUS_CHANGE' vocabulary, not a new one.
+  calendarEventId String?
+  calendarEvent   CalendarEvent? @relation(fields: [calendarEventId], references: [id], onDelete: SetNull)
+
   // Audit
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -464,10 +500,12 @@ model Activity {
   @@index([companyId, contactId])
   @@index([companyId, dealId])
   @@index([companyId, taskId])
+  @@index([companyId, calendarEventId])
   @@index([createdById])
   @@index([contactId])
   @@index([dealId])
   @@index([taskId])
+  @@index([calendarEventId])
   @@index([deletedAt])
 }
 
@@ -527,6 +565,9 @@ model Deal {
 
   // Tasks
   tasks Task[]
+
+  // Calendar Events
+  calendarEvents CalendarEvent[]
 
   // Audit
   createdAt DateTime  @default(now())
@@ -631,4 +672,78 @@ model Task {
   @@index([leadId])
   @@index([dealId])
   @@index([deletedAt])
+}
+
+// A calendar event/appointment, optionally linked to a Contact, Lead,
+// and/or Deal — independent and optional exactly like Task's own three
+// associations above (see the Task model comment for why unrelated-to-
+// each-other optional links are the right shape here too).
+//
+// status is a plain whitelisted string (CALENDAR_EVENT_STATUSES —
+// calendar/constants/calendar.constants.ts), not a Prisma enum, for
+// the same reason as Task.status/Task.priority: adjusting the set
+// never requires a migration. There is no completedAt column — unlike
+// Task, an event's "when was this actually done" isn't a Phase 1
+// requirement; status alone is enough.
+//
+// startAt/endAt are both required DateTime (TIMESTAMP(3), the same
+// column type every other DateTime in this schema uses — no separate
+// date/time system). For a timed event they're real UTC instants; for
+// an all-day event (allDay: true) CalendarService enforces that both
+// are exact UTC midnight and endAt is an exclusive end date (so a
+// single-day all-day event has endAt = startAt + 1 day) — the DB
+// itself doesn't and can't enforce that invariant, so it's a service-
+// layer contract, not a schema one.
+//
+// Only 2 composite indexes, deliberately fewer than Task's — every
+// Calendar list query is bounded by a date range (see
+// CalendarService's 92-day max query span and 31-day max event
+// duration) and then optionally post-filtered by status/relation IDs
+// in memory-cheap ways, so an index per relation column the way Task
+// has wouldn't be earning its write-time cost here.
+model CalendarEvent {
+  id String @id @default(cuid())
+
+  // Tenant
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Core Information
+  title       String
+  description String?
+  location    String?
+
+  // Scheduling
+  startAt DateTime
+  endAt   DateTime
+  allDay  Boolean  @default(false)
+  status  String   @default("scheduled")
+
+  // Associations — independent and optional, see model comment above
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  leadId String?
+  lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  dealId String?
+  deal   Deal?   @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  // Ownership / Assignment
+  createdById String
+  createdBy   User   @relation("CalendarEventCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+
+  assignedToId String?
+  assignedTo   User?   @relation("CalendarEventAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  // Activities
+  activities Activity[]
+
+  // Audit
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([companyId, startAt])
+  @@index([companyId, assignedToId, startAt])
 }

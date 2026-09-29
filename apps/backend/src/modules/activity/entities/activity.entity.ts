@@ -20,6 +20,7 @@ export class ActivityEntity {
   contactId: string | null;
   dealId: string | null;
   taskId: string | null;
+  calendarEventId: string | null;
 
   // Audit
   createdAt: Date;
