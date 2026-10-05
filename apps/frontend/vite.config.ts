@@ -1,4 +1,6 @@
-import { defineConfig } from "vite";
+// `defineConfig` comes from "vitest/config" (a superset of Vite's own)
+// so this one file configures both the app build and the test runner.
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
@@ -40,5 +42,12 @@ export default defineConfig({
     // configured never starts shipping public .map files it didn't
     // generate before.
     sourcemap: Boolean(sentryAuthToken),
+  },
+  // Test runner only: nothing here affects `vite`, `vite build` or the
+  // app bundle. jsdom provides the browser DOM React Testing Library
+  // needs; test APIs are imported explicitly from "vitest" (no globals).
+  test: {
+    environment: "jsdom",
+    setupFiles: ["./src/test/setup.ts"],
   },
 });
