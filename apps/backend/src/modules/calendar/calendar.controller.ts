@@ -105,10 +105,7 @@ export class CalendarController {
     status: 404,
     description: 'Calendar event not found.',
   })
-  async findById(
-    @Req() req: AuthenticatedRequest,
-    @Param('id') id: string,
-  ) {
+  async findById(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.calendarService.findById(req.user.companyId, id);
   }
 

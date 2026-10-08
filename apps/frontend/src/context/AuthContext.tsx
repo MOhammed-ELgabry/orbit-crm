@@ -15,6 +15,7 @@ import {
 } from "../services/authService";
 import { getMyCompany, type Company } from "../services/companyService";
 import { identifyAnalyticsUser, resetAnalyticsIdentity } from "../lib/posthog";
+import { detachPushOnLogout } from "../lib/push";
 import i18n from "i18next";
 import { getForegroundColor } from "../lib/contrast";
 
@@ -193,6 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
+      await detachPushOnLogout();
       await logoutUser();
     } catch {
       // Cookies may already be gone (e.g. the session had expired) — the

@@ -197,8 +197,7 @@ describe('Contacts write-side tenant isolation (integration)', () => {
     expect(res.status).toBe(200);
 
     const setCookie = res.headers['set-cookie'] as unknown as
-      | string[]
-      | undefined;
+      string[] | undefined;
     expect(cookieValue(setCookie, ACCESS_COOKIE)).toBeTruthy();
 
     const csrf = cookieValue(setCookie, CSRF_COOKIE);
@@ -254,7 +253,10 @@ describe('Contacts write-side tenant isolation (integration)', () => {
     // these up). main.ts-only concerns (CORS, helmet, swagger, trust proxy)
     // are irrelevant to this test.
     app.use(cookieParser());
-    app.useGlobalFilters(new PrismaExceptionFilter(), new HttpExceptionFilter());
+    app.useGlobalFilters(
+      new PrismaExceptionFilter(),
+      new HttpExceptionFilter(),
+    );
     app.useGlobalInterceptors(new ResponseInterceptor());
     app.useGlobalPipes(
       new ValidationPipe({
@@ -268,9 +270,9 @@ describe('Contacts write-side tenant isolation (integration)', () => {
     httpServer = app.getHttpServer() as Server;
 
     // The application's own database connection must also be the test DB.
-    const rows = await app
-      .get(PrismaService)
-      .$queryRaw<Array<{ current_database: string }>>`SELECT current_database()`;
+    const rows = await app.get(PrismaService).$queryRaw<
+      Array<{ current_database: string }>
+    >`SELECT current_database()`;
     expect(rows[0]?.current_database).toBe('orbitcrm_test');
     expect(process.env.NODE_ENV).toBe('test');
 
@@ -482,7 +484,7 @@ describe('Contacts write-side tenant isolation (integration)', () => {
     expect(after.deletedAt).toBeNull();
   });
 
-  it("Test 3b: user A cannot move their own contact to company B by sending companyId (400)", async () => {
+  it('Test 3b: user A cannot move their own contact to company B by sending companyId (400)', async () => {
     const before = await rowOf(contactAUpdateId);
     const companyBBefore = await rowsOfCompanyB();
 

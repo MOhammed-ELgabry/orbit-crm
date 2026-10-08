@@ -7,6 +7,7 @@ import { UserModule } from '../user/user.module';
 import { ContactModule } from '../contact/contact.module';
 import { LeadModule } from '../lead/lead.module';
 import { ActivityModule } from '../activity/activity.module';
+import { NotificationModule } from '../notification/notification.module';
 import { PermissionsGuard } from '../../common/security/permissions.guard';
 
 import { DEAL_REPOSITORY } from './constants/deal.constants';
@@ -24,6 +25,9 @@ import { DealService } from './deal.service';
   // ActivityService.logDealEvent (see deal.service.ts) — this is a
   // one-way dependency (ActivityModule does not import DealModule back),
   // so there is no circular module dependency.
+  // NotificationModule is imported so the service can publish its
+  // notification events; it imports no domain module, so this is one-way
+  // (no circular module dependency).
   imports: [
     PrismaModule,
     AuthModule,
@@ -31,6 +35,7 @@ import { DealService } from './deal.service';
     ContactModule,
     LeadModule,
     ActivityModule,
+    NotificationModule,
   ],
 
   controllers: [DealController],

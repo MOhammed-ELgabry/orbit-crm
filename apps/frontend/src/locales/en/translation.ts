@@ -418,6 +418,46 @@ const en = {
   logoutConfirmTitle: "Log out?",
   logoutConfirmMessage: "You'll need to sign in again to access your dashboard.",
   loadMore: "Load more",
+
+  // Notifications
+  notificationsNavLabel: "Notifications",
+  notificationsTitle: "Notifications",
+  notificationsBellLabel: "Notifications",
+  notificationsBellLabelUnread: "Notifications, {{count}} unread",
+  notificationUnread: "Unread",
+  notificationsMarkAllRead: "Mark all as read",
+  notificationsLoading: "Loading…",
+  notificationsLoadError: "We couldn't load your notifications.",
+  notificationsRetry: "Try again",
+  notificationsEmpty: "You have no notifications yet.",
+  notificationsViewAll: "View all notifications",
+  notificationsUnreadSummary: "You have {{count}} unread notifications.",
+  notificationsAllCaughtUp: "You're all caught up.",
+
+  // Settings — Notifications
+  notificationSettingsTitle: "Notifications",
+  notificationSettingsDescription:
+    "Choose how you want to be told when something needs your attention.",
+  notificationsSettingsLoadError: "We couldn't load your notification settings.",
+  notificationsSettingsSaveError: "We couldn't save that change. Please try again.",
+  notificationsInAppLabel: "In-app notifications",
+  notificationsInAppAlwaysOn: "Always on.",
+  emailNotificationsLabel: "Email notifications",
+  emailNotificationsDescription: "Get an email for important updates.",
+  emailNotificationsUnavailable: "Email notifications are not available right now.",
+  pushNotificationsLabel: "Push notifications",
+  pushNotificationsDescription: "Get browser notifications, even when Orbit is closed.",
+  pushThisDeviceLabel: "This device",
+  pushThisDeviceEnabled: "Push notifications are enabled on this device.",
+  pushThisDeviceDisabled: "Push notifications are not enabled on this device.",
+  pushEnableThisDevice: "Enable on this device",
+  pushDisableThisDevice: "Disable on this device",
+  pushRegisteredDevices: "Registered devices: {{count}}",
+  pushUnsupported: "This browser doesn't support push notifications.",
+  pushPermissionDenied:
+    "Notifications are blocked for this site. Allow them in your browser settings to enable push.",
+  pushNotConfigured: "Push notifications are not available right now.",
+  pushFailed: "We couldn't update push notifications on this device. Please try again.",
 };
 
 export default en;

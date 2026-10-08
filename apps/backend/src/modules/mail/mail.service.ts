@@ -25,6 +25,13 @@ export class MailService {
         user: this.configService.get<string>('MAIL_USER'),
         pass: this.configService.get<string>('MAIL_PASSWORD'),
       },
+
+      // Bounded SMTP timeouts. Without them a hung SMTP server holds a
+      // connection open indefinitely (nodemailer's defaults are minutes),
+      // which for notification delivery would stall a worker slot.
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 20_000,
     });
   }
 
@@ -129,5 +136,51 @@ export class MailService {
     this.logger.log(
       `Password reset email sent to ${email} (messageId=${result.messageId}, accepted=${result.accepted.length}, rejected=${result.rejected.length})`,
     );
+  }
+
+  /**
+   * Sends one already-rendered notification email (see
+   * notification.templates.ts). Used by NotificationWorker.
+   *
+   * The recipient address is deliberately never logged here, and any
+   * transport failure is re-thrown as a short, code-only error
+   * (`notification_delivery_failed:email:<code>`) so the SMTP error —
+   * which can embed the address, server banner or credentials hints —
+   * never propagates into logs or the delivery row.
+   */
+  async sendNotificationEmail(
+    email: string,
+    message: { subject: string; html: string; text: string },
+  ): Promise<void> {
+    try {
+      await this.transporter.sendMail({
+        from: this.configService.get<string>('MAIL_FROM'),
+        to: email,
+        subject: message.subject,
+        html: message.html,
+        text: message.text,
+      });
+    } catch (error) {
+      throw new Error(
+        `notification_delivery_failed:email:${MailService.classifyTransportError(error)}`,
+      );
+    }
+  }
+
+  private static classifyTransportError(error: unknown): string {
+    const { code, responseCode } = (error ?? {}) as {
+      code?: string;
+      responseCode?: number;
+    };
+
+    if (code === 'ETIMEDOUT' || code === 'ESOCKET' || code === 'ECONNECTION') {
+      return 'smtp_unreachable';
+    }
+    if (code === 'EAUTH') return 'smtp_auth';
+    if (code === 'EENVELOPE') return 'smtp_recipient_rejected';
+    if (typeof responseCode === 'number') {
+      return responseCode >= 500 ? 'smtp_rejected' : 'smtp_temporary';
+    }
+    return 'smtp_error';
   }
 }

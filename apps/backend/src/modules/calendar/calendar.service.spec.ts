@@ -35,7 +35,9 @@ describe('CalendarService', () => {
   function buildService() {
     const calendarEventRepository = {
       create: jest.fn().mockResolvedValue(baseEvent),
-      findAll: jest.fn().mockResolvedValue({ data: [baseEvent], hasMore: false }),
+      findAll: jest
+        .fn()
+        .mockResolvedValue({ data: [baseEvent], hasMore: false }),
       findById: jest.fn().mockResolvedValue(baseEvent),
       update: jest.fn().mockResolvedValue(baseEvent),
       softDelete: jest.fn().mockResolvedValue(true),
@@ -83,8 +85,14 @@ describe('CalendarService', () => {
 
   describe('create', () => {
     it('creates directly when no contact/lead/deal/assignedTo are supplied', async () => {
-      const { service, calendarEventRepository, contactService, leadService, dealService, userService } =
-        buildService();
+      const {
+        service,
+        calendarEventRepository,
+        contactService,
+        leadService,
+        dealService,
+        userService,
+      } = buildService();
 
       await service.create(companyId, createdById, {
         title: 'New event',
@@ -112,7 +120,8 @@ describe('CalendarService', () => {
     });
 
     it('validates contactId/leadId/dealId/assignedToId against the caller\u2019s own company (IDOR guard)', async () => {
-      const { service, contactService, leadService, dealService, userService } = buildService();
+      const { service, contactService, leadService, dealService, userService } =
+        buildService();
 
       await service.create(companyId, createdById, {
         title: 'New event',
@@ -124,7 +133,10 @@ describe('CalendarService', () => {
         assignedToId: 'user-2',
       });
 
-      expect(contactService.findById).toHaveBeenCalledWith(companyId, 'contact-1');
+      expect(contactService.findById).toHaveBeenCalledWith(
+        companyId,
+        'contact-1',
+      );
       expect(leadService.findById).toHaveBeenCalledWith(companyId, 'lead-1');
       expect(dealService.findById).toHaveBeenCalledWith(companyId, 'deal-1');
       // UserService.findById is (id, companyId) — the reverse of the
@@ -150,7 +162,9 @@ describe('CalendarService', () => {
 
     it('rejects a cross-company leadId the same way as a nonexistent one (no existence leak)', async () => {
       const { service, leadService } = buildService();
-      leadService.findById.mockRejectedValue(new NotFoundException('Lead with ID "lead-x" not found.'));
+      leadService.findById.mockRejectedValue(
+        new NotFoundException('Lead with ID "lead-x" not found.'),
+      );
 
       await expect(
         service.create(companyId, createdById, {
@@ -159,7 +173,9 @@ describe('CalendarService', () => {
           endAt: endAt.toISOString(),
           leadId: 'lead-x',
         }),
-      ).rejects.toThrow('leadId "lead-x" does not reference a lead in this company.');
+      ).rejects.toThrow(
+        'leadId "lead-x" does not reference a lead in this company.',
+      );
     });
 
     it('does not mask an unexpected (non-NotFound) error from a relation check as "not found"', async () => {
@@ -275,11 +291,15 @@ describe('CalendarService', () => {
         endAt: endAt.toISOString(),
       });
 
-      expect(activityService.logCalendarEvent).toHaveBeenCalledWith(companyId, createdById, {
-        type: 'SYSTEM',
-        title: `Calendar event created: ${event.title}`,
-        calendarEventId: event.id,
-      });
+      expect(activityService.logCalendarEvent).toHaveBeenCalledWith(
+        companyId,
+        createdById,
+        {
+          type: 'SYSTEM',
+          title: `Calendar event created: ${event.title}`,
+          calendarEventId: event.id,
+        },
+      );
     });
   });
 
@@ -325,7 +345,10 @@ describe('CalendarService', () => {
 
     it('returns hasMore and echoes from/to/limit in meta', async () => {
       const { service, calendarEventRepository } = buildService();
-      calendarEventRepository.findAll.mockResolvedValue({ data: [baseEvent], hasMore: true });
+      calendarEventRepository.findAll.mockResolvedValue({
+        data: [baseEvent],
+        hasMore: true,
+      });
 
       const result = await service.findAll(companyId, {
         from: '2026-10-01T00:00:00.000Z',
@@ -346,18 +369,29 @@ describe('CalendarService', () => {
       const { service, calendarEventRepository } = buildService();
       calendarEventRepository.findById.mockResolvedValue(null);
 
-      await expect(service.findById(otherCompanyId, eventId)).rejects.toThrow(NotFoundException);
-      expect(calendarEventRepository.findById).toHaveBeenCalledWith(otherCompanyId, eventId);
+      await expect(service.findById(otherCompanyId, eventId)).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(calendarEventRepository.findById).toHaveBeenCalledWith(
+        otherCompanyId,
+        eventId,
+      );
     });
   });
 
   describe('update', () => {
     it('throws NotFoundException before validating anything else when the event does not belong to the company', async () => {
-      const { service, calendarEventRepository, contactService } = buildService();
+      const { service, calendarEventRepository, contactService } =
+        buildService();
       calendarEventRepository.findById.mockResolvedValue(null);
 
       await expect(
-        service.update(otherCompanyId, eventId, { contactId: 'contact-1' }, createdById),
+        service.update(
+          otherCompanyId,
+          eventId,
+          { contactId: 'contact-1' },
+          createdById,
+        ),
       ).rejects.toThrow(NotFoundException);
       expect(contactService.findById).not.toHaveBeenCalled();
     });
@@ -365,7 +399,12 @@ describe('CalendarService', () => {
     it('sends an explicit null through to the repository to clear contactId (never silently omitted)', async () => {
       const { service, calendarEventRepository } = buildService();
 
-      await service.update(companyId, eventId, { contactId: null }, createdById);
+      await service.update(
+        companyId,
+        eventId,
+        { contactId: null },
+        createdById,
+      );
 
       expect(calendarEventRepository.update).toHaveBeenCalledWith(
         companyId,
@@ -377,7 +416,12 @@ describe('CalendarService', () => {
     it('omits contactId entirely from the repository call when it is not present in the patch (never accidentally cleared)', async () => {
       const { service, calendarEventRepository } = buildService();
 
-      await service.update(companyId, eventId, { title: 'Renamed' }, createdById);
+      await service.update(
+        companyId,
+        eventId,
+        { title: 'Renamed' },
+        createdById,
+      );
 
       const [, , input] = calendarEventRepository.update.mock.calls[0];
       expect('contactId' in input).toBe(false);
@@ -390,7 +434,12 @@ describe('CalendarService', () => {
       // service layer does not quietly accept it either, in case that
       // guarantee is ever loosened at the DTO layer.
       await expect(
-        service.update(companyId, eventId, { contactId: '' } as never, createdById),
+        service.update(
+          companyId,
+          eventId,
+          { contactId: '' } as never,
+          createdById,
+        ),
       ).resolves.toBeDefined();
       // '' is falsy, so assertRelations' `if (dto.contactId)` check
       // skips validation for it — it reaches the repository update
@@ -403,7 +452,10 @@ describe('CalendarService', () => {
     it('re-validates the merged date range when only endAt changes', async () => {
       const { service, calendarEventRepository } = buildService();
       calendarEventRepository.findById.mockResolvedValue(
-        new CalendarEventEntity({ ...baseEvent, startAt: new Date('2026-10-01T13:00:00.000Z') }),
+        new CalendarEventEntity({
+          ...baseEvent,
+          startAt: new Date('2026-10-01T13:00:00.000Z'),
+        }),
       );
 
       await expect(
@@ -424,53 +476,81 @@ describe('CalendarService', () => {
       // aligned), a patch that never mentions timing must not trip
       // over it.
       await expect(
-        service.update(companyId, eventId, { title: 'Renamed only' }, createdById),
+        service.update(
+          companyId,
+          eventId,
+          { title: 'Renamed only' },
+          createdById,
+        ),
       ).resolves.toBeDefined();
     });
 
     describe('activity logging (before/after value comparison, not payload presence)', () => {
       it('logs "completed" only on an actual transition into completed', async () => {
-        const { service, calendarEventRepository, activityService } = buildService();
+        const { service, calendarEventRepository, activityService } =
+          buildService();
         calendarEventRepository.update.mockResolvedValue(
           new CalendarEventEntity({ ...baseEvent, status: 'completed' }),
         );
 
-        await service.update(companyId, eventId, { status: 'completed' }, createdById);
+        await service.update(
+          companyId,
+          eventId,
+          { status: 'completed' },
+          createdById,
+        );
 
         expect(activityService.logCalendarEvent).toHaveBeenCalledWith(
           companyId,
           createdById,
-          expect.objectContaining({ title: expect.stringContaining('completed') }),
+          expect.objectContaining({
+            title: expect.stringContaining('completed'),
+          }),
         );
       });
 
       it('does not log a status change when the resent status equals the current one', async () => {
-        const { service, calendarEventRepository, activityService } = buildService();
+        const { service, calendarEventRepository, activityService } =
+          buildService();
         // before.status and after.status are both 'scheduled'
         calendarEventRepository.update.mockResolvedValue(baseEvent);
 
-        await service.update(companyId, eventId, { status: 'scheduled' }, createdById);
+        await service.update(
+          companyId,
+          eventId,
+          { status: 'scheduled' },
+          createdById,
+        );
 
         expect(activityService.logCalendarEvent).not.toHaveBeenCalled();
       });
 
       it('logs "assigned" and "unassigned" based on the actual before/after assignedToId', async () => {
-        const { service, calendarEventRepository, activityService } = buildService();
+        const { service, calendarEventRepository, activityService } =
+          buildService();
         calendarEventRepository.update.mockResolvedValue(
           new CalendarEventEntity({ ...baseEvent, assignedToId: 'user-2' }),
         );
 
-        await service.update(companyId, eventId, { assignedToId: 'user-2' }, createdById);
+        await service.update(
+          companyId,
+          eventId,
+          { assignedToId: 'user-2' },
+          createdById,
+        );
 
         expect(activityService.logCalendarEvent).toHaveBeenCalledWith(
           companyId,
           createdById,
-          expect.objectContaining({ title: expect.stringContaining('assigned') }),
+          expect.objectContaining({
+            title: expect.stringContaining('assigned'),
+          }),
         );
       });
 
       it('logs "rescheduled" when startAt/endAt/allDay actually change', async () => {
-        const { service, calendarEventRepository, activityService } = buildService();
+        const { service, calendarEventRepository, activityService } =
+          buildService();
         calendarEventRepository.update.mockResolvedValue(
           new CalendarEventEntity({
             ...baseEvent,
@@ -482,21 +562,31 @@ describe('CalendarService', () => {
         await service.update(
           companyId,
           eventId,
-          { startAt: '2026-10-02T13:00:00.000Z', endAt: '2026-10-02T14:00:00.000Z' },
+          {
+            startAt: '2026-10-02T13:00:00.000Z',
+            endAt: '2026-10-02T14:00:00.000Z',
+          },
           createdById,
         );
 
         expect(activityService.logCalendarEvent).toHaveBeenCalledWith(
           companyId,
           createdById,
-          expect.objectContaining({ title: expect.stringContaining('rescheduled') }),
+          expect.objectContaining({
+            title: expect.stringContaining('rescheduled'),
+          }),
         );
       });
 
       it('logs nothing when the update changes only title/description (no status/assignment/timing change)', async () => {
         const { service, activityService } = buildService();
 
-        await service.update(companyId, eventId, { title: 'Renamed' }, createdById);
+        await service.update(
+          companyId,
+          eventId,
+          { title: 'Renamed' },
+          createdById,
+        );
 
         expect(activityService.logCalendarEvent).not.toHaveBeenCalled();
       });
@@ -508,9 +598,9 @@ describe('CalendarService', () => {
       const { service, calendarEventRepository } = buildService();
       calendarEventRepository.findById.mockResolvedValue(null);
 
-      await expect(service.remove(otherCompanyId, eventId, createdById)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.remove(otherCompanyId, eventId, createdById),
+      ).rejects.toThrow(NotFoundException);
       expect(calendarEventRepository.softDelete).not.toHaveBeenCalled();
     });
 
@@ -519,18 +609,25 @@ describe('CalendarService', () => {
 
       await service.remove(companyId, eventId, createdById);
 
-      expect(activityService.logCalendarEvent).toHaveBeenCalledWith(companyId, createdById, {
-        type: 'SYSTEM',
-        title: `Calendar event deleted: ${baseEvent.title}`,
-        calendarEventId: eventId,
-      });
+      expect(activityService.logCalendarEvent).toHaveBeenCalledWith(
+        companyId,
+        createdById,
+        {
+          type: 'SYSTEM',
+          title: `Calendar event deleted: ${baseEvent.title}`,
+          calendarEventId: eventId,
+        },
+      );
     });
 
     it('throws NotFoundException if softDelete reports no row matched (race: deleted between the fetch and the delete)', async () => {
-      const { service, calendarEventRepository, activityService } = buildService();
+      const { service, calendarEventRepository, activityService } =
+        buildService();
       calendarEventRepository.softDelete.mockResolvedValue(false);
 
-      await expect(service.remove(companyId, eventId, createdById)).rejects.toThrow(NotFoundException);
+      await expect(
+        service.remove(companyId, eventId, createdById),
+      ).rejects.toThrow(NotFoundException);
       expect(activityService.logCalendarEvent).not.toHaveBeenCalled();
     });
   });

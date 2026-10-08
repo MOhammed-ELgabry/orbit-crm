@@ -19,6 +19,7 @@ import { ContactService } from '../contact/contact.service';
 import { LeadService } from '../lead/lead.service';
 import { DealService } from '../deal/deal.service';
 import { UserService } from '../user/user.service';
+import { NotificationService } from '../notification/notification.service';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -45,6 +46,7 @@ export class CalendarService {
     private readonly dealService: DealService,
     private readonly userService: UserService,
     private readonly activityService: ActivityService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async create(
@@ -77,11 +79,31 @@ export class CalendarService {
       createdById,
     });
 
-    await this.activityService.logCalendarEvent(companyId, createdById, {
-      type: 'SYSTEM',
-      title: `Calendar event created: ${event.title}`,
-      calendarEventId: event.id,
-    });
+    const createdActivity = await this.activityService.logCalendarEvent(
+      companyId,
+      createdById,
+      {
+        type: 'SYSTEM',
+        title: `Calendar event created: ${event.title}`,
+        calendarEventId: event.id,
+      },
+    );
+
+    // Created already assigned to someone else: they were added to it.
+    // Keyed on the "created" Activity. Never throws.
+    if (event.assignedToId) {
+      await this.notificationService.publish({
+        type: 'calendar.assigned',
+        companyId,
+        actorId: createdById,
+        recipientIds: [event.assignedToId],
+        entityType: 'calendar_event',
+        entityId: event.id,
+        title: event.title,
+        startAt: event.startAt,
+        occurrenceId: createdActivity.id,
+      });
+    }
 
     return event;
   }
@@ -404,10 +426,27 @@ export class CalendarService {
           calendarEventId: after.id,
         });
       } else if (after.status === 'cancelled') {
-        await this.activityService.logCalendarEvent(companyId, actorId, {
-          type: 'STATUS_CHANGE',
-          title: `Calendar event cancelled: ${after.title}`,
-          calendarEventId: after.id,
+        const activity = await this.activityService.logCalendarEvent(
+          companyId,
+          actorId,
+          {
+            type: 'STATUS_CHANGE',
+            title: `Calendar event cancelled: ${after.title}`,
+            calendarEventId: after.id,
+          },
+        );
+
+        // The person the event is assigned to (publish() drops the actor).
+        await this.notificationService.publish({
+          type: 'calendar.cancelled',
+          companyId,
+          actorId,
+          recipientIds: [after.assignedToId],
+          entityType: 'calendar_event',
+          entityId: after.id,
+          title: after.title,
+          startAt: after.startAt,
+          occurrenceId: activity.id,
         });
       } else {
         await this.activityService.logCalendarEvent(companyId, actorId, {
@@ -420,11 +459,30 @@ export class CalendarService {
 
     if (before.assignedToId !== after.assignedToId) {
       if (after.assignedToId) {
-        await this.activityService.logCalendarEvent(companyId, actorId, {
-          type: 'STATUS_CHANGE',
-          title: `Calendar event assigned: ${after.title}`,
-          calendarEventId: after.id,
-        });
+        const activity = await this.activityService.logCalendarEvent(
+          companyId,
+          actorId,
+          {
+            type: 'STATUS_CHANGE',
+            title: `Calendar event assigned: ${after.title}`,
+            calendarEventId: after.id,
+          },
+        );
+
+        // A cancelled event is not worth announcing as a new assignment.
+        if (after.status !== 'cancelled') {
+          await this.notificationService.publish({
+            type: 'calendar.assigned',
+            companyId,
+            actorId,
+            recipientIds: [after.assignedToId],
+            entityType: 'calendar_event',
+            entityId: after.id,
+            title: after.title,
+            startAt: after.startAt,
+            occurrenceId: activity.id,
+          });
+        }
       } else {
         await this.activityService.logCalendarEvent(companyId, actorId, {
           type: 'STATUS_CHANGE',
@@ -440,11 +498,36 @@ export class CalendarService {
       before.allDay !== after.allDay;
 
     if (rescheduled) {
-      await this.activityService.logCalendarEvent(companyId, actorId, {
-        type: 'STATUS_CHANGE',
-        title: `Calendar event rescheduled: ${after.title}`,
-        calendarEventId: after.id,
-      });
+      const activity = await this.activityService.logCalendarEvent(
+        companyId,
+        actorId,
+        {
+          type: 'STATUS_CHANGE',
+          title: `Calendar event rescheduled: ${after.title}`,
+          calendarEventId: after.id,
+        },
+      );
+
+      // Only someone who ALREADY had the event hears about a reschedule.
+      // A person newly assigned in the same update gets calendar.assigned
+      // (with the new time) instead; a cancelled event is not announced
+      // as rescheduled.
+      if (
+        after.status !== 'cancelled' &&
+        before.assignedToId === after.assignedToId
+      ) {
+        await this.notificationService.publish({
+          type: 'calendar.rescheduled',
+          companyId,
+          actorId,
+          recipientIds: [after.assignedToId],
+          entityType: 'calendar_event',
+          entityId: after.id,
+          title: after.title,
+          startAt: after.startAt,
+          occurrenceId: activity.id,
+        });
+      }
     }
   }
 }

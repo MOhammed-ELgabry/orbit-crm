@@ -59,7 +59,9 @@ describe('CalendarEventRepository', () => {
       const from = new Date();
       const to = new Date(from.getTime() + 1000);
 
-      await repository.findAll(companyId, from, to, from, { status: 'completed' });
+      await repository.findAll(companyId, from, to, from, {
+        status: 'completed',
+      });
 
       const [[callArgs]] = prisma.calendarEvent.findMany.mock.calls;
       expect(callArgs.where.status).toBe('completed');
@@ -72,7 +74,13 @@ describe('CalendarEventRepository', () => {
       const rows = Array.from({ length: 501 }, (_, i) => ({ id: `e${i}` }));
       prisma.calendarEvent.findMany.mockResolvedValue(rows);
 
-      const result = await repository.findAll(companyId, new Date(), new Date(), new Date(), {});
+      const result = await repository.findAll(
+        companyId,
+        new Date(),
+        new Date(),
+        new Date(),
+        {},
+      );
 
       expect(prisma.calendarEvent.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ take: 501 }),
@@ -83,9 +91,18 @@ describe('CalendarEventRepository', () => {
 
     it('reports hasMore: false and returns every row when the limit is not exceeded', async () => {
       const { repository, prisma } = makeMocks();
-      prisma.calendarEvent.findMany.mockResolvedValue([{ id: 'e1' }, { id: 'e2' }]);
+      prisma.calendarEvent.findMany.mockResolvedValue([
+        { id: 'e1' },
+        { id: 'e2' },
+      ]);
 
-      const result = await repository.findAll(companyId, new Date(), new Date(), new Date(), {});
+      const result = await repository.findAll(
+        companyId,
+        new Date(),
+        new Date(),
+        new Date(),
+        {},
+      );
 
       expect(result.hasMore).toBe(false);
       expect(result.data).toHaveLength(2);
@@ -94,10 +111,18 @@ describe('CalendarEventRepository', () => {
     it('orders by startAt then id, matching the fixed, non-configurable sort the API contract promises', async () => {
       const { repository, prisma } = makeMocks();
 
-      await repository.findAll(companyId, new Date(), new Date(), new Date(), {});
+      await repository.findAll(
+        companyId,
+        new Date(),
+        new Date(),
+        new Date(),
+        {},
+      );
 
       expect(prisma.calendarEvent.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ orderBy: [{ startAt: 'asc' }, { id: 'asc' }] }),
+        expect.objectContaining({
+          orderBy: [{ startAt: 'asc' }, { id: 'asc' }],
+        }),
       );
     });
   });

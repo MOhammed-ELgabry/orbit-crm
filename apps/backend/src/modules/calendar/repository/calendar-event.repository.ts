@@ -102,9 +102,9 @@ export class CalendarEventRepository implements ICalendarEventRepository {
     });
 
     const hasMore = rows.length > CALENDAR_LIST_MAX_RESULTS;
-    const data = (hasMore ? rows.slice(0, CALENDAR_LIST_MAX_RESULTS) : rows).map(
-      (row) => new CalendarEventEntity(row),
-    );
+    const data = (
+      hasMore ? rows.slice(0, CALENDAR_LIST_MAX_RESULTS) : rows
+    ).map((row) => new CalendarEventEntity(row));
 
     return { data, hasMore };
   }

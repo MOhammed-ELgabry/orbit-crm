@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { NotificationsProvider } from "./context/NotificationsProvider";
 import RegisterPage from "./pages/auth/RegisterPage/RegisterPage";
 import LoginPage from "./pages/auth/LoginPage/LoginPage";
 import VerifyEmail from "./pages/auth/VerifyEmail/VerifyEmail";
@@ -22,63 +23,71 @@ import SettingsPage from "./pages/Settings/SettingsPage";
 import TermsOfServicePage from "./pages/Settings/TermsOfServicePage";
 import PrivacyPolicyPage from "./pages/Settings/PrivacyPolicyPage";
 import ReportsPage from "./pages/Reports/ReportsPage";
+import NotificationsPage from "./pages/Notifications/NotificationsPage";
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <div className="relative min-h-screen">
-          <Routes>
-            <Route path="/" element={<RegisterPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/industry-selection" element={<IndustrySelection />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<DashboardPage />} />
+        <NotificationsProvider>
+          <div className="relative min-h-screen">
+            <Routes>
+              <Route path="/" element={<RegisterPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route
+                path="/industry-selection"
+                element={<IndustrySelection />}
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<DashboardPage />} />
 
-              <Route path="contacts" element={<ContactsPage />} />
+                <Route path="contacts" element={<ContactsPage />} />
 
-              <Route path="contacts/:id" element={<ContactDetailPage />} />
+                <Route path="contacts/:id" element={<ContactDetailPage />} />
 
-              <Route path="users" element={<UsersPage />} />
+                <Route path="users" element={<UsersPage />} />
 
-              <Route path="leads" element={<LeadsPage />} />
+                <Route path="leads" element={<LeadsPage />} />
 
-              <Route path="leads/:id" element={<LeadDetailPage />} />
+                <Route path="leads/:id" element={<LeadDetailPage />} />
 
-              <Route path="deals" element={<DealsPage />} />
-              <Route path="deals/:id" element={<DealDetailPage />} />
+                <Route path="deals" element={<DealsPage />} />
+                <Route path="deals/:id" element={<DealDetailPage />} />
 
-              <Route path="tasks" element={<TasksPage />} />
+                <Route path="tasks" element={<TasksPage />} />
 
-              <Route path="calendar" element={<CalendarPage />} />
+                <Route path="calendar" element={<CalendarPage />} />
 
-              <Route path="reports" element={<ReportsPage />} />
+                <Route path="reports" element={<ReportsPage />} />
 
-              <Route path="settings" element={<SettingsPage />} />
-            </Route>
+                <Route path="notifications" element={<NotificationsPage />} />
 
-            {/*
+                <Route path="settings" element={<SettingsPage />} />
+              </Route>
+
+              {/*
               Public — outside ProtectedRoute on purpose: legal pages must
               be reachable before sign-in/registration, not just from
               Settings. Still inside AuthProvider (which wraps the whole
               <Routes> tree below), so LegalDocumentView can read
               isAuthenticated for its back-link without requiring it.
             */}
-            <Route path="/terms" element={<TermsOfServicePage />} />
-            <Route path="/privacy" element={<PrivacyPolicyPage />} />
-          </Routes>
-        </div>
+              <Route path="/terms" element={<TermsOfServicePage />} />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
+            </Routes>
+          </div>
+        </NotificationsProvider>
       </AuthProvider>
     </BrowserRouter>
   );

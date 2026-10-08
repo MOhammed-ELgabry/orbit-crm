@@ -14,6 +14,7 @@ import { getErrorMessage } from "../../lib/errors";
 import type { BusinessType } from "../../services/authService";
 import LanguageSettings from "./LanguageSettings";
 import AppearanceSettings from "./AppearanceSettings";
+import NotificationSettings from "./NotificationSettings";
 
 const inputClass =
   "h-[38px] w-full rounded-[10px] bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none disabled:opacity-60";
@@ -217,6 +218,7 @@ export default function SettingsPage() {
       <CompanySettingsSection />
       <LanguageSettings />
       <AppearanceSettings />
+      <NotificationSettings />
       <LegalSection />
     </div>
   );

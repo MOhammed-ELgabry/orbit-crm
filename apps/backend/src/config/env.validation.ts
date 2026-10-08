@@ -73,4 +73,21 @@ export const envValidationSchema = Joi.object({
   // stays an accurate list of every env var the app recognizes, not
   // because anything reads it via ConfigService.
   SENTRY_DSN: Joi.string().uri().optional(),
+
+  // Notifications — all OPTIONAL so existing deployments keep booting
+  // exactly as before.
+  //
+  // NOTIFICATIONS_EMAIL_ENABLED: email delivery is OFF unless this is the
+  // literal string "true".
+  // NOTIFICATIONS_WORKER_ENABLED: the in-process delivery worker runs by
+  // default (except NODE_ENV=test); set "false" on API-only instances.
+  // VAPID_*: Web Push is unavailable (the API answers 503 / hides the
+  // option) unless all three are set. Generate the pair with
+  // `npx web-push generate-vapid-keys`; the subject is a mailto: or
+  // https: URL.
+  NOTIFICATIONS_EMAIL_ENABLED: Joi.string().valid('true', 'false').optional(),
+  NOTIFICATIONS_WORKER_ENABLED: Joi.string().valid('true', 'false').optional(),
+  VAPID_PUBLIC_KEY: Joi.string().optional(),
+  VAPID_PRIVATE_KEY: Joi.string().optional(),
+  VAPID_SUBJECT: Joi.string().optional(),
 });

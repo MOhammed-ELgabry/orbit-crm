@@ -17,6 +17,7 @@ import { ContactService } from '../contact/contact.service';
 import { LeadService } from '../lead/lead.service';
 import { DealService } from '../deal/deal.service';
 import { UserService } from '../user/user.service';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class TaskService {
@@ -29,6 +30,7 @@ export class TaskService {
     private readonly dealService: DealService,
     private readonly userService: UserService,
     private readonly activityService: ActivityService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   /**
@@ -160,11 +162,31 @@ export class TaskService {
       completedAt,
     );
 
-    await this.activityService.logTaskEvent(companyId, createdById, {
-      type: 'SYSTEM',
-      title: `Task created: ${task.title}`,
-      taskId: task.id,
-    });
+    const createdActivity = await this.activityService.logTaskEvent(
+      companyId,
+      createdById,
+      {
+        type: 'SYSTEM',
+        title: `Task created: ${task.title}`,
+        taskId: task.id,
+      },
+    );
+
+    // Created already assigned to someone: that is an assignment. Keyed on
+    // the "created" Activity (one per creation). Never throws; a notifier
+    // problem cannot fail the create.
+    if (task.assignedToId) {
+      await this.notificationService.publish({
+        type: 'task.assigned',
+        companyId,
+        actorId: createdById,
+        recipientIds: [task.assignedToId],
+        entityType: 'task',
+        entityId: task.id,
+        title: task.title,
+        occurrenceId: createdActivity.id,
+      });
+    }
 
     return task;
   }
@@ -243,10 +265,28 @@ export class TaskService {
   ): Promise<void> {
     if (before.status !== after.status) {
       if (after.status === 'completed') {
-        await this.activityService.logTaskEvent(companyId, actorId, {
-          type: 'STATUS_CHANGE',
-          title: `Task completed: ${after.title}`,
-          taskId: after.id,
+        const activity = await this.activityService.logTaskEvent(
+          companyId,
+          actorId,
+          {
+            type: 'STATUS_CHANGE',
+            title: `Task completed: ${after.title}`,
+            taskId: after.id,
+          },
+        );
+
+        // Tell the person who created the task that it is done (never the
+        // actor themself — publish() drops the actor). occurrenceId is
+        // this transition's own Activity row.
+        await this.notificationService.publish({
+          type: 'task.completed',
+          companyId,
+          actorId,
+          recipientIds: [after.createdById],
+          entityType: 'task',
+          entityId: after.id,
+          title: after.title,
+          occurrenceId: activity.id,
         });
       } else if (after.status === 'cancelled') {
         await this.activityService.logTaskEvent(companyId, actorId, {
@@ -264,11 +304,29 @@ export class TaskService {
     }
 
     if (before.assignedToId !== after.assignedToId) {
-      await this.activityService.logTaskEvent(companyId, actorId, {
-        type: 'SYSTEM',
-        title: after.assignedToId ? 'Task assigned' : 'Task unassigned',
-        taskId: after.id,
-      });
+      const activity = await this.activityService.logTaskEvent(
+        companyId,
+        actorId,
+        {
+          type: 'SYSTEM',
+          title: after.assignedToId ? 'Task assigned' : 'Task unassigned',
+          taskId: after.id,
+        },
+      );
+
+      // Only an assignment notifies (an unassignment does not).
+      if (after.assignedToId) {
+        await this.notificationService.publish({
+          type: 'task.assigned',
+          companyId,
+          actorId,
+          recipientIds: [after.assignedToId],
+          entityType: 'task',
+          entityId: after.id,
+          title: after.title,
+          occurrenceId: activity.id,
+        });
+      }
     }
   }
 

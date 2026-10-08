@@ -86,7 +86,12 @@ const ROLE_NAME: Record<RoleKey, string> = {
 
 /** The documented policy, written out by hand (NOT read from the product). */
 const EXPECTED_CONTACT_PERMISSIONS: Record<RoleKey, string[]> = {
-  manager: ['contact:create', 'contact:delete', 'contact:read', 'contact:update'],
+  manager: [
+    'contact:create',
+    'contact:delete',
+    'contact:read',
+    'contact:update',
+  ],
   sales: ['contact:create', 'contact:read', 'contact:update'],
   support: ['contact:create', 'contact:read', 'contact:update'],
   employee: ['contact:read'],
@@ -197,8 +202,7 @@ describe('Contacts RBAC role matrix (integration)', () => {
     expect(res.status).toBe(200);
 
     const setCookie = res.headers['set-cookie'] as unknown as
-      | string[]
-      | undefined;
+      string[] | undefined;
     expect(cookieValue(setCookie, ACCESS_COOKIE)).toBeTruthy();
 
     const csrf = cookieValue(setCookie, CSRF_COOKIE);
@@ -387,7 +391,10 @@ describe('Contacts RBAC role matrix (integration)', () => {
     // these up). main.ts-only concerns (CORS, helmet, swagger, trust proxy)
     // are irrelevant to this test.
     app.use(cookieParser());
-    app.useGlobalFilters(new PrismaExceptionFilter(), new HttpExceptionFilter());
+    app.useGlobalFilters(
+      new PrismaExceptionFilter(),
+      new HttpExceptionFilter(),
+    );
     app.useGlobalInterceptors(new ResponseInterceptor());
     app.useGlobalPipes(
       new ValidationPipe({
@@ -401,9 +408,9 @@ describe('Contacts RBAC role matrix (integration)', () => {
     httpServer = app.getHttpServer() as Server;
 
     // The application's own database connection must also be the test DB.
-    const rows = await app
-      .get(PrismaService)
-      .$queryRaw<Array<{ current_database: string }>>`SELECT current_database()`;
+    const rows = await app.get(PrismaService).$queryRaw<
+      Array<{ current_database: string }>
+    >`SELECT current_database()`;
     expect(rows[0]?.current_database).toBe('orbitcrm_test');
     expect(process.env.NODE_ENV).toBe('test');
 

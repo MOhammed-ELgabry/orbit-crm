@@ -52,10 +52,17 @@ describe('Calendar permission matrix (real guard + real controller metadata + re
   }
 
   /** A role whose granted permissions are exactly DEFAULT_ROLE_DEFINITIONS' entry for `roleName`. */
-  function mockRoleFrom(roleName: string, roleId = `role-${roleName.toLowerCase()}`) {
-    const definition = DEFAULT_ROLE_DEFINITIONS.find((r) => r.name === roleName);
+  function mockRoleFrom(
+    roleName: string,
+    roleId = `role-${roleName.toLowerCase()}`,
+  ) {
+    const definition = DEFAULT_ROLE_DEFINITIONS.find(
+      (r) => r.name === roleName,
+    );
     if (!definition) {
-      throw new Error(`No DEFAULT_ROLE_DEFINITIONS entry for ${roleName} — fixture is out of date.`);
+      throw new Error(
+        `No DEFAULT_ROLE_DEFINITIONS entry for ${roleName} — fixture is out of date.`,
+      );
     }
 
     prisma.user.findFirst.mockResolvedValue({ roleId });
@@ -72,35 +79,62 @@ describe('Calendar permission matrix (real guard + real controller metadata + re
       role: { findFirst: jest.fn() },
     };
 
-    guard = new PermissionsGuard(new Reflector(), prisma as unknown as PrismaService);
+    guard = new PermissionsGuard(
+      new Reflector(),
+      prisma as unknown as PrismaService,
+    );
   });
 
   const routes: Array<{
     label: string;
     handler: (...args: never[]) => unknown;
   }> = [
-    { label: 'POST /calendar (create)', handler: CalendarController.prototype.create },
-    { label: 'GET /calendar (findAll)', handler: CalendarController.prototype.findAll },
-    { label: 'GET /calendar/:id (findById)', handler: CalendarController.prototype.findById },
-    { label: 'PATCH /calendar/:id (update)', handler: CalendarController.prototype.update },
-    { label: 'DELETE /calendar/:id (remove)', handler: CalendarController.prototype.remove },
+    {
+      label: 'POST /calendar (create)',
+      handler: CalendarController.prototype.create,
+    },
+    {
+      label: 'GET /calendar (findAll)',
+      handler: CalendarController.prototype.findAll,
+    },
+    {
+      label: 'GET /calendar/:id (findById)',
+      handler: CalendarController.prototype.findById,
+    },
+    {
+      label: 'PATCH /calendar/:id (update)',
+      handler: CalendarController.prototype.update,
+    },
+    {
+      label: 'DELETE /calendar/:id (remove)',
+      handler: CalendarController.prototype.remove,
+    },
   ];
 
   describe('route metadata', () => {
-    it.each(routes)('$label carries exactly one calendar permission requirement', async ({ handler }) => {
-      const reflector = new Reflector();
-      const required = reflector.getAllAndOverride('requiredPermissions', [
-        handler,
-        CalendarController,
-      ]);
-      expect(required).toHaveLength(1);
-      expect(required[0].resource).toBe('calendar');
-    });
+    it.each(routes)(
+      '$label carries exactly one calendar permission requirement',
+      async ({ handler }) => {
+        const reflector = new Reflector();
+        const required = reflector.getAllAndOverride('requiredPermissions', [
+          handler,
+          CalendarController,
+        ]);
+        expect(required).toHaveLength(1);
+        expect(required[0].resource).toBe('calendar');
+      },
+    );
 
     it('GET routes require calendar:read — a deliberate difference from Contact/Lead/Deal/Task\u2019s own unguarded GETs', () => {
       const reflector = new Reflector();
-      for (const handler of [CalendarController.prototype.findAll, CalendarController.prototype.findById]) {
-        const required = reflector.getAllAndOverride('requiredPermissions', [handler, CalendarController]);
+      for (const handler of [
+        CalendarController.prototype.findAll,
+        CalendarController.prototype.findById,
+      ]) {
+        const required = reflector.getAllAndOverride('requiredPermissions', [
+          handler,
+          CalendarController,
+        ]);
         expect(required[0].action).toBe('read');
       }
     });
@@ -113,21 +147,54 @@ describe('Calendar permission matrix (real guard + real controller metadata + re
         remove: 'delete',
       };
       for (const [method, action] of Object.entries(expected)) {
-        const handler = (CalendarController.prototype as unknown as Record<string, (...args: never[]) => unknown>)[
-          method
-        ];
-        const required = reflector.getAllAndOverride('requiredPermissions', [handler, CalendarController]);
+        const handler = (
+          CalendarController.prototype as unknown as Record<
+            string,
+            (...args: never[]) => unknown
+          >
+        )[method];
+        const required = reflector.getAllAndOverride('requiredPermissions', [
+          handler,
+          CalendarController,
+        ]);
         expect(required[0].action).toBe(action);
       }
     });
   });
 
   describe('the deployed matrix', () => {
-    const matrix: Record<string, Record<'create' | 'findAll' | 'findById' | 'update' | 'remove', boolean>> = {
-      MANAGER: { create: true, findAll: true, findById: true, update: true, remove: true },
-      SALES: { create: true, findAll: true, findById: true, update: true, remove: false },
-      SUPPORT: { create: true, findAll: true, findById: true, update: true, remove: false },
-      EMPLOYEE: { create: false, findAll: true, findById: true, update: false, remove: false },
+    const matrix: Record<
+      string,
+      Record<'create' | 'findAll' | 'findById' | 'update' | 'remove', boolean>
+    > = {
+      MANAGER: {
+        create: true,
+        findAll: true,
+        findById: true,
+        update: true,
+        remove: true,
+      },
+      SALES: {
+        create: true,
+        findAll: true,
+        findById: true,
+        update: true,
+        remove: false,
+      },
+      SUPPORT: {
+        create: true,
+        findAll: true,
+        findById: true,
+        update: true,
+        remove: false,
+      },
+      EMPLOYEE: {
+        create: false,
+        findAll: true,
+        findById: true,
+        update: false,
+        remove: false,
+      },
     };
 
     for (const [roleName, expectations] of Object.entries(matrix)) {
@@ -143,7 +210,9 @@ describe('Calendar permission matrix (real guard + real controller metadata + re
             if (shouldAllow) {
               await expect(guard.canActivate(context)).resolves.toBe(true);
             } else {
-              await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
+              await expect(guard.canActivate(context)).rejects.toThrow(
+                ForbiddenException,
+              );
             }
           });
         }
@@ -172,6 +241,8 @@ describe('Calendar permission matrix (real guard + real controller metadata + re
     prisma.role.findFirst.mockResolvedValue({ rolePermissions: [] });
     const context = buildContext(jwt(), CalendarController.prototype.findAll);
 
-    await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
+    await expect(guard.canActivate(context)).rejects.toThrow(
+      ForbiddenException,
+    );
   });
 });

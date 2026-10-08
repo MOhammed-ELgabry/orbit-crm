@@ -51,7 +51,12 @@ describe('CalendarController (wiring only — see calendar.permissions.spec.ts f
 
     await controller.update(req, 'event-1', dto);
 
-    expect(calendarService.update).toHaveBeenCalledWith(companyId, 'event-1', dto, userId);
+    expect(calendarService.update).toHaveBeenCalledWith(
+      companyId,
+      'event-1',
+      dto,
+      userId,
+    );
   });
 
   it('remove() delegates with companyId, id, and the actor id', async () => {
@@ -59,6 +64,10 @@ describe('CalendarController (wiring only — see calendar.permissions.spec.ts f
 
     await controller.remove(req, 'event-1');
 
-    expect(calendarService.remove).toHaveBeenCalledWith(companyId, 'event-1', userId);
+    expect(calendarService.remove).toHaveBeenCalledWith(
+      companyId,
+      'event-1',
+      userId,
+    );
   });
 });

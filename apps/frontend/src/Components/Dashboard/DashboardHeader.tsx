@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { FiMenu } from "react-icons/fi";
 
 import DatePickerComponent from "./DatePicker";
+import NotificationBell from "../Notification/NotificationBell";
 import { useAuth } from "../../context/AuthContext";
 import { getBusinessTypeCopy } from "../../config/businessType";
 
@@ -26,6 +27,7 @@ export default function DashboardHeader({
     "/dashboard/tasks": "tasksNavLabel",
     "/dashboard/calendar": "calendarNavLabel",
     "/dashboard/reports": "reportsNavLabel",
+    "/dashboard/notifications": "notificationsNavLabel",
     "/dashboard/settings": "settingsNavLabel",
   };
 
@@ -67,8 +69,12 @@ export default function DashboardHeader({
         </div>
       </div>
 
-      <div className="hidden shrink-0 items-center sm:flex">
-        <DatePickerComponent />
+      <div className="flex shrink-0 items-center gap-2">
+        <NotificationBell />
+
+        <div className="hidden items-center sm:flex">
+          <DatePickerComponent />
+        </div>
       </div>
     </div>
   );

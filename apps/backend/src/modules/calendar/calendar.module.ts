@@ -8,6 +8,7 @@ import { ContactModule } from '../contact/contact.module';
 import { LeadModule } from '../lead/lead.module';
 import { DealModule } from '../deal/deal.module';
 import { ActivityModule } from '../activity/activity.module';
+import { NotificationModule } from '../notification/notification.module';
 import { PermissionsGuard } from '../../common/security/permissions.guard';
 
 import { CALENDAR_REPOSITORY } from './constants/calendar.constants';
@@ -25,6 +26,9 @@ import { CalendarController } from './calendar.controller';
   // event lifecycle activity via ActivityService.logCalendarEvent —
   // this is a one-way dependency (ActivityModule does not import
   // CalendarModule back), so there is no circular module dependency.
+  // NotificationModule is imported so the service can publish its
+  // notification events; it imports no domain module, so this is one-way
+  // (no circular module dependency).
   imports: [
     PrismaModule,
     AuthModule,
@@ -33,6 +37,7 @@ import { CalendarController } from './calendar.controller';
     LeadModule,
     DealModule,
     ActivityModule,
+    NotificationModule,
   ],
 
   controllers: [CalendarController],

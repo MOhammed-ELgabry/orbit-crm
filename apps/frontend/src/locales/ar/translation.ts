@@ -408,6 +408,46 @@ const ar = {
   logoutConfirmTitle: "تسجيل الخروج؟",
   logoutConfirmMessage: "ستحتاج إلى تسجيل الدخول مرة أخرى للوصول إلى لوحة التحكم.",
   loadMore: "عرض المزيد",
+
+  // Notifications
+  notificationsNavLabel: "الإشعارات",
+  notificationsTitle: "الإشعارات",
+  notificationsBellLabel: "الإشعارات",
+  notificationsBellLabelUnread: "الإشعارات، {{count}} غير مقروء",
+  notificationUnread: "غير مقروء",
+  notificationsMarkAllRead: "تعليم الكل كمقروء",
+  notificationsLoading: "جارٍ التحميل…",
+  notificationsLoadError: "تعذّر تحميل الإشعارات.",
+  notificationsRetry: "إعادة المحاولة",
+  notificationsEmpty: "لا توجد إشعارات حتى الآن.",
+  notificationsViewAll: "عرض كل الإشعارات",
+  notificationsUnreadSummary: "لديك {{count}} إشعارات غير مقروءة.",
+  notificationsAllCaughtUp: "لا توجد إشعارات جديدة.",
+
+  // Settings — Notifications
+  notificationSettingsTitle: "الإشعارات",
+  notificationSettingsDescription:
+    "اختر الطريقة التي تفضّلها لتنبيهك عندما يحتاج أمر ما إلى انتباهك.",
+  notificationsSettingsLoadError: "تعذّر تحميل إعدادات الإشعارات.",
+  notificationsSettingsSaveError: "تعذّر حفظ هذا التغيير. يرجى المحاولة مرة أخرى.",
+  notificationsInAppLabel: "الإشعارات داخل التطبيق",
+  notificationsInAppAlwaysOn: "مفعّلة دائمًا.",
+  emailNotificationsLabel: "إشعارات البريد الإلكتروني",
+  emailNotificationsDescription: "استلم رسالة بريد إلكتروني للتحديثات المهمة.",
+  emailNotificationsUnavailable: "إشعارات البريد الإلكتروني غير متاحة حاليًا.",
+  pushNotificationsLabel: "الإشعارات الفورية",
+  pushNotificationsDescription: "استلم إشعارات المتصفح حتى عندما يكون Orbit مغلقًا.",
+  pushThisDeviceLabel: "هذا الجهاز",
+  pushThisDeviceEnabled: "الإشعارات الفورية مفعّلة على هذا الجهاز.",
+  pushThisDeviceDisabled: "الإشعارات الفورية غير مفعّلة على هذا الجهاز.",
+  pushEnableThisDevice: "تفعيل على هذا الجهاز",
+  pushDisableThisDevice: "إيقاف على هذا الجهاز",
+  pushRegisteredDevices: "الأجهزة المسجّلة: {{count}}",
+  pushUnsupported: "هذا المتصفح لا يدعم الإشعارات الفورية.",
+  pushPermissionDenied:
+    "الإشعارات محظورة لهذا الموقع. اسمح بها من إعدادات المتصفح لتفعيل الإشعارات الفورية.",
+  pushNotConfigured: "الإشعارات الفورية غير متاحة حاليًا.",
+  pushFailed: "تعذّر تحديث الإشعارات الفورية على هذا الجهاز. يرجى المحاولة مرة أخرى.",
 };
 
 export default ar;

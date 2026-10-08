@@ -40,6 +40,11 @@ model Company {
   onboardingTokens OnboardingToken[]
   activities       Activity[]
 
+  // Notifications
+  notifications           Notification[]
+  notificationPreferences NotificationPreference[]
+  pushSubscriptions       PushSubscription[]
+
   // Audit
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -139,6 +144,12 @@ model User {
 
   // Activities
   activitiesCreated Activity[] @relation("ActivityCreatedBy")
+
+  // Notifications
+  notificationsReceived   Notification[]           @relation("NotificationRecipient")
+  notificationsTriggered  Notification[]           @relation("NotificationActor")
+  notificationPreferences NotificationPreference[]
+  pushSubscriptions       PushSubscription[]
 
   // Audit
   createdAt DateTime  @default(now())
@@ -746,4 +757,161 @@ model CalendarEvent {
 
   @@index([companyId, startAt])
   @@index([companyId, assignedToId, startAt])
+}
+
+// ---------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------
+
+// The internal inbox row: one per (recipient, event occurrence).
+//
+// type / entityType / channel / status are plain whitelisted strings
+// validated in the application layer (notification.constants.ts), not
+// Prisma enums, for the same reason as Task.status / Deal.stage: adding
+// a new notification type never requires a migration.
+//
+// params holds ONLY small, non-sensitive facts (e.g. the entity title,
+// a start time). The visible text is never stored: it is rendered at
+// read time from type + params in the recipient's User.language.
+//
+// entityType/entityId is a polymorphic reference with no foreign key on
+// purpose — a notification must outlive a deleted or renamed entity.
+// The deep link is likewise never stored; it is generated from
+// entityType + entityId by a trusted allowlist in the application.
+//
+// dedupeKey makes creation idempotent: "<type>:<occurrenceId>" where
+// the occurrence is the Activity row id (Task/Deal/Calendar) or, for
+// Lead only, a persisted update stamp — see NotificationService. The
+// unique (userId, dedupeKey) means replaying a publish can never create
+// a second row, while a genuinely repeated event gets a new key.
+model Notification {
+  id String @id @default(cuid())
+
+  // Tenant + recipient
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Who caused it. Null if the actor is later removed.
+  actorId String?
+  actor   User?   @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  // What happened, and to which entity
+  type       String
+  entityType String?
+  entityId   String?
+  params     Json    @default("{}")
+
+  dedupeKey String
+
+  readAt DateTime?
+
+  deliveries NotificationDelivery[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, dedupeKey])
+  @@index([companyId, userId, createdAt(sort: Desc)])
+  @@index([userId, readAt])
+  @@index([createdAt])
+}
+
+// One outbound delivery target per (notification, channel, target).
+//
+// Ownership (company/user) deliberately comes from Notification and is
+// not duplicated here: a delivery can never point at a different user
+// than its notification, and no API exposes deliveries directly.
+//
+// channel: "email" | "push" (future: "sms", "whatsapp", ...).
+// target:  "default" for email; PushSubscription.id for push, so one row
+//          per device and one dead device never affects another.
+// status:  pending | processing | sent | failed | skipped.
+//
+// lastErrorCode is a short machine code only (e.g. ETIMEDOUT, smtp_550,
+// push_410, rate_limited, expired) — never a raw provider message, which
+// can contain recipient addresses.
+model NotificationDelivery {
+  id String @id @default(cuid())
+
+  notificationId String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  channel String
+  target  String @default("default")
+
+  status        String    @default("pending")
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now())
+  lockedAt      DateTime?
+  sentAt        DateTime?
+
+  lastErrorCode String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([notificationId, channel, target])
+  @@index([status, nextAttemptAt])
+}
+
+// Per-user channel opt-outs. No row = the application default (enabled).
+// type "*" means all event types; per-type overrides can be added later
+// with no schema change. "internal" is never stored (always on).
+//
+// companyId is stored explicitly (like every other business-data table)
+// because User.companyId is nullable and assigned after registration;
+// it is part of the unique key so an upsert can never touch another
+// tenant's row.
+model NotificationPreference {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  channel String
+  type    String  @default("*")
+  enabled Boolean
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, userId, channel, type])
+}
+
+// One row per browser/device. endpoint is globally unique: that single
+// constraint is what guarantees one owner per endpoint. Subscribing an
+// existing endpoint re-assigns the row inside a transaction.
+//
+// provider + nullable keys leave room for native tokens (fcm/apns) later
+// without changing this table. p256dh/auth are secrets: never returned
+// by the API and never logged.
+model PushSubscription {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  provider String  @default("webpush")
+  endpoint String  @unique
+  p256dh   String?
+  auth     String?
+
+  userAgent String?
+
+  failureCount  Int       @default(0)
+  lastSuccessAt DateTime?
+  lastFailureAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId, userId])
 }

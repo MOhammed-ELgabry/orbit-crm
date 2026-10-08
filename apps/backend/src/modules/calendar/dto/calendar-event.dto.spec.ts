@@ -18,37 +18,55 @@ describe('CreateCalendarEventDto', () => {
   });
 
   it('rejects a malformed startAt with a validation error, not a thrown exception', async () => {
-    const dto = plainToInstance(CreateCalendarEventDto, { ...validBody, startAt: 'not-a-date' });
+    const dto = plainToInstance(CreateCalendarEventDto, {
+      ...validBody,
+      startAt: 'not-a-date',
+    });
     const errors = await validate(dto);
     expect(errors.some((e) => e.property === 'startAt')).toBe(true);
   });
 
   it('rejects a title that is too short', async () => {
-    const dto = plainToInstance(CreateCalendarEventDto, { ...validBody, title: 'A' });
+    const dto = plainToInstance(CreateCalendarEventDto, {
+      ...validBody,
+      title: 'A',
+    });
     const errors = await validate(dto);
     expect(errors.some((e) => e.property === 'title')).toBe(true);
   });
 
   it('trims a padded title', async () => {
-    const dto = plainToInstance(CreateCalendarEventDto, { ...validBody, title: '  Padded  ' });
+    const dto = plainToInstance(CreateCalendarEventDto, {
+      ...validBody,
+      title: '  Padded  ',
+    });
     expect(dto.title).toBe('Padded');
   });
 
   it('normalizes an empty-string description to undefined-safe null rather than storing ""', async () => {
-    const dto = plainToInstance(CreateCalendarEventDto, { ...validBody, description: '   ' });
+    const dto = plainToInstance(CreateCalendarEventDto, {
+      ...validBody,
+      description: '   ',
+    });
     expect(dto.description).toBeNull();
     const errors = await validate(dto);
     expect(errors).toHaveLength(0);
   });
 
   it('rejects an empty-string contactId — never silently treated as "no relation"', async () => {
-    const dto = plainToInstance(CreateCalendarEventDto, { ...validBody, contactId: '' });
+    const dto = plainToInstance(CreateCalendarEventDto, {
+      ...validBody,
+      contactId: '',
+    });
     const errors = await validate(dto);
     expect(errors.some((e) => e.property === 'contactId')).toBe(true);
   });
 
   it('trims a padded contactId', async () => {
-    const dto = plainToInstance(CreateCalendarEventDto, { ...validBody, contactId: '  cm123  ' });
+    const dto = plainToInstance(CreateCalendarEventDto, {
+      ...validBody,
+      contactId: '  cm123  ',
+    });
     expect(dto.contactId).toBe('cm123');
   });
 });
@@ -108,7 +126,9 @@ describe('UpdateCalendarEventDto', () => {
   });
 
   it('rejects a status outside the whitelisted set', async () => {
-    const dto = plainToInstance(UpdateCalendarEventDto, { status: 'in_progress' });
+    const dto = plainToInstance(UpdateCalendarEventDto, {
+      status: 'in_progress',
+    });
     const errors = await validate(dto);
     expect(errors.some((e) => e.property === 'status')).toBe(true);
   });
@@ -130,8 +150,13 @@ describe('UpdateCalendarEventDto', () => {
     // effective: an unlisted key like companyId simply has no
     // decorator here for the pipe to whitelist, so it's stripped
     // before ever reaching the DTO.
-    const dto = plainToInstance(UpdateCalendarEventDto, { companyId: 'company-x', title: 'X' });
-    expect((dto as unknown as { companyId?: string }).companyId).toBe('company-x');
+    const dto = plainToInstance(UpdateCalendarEventDto, {
+      companyId: 'company-x',
+      title: 'X',
+    });
+    expect((dto as unknown as { companyId?: string }).companyId).toBe(
+      'company-x',
+    );
     // plainToInstance alone does not strip unknown properties by
     // default the way the ValidationPipe's whitelist option does —
     // this assertion exists to make that distinction explicit rather

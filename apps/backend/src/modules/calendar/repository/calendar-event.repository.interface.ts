@@ -75,10 +75,7 @@ export interface ICalendarEventRepository {
     filters: CalendarEventListFilters,
   ): Promise<CalendarEventListResult>;
 
-  findById(
-    companyId: string,
-    id: string,
-  ): Promise<CalendarEventEntity | null>;
+  findById(companyId: string, id: string): Promise<CalendarEventEntity | null>;
 
   update(
     companyId: string,

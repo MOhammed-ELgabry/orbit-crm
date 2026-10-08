@@ -8,6 +8,7 @@ import { ContactModule } from '../contact/contact.module';
 import { LeadModule } from '../lead/lead.module';
 import { DealModule } from '../deal/deal.module';
 import { ActivityModule } from '../activity/activity.module';
+import { NotificationModule } from '../notification/notification.module';
 import { PermissionsGuard } from '../../common/security/permissions.guard';
 
 import { TASK_REPOSITORY } from './constants/task.constants';
@@ -26,7 +27,9 @@ import { TaskService } from './task.service';
   // log task lifecycle events via ActivityService.logTaskEvent (see
   // task.service.ts) — this is a one-way dependency (ActivityModule
   // and DealModule do not import TaskModule back), so there is no
-  // circular module dependency.
+  // circular module dependency. NotificationModule is imported so
+  // TaskService can publish task.assigned / task.completed (also
+  // one-way: NotificationModule imports no domain module).
   imports: [
     PrismaModule,
     AuthModule,
@@ -35,6 +38,7 @@ import { TaskService } from './task.service';
     LeadModule,
     DealModule,
     ActivityModule,
+    NotificationModule,
   ],
 
   controllers: [TaskController],

@@ -16,6 +16,7 @@ import { ActivityService } from '../activity/activity.service';
 import { ContactService } from '../contact/contact.service';
 import { LeadService } from '../lead/lead.service';
 import { UserService } from '../user/user.service';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class DealService {
@@ -27,6 +28,7 @@ export class DealService {
     private readonly leadService: LeadService,
     private readonly userService: UserService,
     private readonly activityService: ActivityService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   /**
@@ -103,11 +105,30 @@ export class DealService {
 
     const deal = await this.dealRepository.create(companyId, createdById, dto);
 
-    await this.activityService.logDealEvent(companyId, createdById, {
-      type: 'SYSTEM',
-      title: `Deal created: ${deal.title}`,
-      dealId: deal.id,
-    });
+    const createdActivity = await this.activityService.logDealEvent(
+      companyId,
+      createdById,
+      {
+        type: 'SYSTEM',
+        title: `Deal created: ${deal.title}`,
+        dealId: deal.id,
+      },
+    );
+
+    // Created already assigned to someone: that is an assignment, keyed on
+    // the "created" Activity. Never throws.
+    if (deal.assignedToId) {
+      await this.notificationService.publish({
+        type: 'deal.assigned',
+        companyId,
+        actorId: createdById,
+        recipientIds: [deal.assignedToId],
+        entityType: 'deal',
+        entityId: deal.id,
+        title: deal.title,
+        occurrenceId: createdActivity.id,
+      });
+    }
 
     return deal;
   }
@@ -174,16 +195,48 @@ export class DealService {
   ): Promise<void> {
     if (before.stage !== after.stage) {
       if (after.stage === 'closed_won') {
-        await this.activityService.logDealEvent(companyId, actorId, {
-          type: 'STATUS_CHANGE',
-          title: `Deal won: ${after.title}`,
-          dealId: after.id,
+        const activity = await this.activityService.logDealEvent(
+          companyId,
+          actorId,
+          {
+            type: 'STATUS_CHANGE',
+            title: `Deal won: ${after.title}`,
+            dealId: after.id,
+          },
+        );
+
+        // The deal's creator and its owner (publish() de-duplicates them
+        // and drops the actor). occurrenceId = this transition's Activity.
+        await this.notificationService.publish({
+          type: 'deal.won',
+          companyId,
+          actorId,
+          recipientIds: [after.createdById, after.assignedToId],
+          entityType: 'deal',
+          entityId: after.id,
+          title: after.title,
+          occurrenceId: activity.id,
         });
       } else if (after.stage === 'closed_lost') {
-        await this.activityService.logDealEvent(companyId, actorId, {
-          type: 'STATUS_CHANGE',
-          title: `Deal lost: ${after.title}`,
-          dealId: after.id,
+        const activity = await this.activityService.logDealEvent(
+          companyId,
+          actorId,
+          {
+            type: 'STATUS_CHANGE',
+            title: `Deal lost: ${after.title}`,
+            dealId: after.id,
+          },
+        );
+
+        await this.notificationService.publish({
+          type: 'deal.lost',
+          companyId,
+          actorId,
+          recipientIds: [after.createdById, after.assignedToId],
+          entityType: 'deal',
+          entityId: after.id,
+          title: after.title,
+          occurrenceId: activity.id,
         });
       } else {
         await this.activityService.logDealEvent(companyId, actorId, {
@@ -195,11 +248,29 @@ export class DealService {
     }
 
     if (before.assignedToId !== after.assignedToId) {
-      await this.activityService.logDealEvent(companyId, actorId, {
-        type: 'SYSTEM',
-        title: after.assignedToId ? 'Deal assigned' : 'Deal unassigned',
-        dealId: after.id,
-      });
+      const activity = await this.activityService.logDealEvent(
+        companyId,
+        actorId,
+        {
+          type: 'SYSTEM',
+          title: after.assignedToId ? 'Deal assigned' : 'Deal unassigned',
+          dealId: after.id,
+        },
+      );
+
+      // Only an assignment notifies (an unassignment does not).
+      if (after.assignedToId) {
+        await this.notificationService.publish({
+          type: 'deal.assigned',
+          companyId,
+          actorId,
+          recipientIds: [after.assignedToId],
+          entityType: 'deal',
+          entityId: after.id,
+          title: after.title,
+          occurrenceId: activity.id,
+        });
+      }
     }
   }
 

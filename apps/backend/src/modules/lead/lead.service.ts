@@ -13,6 +13,8 @@ import type {
 } from './repository/lead.repository.interface';
 
 import { UserService } from '../user/user.service';
+import { NotificationService } from '../notification/notification.service';
+import { buildLeadOccurrenceId } from '../notification/notification.policy';
 
 @Injectable()
 export class LeadService {
@@ -21,6 +23,7 @@ export class LeadService {
     private readonly leadRepository: ILeadRepository,
 
     private readonly userService: UserService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   /**
@@ -54,7 +57,28 @@ export class LeadService {
       await this.assertAssignableInCompany(dto.assignedToId, companyId);
     }
 
-    return this.leadRepository.create(companyId, createdById, dto);
+    const lead = await this.leadRepository.create(companyId, createdById, dto);
+
+    // Leads have no Activity log, so the occurrence is derived from the
+    // persisted row (see buildLeadOccurrenceId). Never throws.
+    if (lead.assignedToId) {
+      await this.notificationService.publish({
+        type: 'lead.assigned',
+        companyId,
+        actorId: createdById,
+        recipientIds: [lead.assignedToId],
+        entityType: 'lead',
+        entityId: lead.id,
+        title: `${lead.firstName} ${lead.lastName}`,
+        occurrenceId: buildLeadOccurrenceId(
+          lead.id,
+          lead.assignedToId,
+          lead.updatedAt,
+        ),
+      });
+    }
+
+    return lead;
   }
 
   async findAll(
@@ -78,6 +102,7 @@ export class LeadService {
     companyId: string,
     leadId: string,
     dto: UpdateLeadDto,
+    actorId: string,
   ): Promise<LeadEntity> {
     const existingLead = await this.leadRepository.findById(companyId, leadId);
 
@@ -97,6 +122,29 @@ export class LeadService {
 
     if (!updatedLead) {
       throw new NotFoundException(`Lead with ID "${leadId}" not found.`);
+    }
+
+    // Only a real change of owner to someone notifies (not a repeat PATCH
+    // with the same assignee, not an unassignment). The occurrence is
+    // <leadId>:<newAssignee>:<updatedAt of the row THIS update persisted>.
+    if (
+      updatedLead.assignedToId &&
+      updatedLead.assignedToId !== existingLead.assignedToId
+    ) {
+      await this.notificationService.publish({
+        type: 'lead.assigned',
+        companyId,
+        actorId,
+        recipientIds: [updatedLead.assignedToId],
+        entityType: 'lead',
+        entityId: updatedLead.id,
+        title: `${updatedLead.firstName} ${updatedLead.lastName}`,
+        occurrenceId: buildLeadOccurrenceId(
+          updatedLead.id,
+          updatedLead.assignedToId,
+          updatedLead.updatedAt,
+        ),
+      });
     }
 
     return updatedLead;

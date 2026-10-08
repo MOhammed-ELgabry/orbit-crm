@@ -14,6 +14,7 @@ import { DealModule } from '../deal/deal.module';
 import { TaskModule } from '../task/task.module';
 import { CalendarModule } from '../calendar/calendar.module';
 import { ActivityModule } from '../activity/activity.module';
+import { NotificationModule } from '../notification/notification.module';
 import { RoleModule } from '../role/role.module';
 import { PermissionModule } from '../permission/permission.module';
 
@@ -60,6 +61,8 @@ import { AuthModule } from '../auth/auth.module';
     CalendarModule,
 
     ActivityModule,
+
+    NotificationModule,
 
     RoleModule,
 

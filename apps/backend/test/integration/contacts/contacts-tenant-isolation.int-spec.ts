@@ -166,11 +166,12 @@ describe('Contacts tenant isolation (integration)', () => {
     expect(res.status).toBe(200);
 
     const setCookie = res.headers['set-cookie'] as unknown as
-      | string[]
-      | undefined;
+      string[] | undefined;
     expect(Array.isArray(setCookie)).toBe(true);
     expect(
-      (setCookie ?? []).some((cookie) => cookie.startsWith(`${ACCESS_COOKIE}=`)),
+      (setCookie ?? []).some((cookie) =>
+        cookie.startsWith(`${ACCESS_COOKIE}=`),
+      ),
     ).toBe(true);
 
     const body = res.body as LoginBody;
@@ -204,7 +205,10 @@ describe('Contacts tenant isolation (integration)', () => {
     // these up). main.ts-only concerns (CORS, helmet, swagger, trust proxy)
     // are irrelevant to this test.
     app.use(cookieParser());
-    app.useGlobalFilters(new PrismaExceptionFilter(), new HttpExceptionFilter());
+    app.useGlobalFilters(
+      new PrismaExceptionFilter(),
+      new HttpExceptionFilter(),
+    );
     app.useGlobalInterceptors(new ResponseInterceptor());
     app.useGlobalPipes(
       new ValidationPipe({
@@ -218,9 +222,9 @@ describe('Contacts tenant isolation (integration)', () => {
     httpServer = app.getHttpServer() as Server;
 
     // The application's own database connection must also be the test DB.
-    const rows = await app
-      .get(PrismaService)
-      .$queryRaw<Array<{ current_database: string }>>`SELECT current_database()`;
+    const rows = await app.get(PrismaService).$queryRaw<
+      Array<{ current_database: string }>
+    >`SELECT current_database()`;
     expect(rows[0]?.current_database).toBe('orbitcrm_test');
 
     // Fail fast, with a clear message, on configuration that would make the

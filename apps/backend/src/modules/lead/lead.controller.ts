@@ -117,7 +117,12 @@ export class LeadController {
     @Param('id') leadId: string,
     @Body() dto: UpdateLeadDto,
   ) {
-    return this.leadService.update(req.user.companyId, leadId, dto);
+    return this.leadService.update(
+      req.user.companyId,
+      leadId,
+      dto,
+      req.user.sub,
+    );
   }
 
   @Delete(':id')

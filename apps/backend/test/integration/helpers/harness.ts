@@ -167,7 +167,10 @@ function isMarkerEmail(email: string): boolean {
 }
 
 function slug(label: string): string {
-  return label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
 /** Proves the connection is really `orbitcrm_test` (not just the URL). */
@@ -315,7 +318,9 @@ async function assertLedgerIsTestData(
         `user ${user.id}: e-mail is not on the @${MARKER_EMAIL_DOMAIN} marker domain`,
       );
     } else if (user.companyId === null) {
-      violations.push(`user ${user.id}: has no company, lineage cannot be proven`);
+      violations.push(
+        `user ${user.id}: has no company, lineage cannot be proven`,
+      );
     } else if (!provenCompanyIds.has(user.companyId)) {
       violations.push(
         `user ${user.id}: company ${user.companyId} is not a proven test company`,
@@ -457,20 +462,17 @@ async function deleteLedger(
   counts.rolePermission = await deleteByIds(
     'RolePermission',
     [...ledger.createdRoleIds],
-    (ids) => prisma.rolePermission.deleteMany({ where: { roleId: { in: ids } } }),
+    (ids) =>
+      prisma.rolePermission.deleteMany({ where: { roleId: { in: ids } } }),
   );
 
-  counts.user = await deleteByIds(
-    'User',
-    [...ledger.createdUserIds],
-    (ids) => prisma.user.deleteMany({ where: { id: { in: ids } } }),
+  counts.user = await deleteByIds('User', [...ledger.createdUserIds], (ids) =>
+    prisma.user.deleteMany({ where: { id: { in: ids } } }),
   );
   ledger.createdUserIds.clear();
 
-  counts.role = await deleteByIds(
-    'Role',
-    [...ledger.createdRoleIds],
-    (ids) => prisma.role.deleteMany({ where: { id: { in: ids } } }),
+  counts.role = await deleteByIds('Role', [...ledger.createdRoleIds], (ids) =>
+    prisma.role.deleteMany({ where: { id: { in: ids } } }),
   );
   ledger.createdRoleIds.clear();
 
