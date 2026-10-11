@@ -40,7 +40,7 @@ export default function PipelineSnapshotCard({
       state={query.status}
       onRetry={query.reload}
       isEmpty={
-        report !== null &&
+        report != null &&
         report.snapshot.openDealCount === 0 &&
         report.createdInRange.dealCount === 0
       }
