@@ -12,7 +12,13 @@ import {
   startOfWeek,
   subMonths,
 } from "date-fns";
-import { FiCalendar, FiChevronLeft, FiChevronRight, FiList, FiPlus } from "react-icons/fi";
+import {
+  FiCalendar,
+  FiChevronLeft,
+  FiChevronRight,
+  FiList,
+  FiPlus,
+} from "react-icons/fi";
 
 import { useAuth } from "../../context/AuthContext";
 import type {
@@ -52,20 +58,30 @@ export default function CalendarPage() {
   const canDelete = hasPermission("calendar:delete");
 
   const [viewMode, setViewMode] = useState<ViewMode>("agenda");
-  const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(new Date()));
+  const [visibleMonth, setVisibleMonth] = useState(() =>
+    startOfMonth(new Date()),
+  );
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [status, setStatus] = useState<LoadStatus>("loading");
 
-  const [modalState, setModalState] = useState<"create" | CalendarEvent | null>(null);
-  const [modalInitialStart, setModalInitialStart] = useState<Date | undefined>(undefined);
+  const [modalState, setModalState] = useState<"create" | CalendarEvent | null>(
+    null,
+  );
+  const [modalInitialStart, setModalInitialStart] = useState<Date | undefined>(
+    undefined,
+  );
 
   // Only for display — resolving assignedToId/contactId/leadId/dealId
   // to a name in the agenda. Any authenticated tenant member can
   // already list all four (see TasksPage/TaskFormModal), so this
   // needs no permission of its own beyond being logged in.
-  const [memberNameById, setMemberNameById] = useState<Record<string, string>>({});
-  const [contactNameById, setContactNameById] = useState<Record<string, string>>({});
+  const [memberNameById, setMemberNameById] = useState<Record<string, string>>(
+    {},
+  );
+  const [contactNameById, setContactNameById] = useState<
+    Record<string, string>
+  >({});
   const [leadNameById, setLeadNameById] = useState<Record<string, string>>({});
   const [dealNameById, setDealNameById] = useState<Record<string, string>>({});
 
@@ -126,7 +142,10 @@ export default function CalendarPage() {
   // one shared month-at-a-time window for both views).
   const { rangeFrom, rangeTo } = useMemo(() => {
     const from = startOfWeek(startOfMonth(visibleMonth), { weekStartsOn: 0 });
-    const to = addDays(endOfWeek(endOfMonth(visibleMonth), { weekStartsOn: 0 }), 1);
+    const to = addDays(
+      endOfWeek(endOfMonth(visibleMonth), { weekStartsOn: 0 }),
+      1,
+    );
     return { rangeFrom: from, rangeTo: to };
   }, [visibleMonth]);
 
@@ -166,12 +185,21 @@ export default function CalendarPage() {
     setVisibleMonth(startOfMonth(day));
   };
 
-  const trackStatusOutcome = (previousStatus: CalendarEventStatus, updated: CalendarEvent) => {
+  const trackStatusOutcome = (
+    previousStatus: CalendarEventStatus,
+    updated: CalendarEvent,
+  ) => {
     if (updated.status === previousStatus) return;
     if (updated.status === "completed") {
-      trackEvent("calendar_event_completed", { status: updated.status, all_day: updated.allDay });
+      trackEvent("calendar_event_completed", {
+        status: updated.status,
+        all_day: updated.allDay,
+      });
     } else if (updated.status === "cancelled") {
-      trackEvent("calendar_event_cancelled", { status: updated.status, all_day: updated.allDay });
+      trackEvent("calendar_event_cancelled", {
+        status: updated.status,
+        all_day: updated.allDay,
+      });
     }
   };
 
@@ -188,12 +216,22 @@ export default function CalendarPage() {
         modalState.id,
         input as UpdateCalendarEventInput,
       );
-      trackEvent("calendar_event_updated", { status: updated.status, all_day: updated.allDay });
+      trackEvent("calendar_event_updated", {
+        status: updated.status,
+        all_day: updated.allDay,
+      });
       trackStatusOutcome(previousStatus, updated);
-      setEvents((prev) => prev.map((ev) => (ev.id === updated.id ? updated : ev)));
+      setEvents((prev) =>
+        prev.map((ev) => (ev.id === updated.id ? updated : ev)),
+      );
     } else {
-      const created = await createCalendarEvent(input as CreateCalendarEventInput);
-      trackEvent("calendar_event_created", { status: created.status, all_day: created.allDay });
+      const created = await createCalendarEvent(
+        input as CreateCalendarEventInput,
+      );
+      trackEvent("calendar_event_created", {
+        status: created.status,
+        all_day: created.allDay,
+      });
       setEvents((prev) => [...prev, created]);
     }
   };
@@ -204,14 +242,23 @@ export default function CalendarPage() {
   ) => {
     const previous = events;
     setEvents((prev) =>
-      prev.map((ev) => (ev.id === event.id ? { ...ev, status: nextStatus } : ev)),
+      prev.map((ev) =>
+        ev.id === event.id ? { ...ev, status: nextStatus } : ev,
+      ),
     );
 
     try {
-      const updated = await updateCalendarEvent(event.id, { status: nextStatus });
-      trackEvent("calendar_event_updated", { status: updated.status, all_day: updated.allDay });
+      const updated = await updateCalendarEvent(event.id, {
+        status: nextStatus,
+      });
+      trackEvent("calendar_event_updated", {
+        status: updated.status,
+        all_day: updated.allDay,
+      });
       trackStatusOutcome(event.status, updated);
-      setEvents((prev) => prev.map((ev) => (ev.id === updated.id ? updated : ev)));
+      setEvents((prev) =>
+        prev.map((ev) => (ev.id === updated.id ? updated : ev)),
+      );
     } catch (error) {
       setEvents(previous);
       errorAlert({
@@ -279,7 +326,9 @@ export default function CalendarPage() {
               type="button"
               onClick={() => setViewMode("month")}
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold ${
-                viewMode === "month" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500"
+                viewMode === "month"
+                  ? "bg-white text-slate-800 shadow-sm"
+                  : "text-slate-500"
               }`}
             >
               <FiCalendar size={14} />
@@ -289,7 +338,9 @@ export default function CalendarPage() {
               type="button"
               onClick={() => setViewMode("agenda")}
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold ${
-                viewMode === "agenda" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500"
+                viewMode === "agenda"
+                  ? "bg-white text-slate-800 shadow-sm"
+                  : "text-slate-500"
               }`}
             >
               <FiList size={14} />
@@ -314,15 +365,22 @@ export default function CalendarPage() {
         {status === "loading" && (
           <div className="space-y-3 py-2">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="h-12 animate-pulse rounded-xl bg-slate-50" />
+              <div
+                key={i}
+                className="h-12 animate-pulse rounded-xl bg-slate-50"
+              />
             ))}
           </div>
         )}
 
         {status === "forbidden" && (
           <div className="flex flex-col items-center gap-2 py-14 text-center">
-            <p className="text-sm font-medium text-slate-600">{t("calendarNoAccessTitle")}</p>
-            <p className="text-xs text-slate-400">{t("calendarNoAccessDescription")}</p>
+            <p className="text-sm font-medium text-slate-600">
+              {t("calendarNoAccessTitle")}
+            </p>
+            <p className="text-xs text-slate-400">
+              {t("calendarNoAccessDescription")}
+            </p>
           </div>
         )}
 

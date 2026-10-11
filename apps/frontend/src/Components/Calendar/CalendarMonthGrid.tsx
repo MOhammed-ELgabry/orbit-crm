@@ -15,7 +15,10 @@ import {
 
 import type { CalendarEvent } from "../../types/calendar";
 import { eventDateKeys, localDateKey } from "./calendarDates";
-import { calendarStatusBadgeClass, isCalendarEventPastDue } from "./calendarMeta";
+import {
+  calendarStatusBadgeClass,
+  isCalendarEventPastDue,
+} from "./calendarMeta";
 
 interface CalendarMonthGridProps {
   visibleMonth: Date;

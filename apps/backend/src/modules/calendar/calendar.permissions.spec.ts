@@ -10,7 +10,7 @@ import { CalendarController } from './calendar.controller';
 
 /**
  * permissions.guard.spec.ts already proves PermissionsGuard's decision
- * logic in the abstract (owner bypass, the legacy no-role shim, role-
+ * logic in the abstract (owner bypass, the no-role read-only policy, role-
  * has-the-permission, role-lacks-it, dangling roleId). This file proves
  * something that generic spec cannot: that the REAL CalendarController
  * actually carries the RIGHT @RequirePermissions metadata on the right
@@ -229,11 +229,20 @@ describe('Calendar permission matrix (real guard + real controller metadata + re
     expect(prisma.role.findFirst).not.toHaveBeenCalled();
   });
 
-  it('a non-owner with no role assigned falls through the existing legacy compatibility shim (unchanged behavior, not Calendar-specific)', async () => {
+  it('a non-owner with no role assigned is READ-ONLY (decision D2): calendar reads pass, writes are denied', async () => {
     prisma.user.findFirst.mockResolvedValue({ roleId: null });
-    const context = buildContext(jwt(), CalendarController.prototype.remove);
 
-    await expect(guard.canActivate(context)).resolves.toBe(true);
+    await expect(
+      guard.canActivate(
+        buildContext(jwt(), CalendarController.prototype.findAll),
+      ),
+    ).resolves.toBe(true);
+    await expect(
+      guard.canActivate(
+        buildContext(jwt(), CalendarController.prototype.remove),
+      ),
+    ).rejects.toThrow(ForbiddenException);
+    expect(prisma.role.findFirst).not.toHaveBeenCalled();
   });
 
   it('a role assigned but missing calendar:read entirely (e.g. a custom role never given Calendar access) is denied on GET, not silently allowed', async () => {

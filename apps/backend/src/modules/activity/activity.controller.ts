@@ -57,6 +57,8 @@ export class ActivityController {
   }
 
   @Get()
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: 'activity', action: 'read' })
   @ApiOperation({
     summary: 'Get activities / timeline',
     description:
@@ -74,6 +76,8 @@ export class ActivityController {
   }
 
   @Get(':id')
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: 'activity', action: 'read' })
   @ApiOperation({
     summary: 'Get activity by id',
     description:

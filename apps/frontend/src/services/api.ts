@@ -55,9 +55,84 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-let refreshPromise: Promise<boolean> | null = null;
+// ---------------------------------------------------------------------------
+// Centralized HTTP 401 handling (decision D3)
+//
+// The backend now rejects a request with 401 the moment an account is
+// deactivated, even if the access cookie hasn't expired. This is the ONE
+// place that reacts to a 401 for the whole app:
+//
+//   1. A 401 on a non-/auth/ request triggers exactly ONE session refresh
+//      (concurrent 401s share that single refresh) and, if it succeeds,
+//      exactly ONE retry of the original request (`_retry` guards it, so a
+//      retry that 401s again is rejected, never retried again).
+//   2. If the refresh is explicitly refused (the server answered with a
+//      4xx — revoked/expired refresh token, inactive account), the session
+//      is over: the registered listener is notified ONCE so AuthContext can
+//      drop to the unauthenticated state, and ProtectedRoute then redirects
+//      to /login through the router (no hard navigation, so no redirect
+//      loop is possible).
+//   3. While the session is marked ended, further 401s are rejected
+//      immediately — no more refresh attempts, no retries — until a login
+//      (or a successful session restore) marks the session active again.
+//   4. A refresh that fails for a transient reason (network error, 5xx,
+//      429) is NOT treated as the end of the session: the original request
+//      just rejects and the user stays signed in.
+//
+// /auth/* requests are never refreshed or retried here: a 401 from login or
+// /auth/me is a real answer the caller already handles, and refreshing on
+// the refresh endpoint itself would recurse.
+// ---------------------------------------------------------------------------
 
-async function refreshSession(): Promise<boolean> {
+type RefreshOutcome = "refreshed" | "ended" | "unavailable";
+
+let refreshPromise: Promise<RefreshOutcome> | null = null;
+
+// True once we know there is no usable session (refresh refused, or an
+// explicit logout). Starts false so a page that loads with a valid refresh
+// cookie but an expired access cookie can still recover on its first 401.
+let sessionEnded = false;
+
+let sessionEndedListener: (() => void) | null = null;
+
+/**
+ * Registers the single listener that is told when the session has ended
+ * (AuthProvider). Returns an unsubscribe function.
+ */
+export function setSessionEndedListener(listener: () => void): () => void {
+  sessionEndedListener = listener;
+
+  return () => {
+    if (sessionEndedListener === listener) {
+      sessionEndedListener = null;
+    }
+  };
+}
+
+/** Call after a successful login or session restore: 401s may refresh again. */
+export function markSessionActive(): void {
+  sessionEnded = false;
+}
+
+/**
+ * Call on an explicit logout: stops any in-flight stale request from
+ * starting a refresh with cookies that were just cleared. Does NOT notify
+ * the listener (the caller is already handling the logout).
+ */
+export function markSessionInactive(): void {
+  sessionEnded = true;
+}
+
+function endSession(): void {
+  if (sessionEnded) {
+    return;
+  }
+
+  sessionEnded = true;
+  sessionEndedListener?.();
+}
+
+async function refreshSession(): Promise<RefreshOutcome> {
   try {
     // Deliberately a plain axios call (not the `api` instance) so this
     // request never re-enters these same interceptors. Still needs
@@ -75,9 +150,25 @@ async function refreshSession(): Promise<boolean> {
       },
     );
 
-    return true;
-  } catch {
-    return false;
+    return "refreshed";
+  } catch (refreshError) {
+    const status = axios.isAxiosError(refreshError)
+      ? refreshError.response?.status
+      : undefined;
+
+    // The server answered and said no (400 invalid/revoked/expired token or
+    // inactive account, 401, 403): the session is over. Anything else
+    // (no response at all, 5xx, 429) may be a blip — don't log anyone out.
+    if (
+      status !== undefined &&
+      status >= 400 &&
+      status < 500 &&
+      status !== 429
+    ) {
+      return "ended";
+    }
+
+    return "unavailable";
   }
 }
 
@@ -94,28 +185,32 @@ api.interceptors.response.use(
       error?.response?.status === 401 &&
       originalRequest &&
       !originalRequest._retry &&
-      !isAuthEndpoint
+      !isAuthEndpoint &&
+      !sessionEnded
     ) {
       originalRequest._retry = true;
 
       if (!refreshPromise) {
-        refreshPromise = refreshSession().finally(() => {
-          refreshPromise = null;
-        });
+        refreshPromise = refreshSession()
+          .then((outcome) => {
+            if (outcome === "ended") {
+              endSession();
+            }
+
+            return outcome;
+          })
+          .finally(() => {
+            refreshPromise = null;
+          });
       }
 
-      const refreshed = await refreshPromise;
+      const outcome = await refreshPromise;
 
-      if (refreshed) {
+      if (outcome === "refreshed") {
         // Nothing to re-attach by hand — the browser sends the
         // newly-issued cookies automatically on retry.
         return api(originalRequest);
       }
-
-      // Refresh failed — the session is genuinely over. There's no local
-      // token cache to clear anymore; a consumer that cares (e.g. once a
-      // protected dashboard exists) should treat this rejection, or a
-      // failed /auth/me call, as "logged out".
     }
 
     return Promise.reject(error);

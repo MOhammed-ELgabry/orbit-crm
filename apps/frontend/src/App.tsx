@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { NotificationsProvider } from "./context/NotificationsProvider";
@@ -22,8 +23,11 @@ import CalendarPage from "./pages/Calendar/CalendarPage";
 import SettingsPage from "./pages/Settings/SettingsPage";
 import TermsOfServicePage from "./pages/Settings/TermsOfServicePage";
 import PrivacyPolicyPage from "./pages/Settings/PrivacyPolicyPage";
-import ReportsPage from "./pages/Reports/ReportsPage";
 import NotificationsPage from "./pages/Notifications/NotificationsPage";
+
+// Loaded on demand: the Reports page is the only consumer of recharts, so
+// keeping it out of the main bundle means every other page ships without it.
+const ReportsPage = lazy(() => import("./pages/Reports/ReportsPage"));
 
 function App() {
   return (
@@ -69,7 +73,23 @@ function App() {
 
                 <Route path="calendar" element={<CalendarPage />} />
 
-                <Route path="reports" element={<ReportsPage />} />
+                <Route
+                  path="reports"
+                  element={
+                    <Suspense
+                      fallback={
+                        <div
+                          className="flex min-h-[40vh] items-center justify-center"
+                          role="status"
+                        >
+                          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#EEEEF5] border-t-[#605BFF]" />
+                        </div>
+                      }
+                    >
+                      <ReportsPage />
+                    </Suspense>
+                  }
+                />
 
                 <Route path="notifications" element={<NotificationsPage />} />
 

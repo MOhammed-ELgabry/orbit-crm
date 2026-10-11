@@ -30,9 +30,9 @@ export default function DealDetailPage() {
   const canDelete = hasPermission("deal:delete");
 
   const [deal, setDeal] = useState<Deal | null>(null);
-const [status, setStatus] = useState<
-  "loading" | "ready" | "error" | "not-found"
->("loading");
+  const [status, setStatus] = useState<
+    "loading" | "ready" | "error" | "not-found"
+  >("loading");
   const [isEditing, setIsEditing] = useState(false);
 
   // Only for showing the assignee's name — see DealsPage for the same
@@ -108,7 +108,9 @@ const [status, setStatus] = useState<
 
     if (deal?.leadId) {
       getLead(deal.leadId)
-        .then((lead) => setLeadName(`${lead.firstName} ${lead.lastName}`.trim()))
+        .then((lead) =>
+          setLeadName(`${lead.firstName} ${lead.lastName}`.trim()),
+        )
         .catch(() => {
           // Non-fatal — the section just falls back to "—".
         });
@@ -242,7 +244,9 @@ const [status, setStatus] = useState<
           {deal.title}
         </h1>
 
-        <p className="text-sm text-slate-500">{formatDealAmount(deal.amount)}</p>
+        <p className="text-sm text-slate-500">
+          {formatDealAmount(deal.amount)}
+        </p>
 
         <span
           className={`mt-2 inline-block rounded-full px-2.5 py-1 text-xs font-medium ${dealStageBadgeClass(deal.stage)}`}
@@ -291,9 +295,7 @@ const [status, setStatus] = useState<
 
         {deal.notes && (
           <div className="mt-4 border-t border-slate-100 pt-4">
-            <p className="text-xs font-semibold text-slate-500">
-              {t("notes")}
-            </p>
+            <p className="text-xs font-semibold text-slate-500">{t("notes")}</p>
             <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600">
               {deal.notes}
             </p>

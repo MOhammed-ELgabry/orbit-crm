@@ -89,7 +89,8 @@ function main() {
     throw error;
   }
 
-  if (!fs.existsSync(SCHEMA_PATH)) fail(`Prisma schema not found at ${SCHEMA_PATH}.`);
+  if (!fs.existsSync(SCHEMA_PATH))
+    fail(`Prisma schema not found at ${SCHEMA_PATH}.`);
   if (!fs.existsSync(MIGRATIONS_DIR)) {
     fail(`Prisma migrations folder not found at ${MIGRATIONS_DIR}.`);
   }

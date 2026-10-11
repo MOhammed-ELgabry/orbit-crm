@@ -1,4 +1,9 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 import {
   CALENDAR_MAX_EVENT_DURATION_DAYS,
@@ -193,9 +198,13 @@ export class CalendarService {
       dto.allDay !== undefined;
 
     const mergedStartAt =
-      dto.startAt !== undefined ? this.parseDate(dto.startAt, 'startAt') : before.startAt;
+      dto.startAt !== undefined
+        ? this.parseDate(dto.startAt, 'startAt')
+        : before.startAt;
     const mergedEndAt =
-      dto.endAt !== undefined ? this.parseDate(dto.endAt, 'endAt') : before.endAt;
+      dto.endAt !== undefined
+        ? this.parseDate(dto.endAt, 'endAt')
+        : before.endAt;
     const mergedAllDay = dto.allDay !== undefined ? dto.allDay : before.allDay;
 
     if (timingTouched) {
@@ -230,7 +239,10 @@ export class CalendarService {
       throw new NotFoundException(`Calendar event with ID "${id}" not found.`);
     }
 
-    const deleted = await this.calendarEventRepository.softDelete(companyId, id);
+    const deleted = await this.calendarEventRepository.softDelete(
+      companyId,
+      id,
+    );
 
     if (!deleted) {
       throw new NotFoundException(`Calendar event with ID "${id}" not found.`);
@@ -277,7 +289,10 @@ export class CalendarService {
   }
 
   /** Same guarantee as assertContactInCompany, for leadId. */
-  private async assertLeadInCompany(leadId: string, companyId: string): Promise<void> {
+  private async assertLeadInCompany(
+    leadId: string,
+    companyId: string,
+  ): Promise<void> {
     try {
       await this.leadService.findById(companyId, leadId);
     } catch (error) {
@@ -291,7 +306,10 @@ export class CalendarService {
   }
 
   /** Same guarantee as assertContactInCompany, for dealId. */
-  private async assertDealInCompany(dealId: string, companyId: string): Promise<void> {
+  private async assertDealInCompany(
+    dealId: string,
+    companyId: string,
+  ): Promise<void> {
     try {
       await this.dealService.findById(companyId, dealId);
     } catch (error) {
@@ -385,7 +403,10 @@ export class CalendarService {
       );
     }
 
-    if (allDay && (!this.isUtcMidnight(startAt) || !this.isUtcMidnight(endAt))) {
+    if (
+      allDay &&
+      (!this.isUtcMidnight(startAt) || !this.isUtcMidnight(endAt))
+    ) {
       throw new BadRequestException(
         'All-day events must start and end at exact UTC midnight.',
       );

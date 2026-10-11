@@ -61,6 +61,8 @@ export class ContactController {
   }
 
   @Get()
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: 'contact', action: 'read' })
   @ApiOperation({
     summary: 'Get contacts',
     description:
@@ -78,6 +80,8 @@ export class ContactController {
   }
 
   @Get(':id')
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: 'contact', action: 'read' })
   @ApiOperation({
     summary: 'Get contact by id',
     description:

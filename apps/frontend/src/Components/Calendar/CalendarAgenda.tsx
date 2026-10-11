@@ -6,7 +6,11 @@ import { FiCheck, FiClock, FiEdit2, FiTrash2, FiXCircle } from "react-icons/fi";
 
 import type { CalendarEvent } from "../../types/calendar";
 import { eventDateKeys } from "./calendarDates";
-import { CALENDAR_STATUS_LABEL_KEY, calendarStatusBadgeClass, isCalendarEventPastDue } from "./calendarMeta";
+import {
+  CALENDAR_STATUS_LABEL_KEY,
+  calendarStatusBadgeClass,
+  isCalendarEventPastDue,
+} from "./calendarMeta";
 
 interface CalendarAgendaProps {
   events: CalendarEvent[];
@@ -18,7 +22,10 @@ interface CalendarAgendaProps {
   canDelete: boolean;
   onEdit: (event: CalendarEvent) => void;
   onDelete: (event: CalendarEvent) => void;
-  onSetStatus: (event: CalendarEvent, status: "completed" | "cancelled" | "scheduled") => void;
+  onSetStatus: (
+    event: CalendarEvent,
+    status: "completed" | "cancelled" | "scheduled",
+  ) => void;
 }
 
 export default function CalendarAgenda({
@@ -59,7 +66,8 @@ export default function CalendarAgenda({
         key,
         date: new Date(`${key}T00:00:00`),
         events: dayEvents.sort(
-          (a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
+          (a, b) =>
+            new Date(a.startAt).getTime() - new Date(b.startAt).getTime(),
         ),
       }));
   }, [events]);
@@ -81,7 +89,9 @@ export default function CalendarAgenda({
     return (
       <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 py-16 text-center">
         <FiClock className="text-slate-300" size={28} />
-        <p className="text-sm font-medium text-slate-500">{t("calendarEmptyState")}</p>
+        <p className="text-sm font-medium text-slate-500">
+          {t("calendarEmptyState")}
+        </p>
       </div>
     );
   }
@@ -108,14 +118,22 @@ export default function CalendarAgenda({
                     <div className="flex flex-wrap items-center gap-2">
                       <span
                         className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                          pastDue ? "bg-amber-100 text-amber-700" : calendarStatusBadgeClass(event.status)
+                          pastDue
+                            ? "bg-amber-100 text-amber-700"
+                            : calendarStatusBadgeClass(event.status)
                         }`}
                       >
-                        {t(pastDue ? "calendarStatusPastDue" : CALENDAR_STATUS_LABEL_KEY[event.status])}
+                        {t(
+                          pastDue
+                            ? "calendarStatusPastDue"
+                            : CALENDAR_STATUS_LABEL_KEY[event.status],
+                        )}
                       </span>
                       <span
                         className={`truncate text-sm font-semibold text-slate-800 ${
-                          event.status === "cancelled" ? "line-through opacity-60" : ""
+                          event.status === "cancelled"
+                            ? "line-through opacity-60"
+                            : ""
                         }`}
                       >
                         {event.title}
@@ -131,10 +149,13 @@ export default function CalendarAgenda({
                               "HH:mm",
                             )}`}
                       </span>
-                      {event.location && <span className="truncate">{event.location}</span>}
+                      {event.location && (
+                        <span className="truncate">{event.location}</span>
+                      )}
                       {event.assignedToId && (
                         <span>
-                          {t("assignedTo")}: {memberNameById[event.assignedToId] ?? "\u2014"}
+                          {t("assignedTo")}:{" "}
+                          {memberNameById[event.assignedToId] ?? "\u2014"}
                         </span>
                       )}
                       {related && <span className="truncate">{related}</span>}

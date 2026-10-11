@@ -57,6 +57,8 @@ export class TaskController {
   }
 
   @Get()
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: 'task', action: 'read' })
   @ApiOperation({
     summary: 'Get tasks',
     description:
@@ -74,6 +76,8 @@ export class TaskController {
   }
 
   @Get(':id')
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: 'task', action: 'read' })
   @ApiOperation({
     summary: 'Get task by id',
     description:

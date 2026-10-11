@@ -9,54 +9,54 @@
 
 /** Mirrors CALENDAR_EVENT_STATUSES (backend calendar.constants.ts). */
 export const CALENDAR_EVENT_STATUSES = [
-"scheduled",
-"completed",
-"cancelled",
+  "scheduled",
+  "completed",
+  "cancelled",
 ] as const;
 
 export type CalendarEventStatus = (typeof CALENDAR_EVENT_STATUSES)[number];
 
 export const CLOSED_CALENDAR_EVENT_STATUSES: readonly CalendarEventStatus[] = [
-"completed",
-"cancelled",
+  "completed",
+  "cancelled",
 ];
 
 export interface CalendarEvent {
-id: string;
-companyId: string;
+  id: string;
+  companyId: string;
 
-title: string;
-description: string | null;
-location: string | null;
+  title: string;
+  description: string | null;
+  location: string | null;
 
-startAt: string;
-endAt: string;
-allDay: boolean;
-status: CalendarEventStatus;
+  startAt: string;
+  endAt: string;
+  allDay: boolean;
+  status: CalendarEventStatus;
 
-contactId: string | null;
-leadId: string | null;
-dealId: string | null;
+  contactId: string | null;
+  leadId: string | null;
+  dealId: string | null;
 
-createdById: string;
-assignedToId: string | null;
+  createdById: string;
+  assignedToId: string | null;
 
-createdAt: string;
-updatedAt: string;
-deletedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
 }
 
 export interface CreateCalendarEventInput {
-title: string;
-description?: string;
-location?: string;
-startAt: string;
-endAt: string;
-allDay?: boolean;
-contactId?: string;
-leadId?: string;
-dealId?: string;
-assignedToId?: string;
+  title: string;
+  description?: string;
+  location?: string;
+  startAt: string;
+  endAt: string;
+  allDay?: boolean;
+  contactId?: string;
+  leadId?: string;
+  dealId?: string;
+  assignedToId?: string;
 }
 
 /**
@@ -70,7 +70,7 @@ assignedToId?: string;
 * handler for where this is applied. startAt/endAt/allDay are never
 * nullable even here — an event's timing can be changed but never unset.
   */
- export type UpdateCalendarEventInput = Partial<
+export type UpdateCalendarEventInput = Partial<
   Omit<
     CreateCalendarEventInput,
     | "description"
@@ -90,18 +90,18 @@ assignedToId?: string;
   assignedToId?: string | null;
 };
 export interface CalendarEventQuery {
-from: string;
-to: string;
-status?: CalendarEventStatus;
-assignedToId?: string;
-contactId?: string;
-leadId?: string;
-dealId?: string;
+  from: string;
+  to: string;
+  status?: CalendarEventStatus;
+  assignedToId?: string;
+  contactId?: string;
+  leadId?: string;
+  dealId?: string;
 }
 
 export interface CalendarEventListMeta {
-from: string;
-to: string;
-limit: number;
-hasMore: boolean;
+  from: string;
+  to: string;
+  limit: number;
+  hasMore: boolean;
 }

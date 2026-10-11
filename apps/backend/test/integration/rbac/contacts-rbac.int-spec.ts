@@ -19,18 +19,19 @@
  *   POST   /contacts      JwtAuthGuard + PermissionsGuard + CsrfGuard, contact:create -> 201
  *   PATCH  /contacts/:id  JwtAuthGuard + PermissionsGuard + CsrfGuard, contact:update -> 200
  *   DELETE /contacts/:id  JwtAuthGuard + PermissionsGuard + CsrfGuard, contact:delete -> 200 (soft delete)
- *   GET    /contacts      JwtAuthGuard ONLY (no PermissionsGuard)                     -> 200
+ *   GET    /contacts      JwtAuthGuard + PermissionsGuard, contact:read               -> 200
  *
  * - A denied write is a 403 raised by PermissionsGuard with the message
  *   "You do not have permission to perform this action." (a CSRF failure is
  *   also 403 but has a different message, so asserting the message proves
  *   the denial really came from the permission check).
- * - GET /contacts carries no @RequirePermissions today, so `contact:read` is
- *   not enforced on reads: every authenticated user of the company gets 200.
- *   The GET assertions below document that current contract; they do not
- *   (and cannot) prove that `contact:read` is checked.
- * - Users are `isOwner: false` WITH a real roleId (never the roleId:null
- *   legacy shim). The Roles are real Role rows with real RolePermission rows.
+ * - GET /contacts and GET /contacts/:id are gated by `contact:read` (decision
+ *   D1). All four default roles hold it, so they all get 200 here; the denial
+ *   path (a role WITHOUT the read permission -> 403) is covered for contacts
+ *   and the other four CRM resources in access-control-hardening.int-spec.ts.
+ * - Users are `isOwner: false` WITH a real roleId (never roleId:null, which
+ *   is read-only under decision D2 and covered in access-control-hardening).
+ *   The Roles are real Role rows with real RolePermission rows.
  *
  * Fixtures:
  * - One company. Four roles named and granted exactly like the product's
@@ -212,7 +213,7 @@ describe('Contacts RBAC role matrix (integration)', () => {
     expect(body.success).toBe(true);
     expect(body.user.id).toBe(userId);
     // Non-owner with a real role: neither the owner bypass nor the
-    // roleId:null shim is in play.
+    // roleId:null read-only policy is in play.
     expect(body.user.isOwner).toBe(false);
     // The real login flow reports the role's grants: RolePermission rows are
     // wired up for this user.

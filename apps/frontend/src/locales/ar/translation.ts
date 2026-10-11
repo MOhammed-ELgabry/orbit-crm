@@ -88,8 +88,7 @@ const ar = {
   // (medical_clinics / real_estate / auto_spare_parts).
   welcomeToOrbit: "مرحبًا بك في Orbit CRM",
   chooseBusinessIndustry: "اختر مجال عملك",
-  chooseWorkspaceDescription:
-    "اختر مساحة العمل التي تناسب نشاطك التجاري.",
+  chooseWorkspaceDescription: "اختر مساحة العمل التي تناسب نشاطك التجاري.",
 
   medicalClinics: "العيادات الطبية",
   medicalClinicsDescription: "إدارة المرضى والمواعيد والعلاجات.",
@@ -119,7 +118,8 @@ const ar = {
   genericErrorMessage: "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
 
   loginFailedTitle: "فشل تسجيل الدخول",
-  loginFailedMessage: "البريد الإلكتروني أو كلمة المرور غير صحيحة. حاول مرة أخرى.",
+  loginFailedMessage:
+    "البريد الإلكتروني أو كلمة المرور غير صحيحة. حاول مرة أخرى.",
   loginSuccessTitle: "مرحبًا بعودتك",
   loginSuccessMessage: "تم تسجيل دخولك بنجاح.",
 
@@ -139,12 +139,14 @@ const ar = {
   resendCodeSuccessTitle: "تم إعادة إرسال الرمز",
   resendCodeSuccessMessage: "تم إرسال رمز تحقق جديد إلى بريدك الإلكتروني.",
   resendCodeFailedTitle: "تعذر إعادة إرسال الرمز",
-  resendCodeFailedMessage: "تعذر إعادة إرسال رمز التحقق. يرجى المحاولة مرة أخرى.",
+  resendCodeFailedMessage:
+    "تعذر إعادة إرسال رمز التحقق. يرجى المحاولة مرة أخرى.",
 
   businessTypeSuccessTitle: "تم حفظ نوع النشاط",
   businessTypeSuccessMessage: "تم حفظ نوع نشاطك التجاري بنجاح.",
   businessTypeFailedTitle: "تعذر حفظ نوع النشاط",
-  businessTypeFailedMessage: "تعذر حفظ نوع نشاطك التجاري. يرجى المحاولة مرة أخرى.",
+  businessTypeFailedMessage:
+    "تعذر حفظ نوع نشاطك التجاري. يرجى المحاولة مرة أخرى.",
 
   forgotPasswordSuccessTitle: "تحقق من بريدك الإلكتروني",
   forgotPasswordSuccessMessage:
@@ -321,7 +323,8 @@ const ar = {
   calendarMoreEvents: "+{{count}} المزيد",
   calendarEmptyState: "لا توجد أحداث في هذا النطاق.",
   calendarNoAccessTitle: "ليس لديك صلاحية الوصول إلى التقويم",
-  calendarNoAccessDescription: "اطلب من مدير أو مالك منحك صلاحية الوصول إلى التقويم.",
+  calendarNoAccessDescription:
+    "اطلب من مدير أو مالك منحك صلاحية الوصول إلى التقويم.",
   calendarShowingFirstResults: "عرض أول 500 حدث في هذا النطاق.",
   deleteCalendarEventConfirm: "حذف هذا الحدث؟ لا يمكن التراجع عن ذلك.",
 
@@ -358,7 +361,8 @@ const ar = {
   roleNameSupport: "دعم",
   roleNameEmployee: "موظف",
   teamMemberAdded: "تمت إضافة عضو الفريق",
-  addTeamMemberDescription: "يمكن للأعضاء الجدد تسجيل الدخول فورًا باستخدام كلمة المرور التي تحددها هنا.",
+  addTeamMemberDescription:
+    "يمكن للأعضاء الجدد تسجيل الدخول فورًا باستخدام كلمة المرور التي تحددها هنا.",
   noTeamMembersYet: "لا يوجد أعضاء فريق بعد",
   you: "أنت",
 
@@ -381,7 +385,8 @@ const ar = {
 
   // الإعدادات — المظهر
   appearanceSettingsTitle: "المظهر",
-  appearanceSettingsDescription: "اختر لون خلفية منطقة المحتوى الرئيسية. سيتم تطبيق لون نص مناسب للقراءة تلقائيًا.",
+  appearanceSettingsDescription:
+    "اختر لون خلفية منطقة المحتوى الرئيسية. سيتم تطبيق لون نص مناسب للقراءة تلقائيًا.",
   backgroundColorLabel: "لون الخلفية",
   backgroundColorHexLabel: "القيمة السداسية عشرية",
   backgroundColorInvalid: "أدخل لونًا صالحًا مكوّنًا من 6 خانات، مثل ‎#F6F8FC.",
@@ -406,7 +411,8 @@ const ar = {
   reportsNavLabel: "التقارير",
   settingsNavLabel: "الإعدادات",
   logoutConfirmTitle: "تسجيل الخروج؟",
-  logoutConfirmMessage: "ستحتاج إلى تسجيل الدخول مرة أخرى للوصول إلى لوحة التحكم.",
+  logoutConfirmMessage:
+    "ستحتاج إلى تسجيل الدخول مرة أخرى للوصول إلى لوحة التحكم.",
   loadMore: "عرض المزيد",
 
   // Notifications
@@ -429,14 +435,16 @@ const ar = {
   notificationSettingsDescription:
     "اختر الطريقة التي تفضّلها لتنبيهك عندما يحتاج أمر ما إلى انتباهك.",
   notificationsSettingsLoadError: "تعذّر تحميل إعدادات الإشعارات.",
-  notificationsSettingsSaveError: "تعذّر حفظ هذا التغيير. يرجى المحاولة مرة أخرى.",
+  notificationsSettingsSaveError:
+    "تعذّر حفظ هذا التغيير. يرجى المحاولة مرة أخرى.",
   notificationsInAppLabel: "الإشعارات داخل التطبيق",
   notificationsInAppAlwaysOn: "مفعّلة دائمًا.",
   emailNotificationsLabel: "إشعارات البريد الإلكتروني",
   emailNotificationsDescription: "استلم رسالة بريد إلكتروني للتحديثات المهمة.",
   emailNotificationsUnavailable: "إشعارات البريد الإلكتروني غير متاحة حاليًا.",
   pushNotificationsLabel: "الإشعارات الفورية",
-  pushNotificationsDescription: "استلم إشعارات المتصفح حتى عندما يكون Orbit مغلقًا.",
+  pushNotificationsDescription:
+    "استلم إشعارات المتصفح حتى عندما يكون Orbit مغلقًا.",
   pushThisDeviceLabel: "هذا الجهاز",
   pushThisDeviceEnabled: "الإشعارات الفورية مفعّلة على هذا الجهاز.",
   pushThisDeviceDisabled: "الإشعارات الفورية غير مفعّلة على هذا الجهاز.",
@@ -447,7 +455,74 @@ const ar = {
   pushPermissionDenied:
     "الإشعارات محظورة لهذا الموقع. اسمح بها من إعدادات المتصفح لتفعيل الإشعارات الفورية.",
   pushNotConfigured: "الإشعارات الفورية غير متاحة حاليًا.",
-  pushFailed: "تعذّر تحديث الإشعارات الفورية على هذا الجهاز. يرجى المحاولة مرة أخرى.",
+  pushFailed:
+    "تعذّر تحديث الإشعارات الفورية على هذا الجهاز. يرجى المحاولة مرة أخرى.",
+
+  // التقارير
+  reportsNoAccessTitle: "ليس لديك صلاحية الوصول إلى أي تقرير",
+  reportsNoAccessDescription:
+    "اطلب من مالك الحساب منحك صلاحية القراءة على الصفقات أو العملاء المحتملين أو المهام.",
+  reportsPeriodLabel: "الفترة",
+  reportsPresetLast7: "آخر 7 أيام",
+  reportsPresetLast30: "آخر 30 يومًا",
+  reportsPresetThisMonth: "هذا الشهر",
+  reportsPresetLastMonth: "الشهر الماضي",
+  reportsFromLabel: "من",
+  reportsToLabel: "إلى",
+  reportsApply: "تطبيق",
+  reportsRangeIncomplete: "اختر تاريخ البداية وتاريخ النهاية.",
+  reportsRangeInvalidOrder: "يجب ألا يكون تاريخ البداية بعد تاريخ النهاية.",
+  reportsRangeTooLong: "يجب ألا تتجاوز الفترة {{days}} يومًا.",
+  reportsTimezoneNote: "تُحتسب الأيام وفق منطقتك الزمنية ({{timezone}}).",
+  reportsEmptyTitle: "لا توجد بيانات لعرضها في هذه الفترة",
+  reportsEmptyDescription: "جرّب نطاقًا زمنيًا مختلفًا.",
+
+  reportsPipelineTitle: "لقطة خط المبيعات",
+  reportsPipelineBasis: "الصفقات المفتوحة الآن — غير مقيّدة بالفترة المحددة.",
+  reportsOpenDeals: "الصفقات المفتوحة",
+  reportsOpenValue: "قيمة الصفقات المفتوحة",
+  reportsNoCurrencyNote: "مجموع مبالغ الصفقات كما أُدخلت، دون تحويل عملات.",
+  reportsValueByStage: "القيمة المفتوحة حسب المرحلة",
+  reportsDealsLabel: "الصفقات",
+  reportsValueLabel: "القيمة",
+  reportsShareOfValue: "نسبة القيمة",
+  reportsUnrecognizedStageNote:
+    "{{count}} صفقة في مرحلة لا يتعرّف عليها هذا التقرير ولا تُحتسب أعلاه.",
+  reportsCreatedInRangeTitle: "الصفقات المُنشأة في الفترة المحددة",
+  reportsCreatedInRangeBasis:
+    "الصفقات التي أُنشئت في هذه الفترة بأي مرحلة — وهذا سؤال مختلف عن اللقطة أعلاه.",
+  reportsCreatedCount: "الصفقات المُنشأة",
+  reportsCreatedValue: "قيمة الصفقات المُنشأة",
+
+  reportsLeadsTitle: "نظرة عامة على العملاء المحتملين",
+  reportsLeadsBasis: "العملاء المحتملون المُنشأون في الفترة المحددة.",
+  reportsLeadsTotal: "العملاء المُنشأون",
+  reportsLeadsWithDeal: "عملاء محتملون لديهم صفقة مرتبطة",
+  reportsLeadsWithDealHint:
+    "عدد العملاء المختلفين الذين لديهم صفقة واحدة على الأقل. هذا ليس معدل تحويل.",
+  reportsPercentOfLeads: "{{value}} من العملاء",
+  reportsStatusDistribution: "الحالة الحالية",
+  reportsLeadStatusBasis:
+    "حالة كل عميل اليوم — لا يحتفظ النظام بسجل لتاريخ الحالات.",
+  reportsUnrecognizedStatusNote:
+    "{{count}} عميل بحالة لا يتعرّف عليها هذا التقرير.",
+  reportsSources: "المصادر",
+  reportsSourceUnspecified: "غير محدد",
+  reportsSourceOtherBucket: "مصادر أخرى ({{count}})",
+
+  reportsTasksTitle: "نظرة عامة على المهام",
+  reportsTasksBasis: "المهام المستحقة في الفترة المحددة.",
+  reportsTasksDue: "المهام المستحقة",
+  reportsCompletionRate: "معدل الإنجاز",
+  reportsCompletionRateHint: "المكتملة ÷ (المستحقة − الملغاة).",
+  reportsCompletionRateNotAvailable:
+    "غير متاح: لا توجد مهام للقياس (المهام الملغاة مستبعدة).",
+  reportsTasksStatusBreakdown: "المهام حسب الحالة",
+  reportsTaskStatusOther: "أخرى",
+  reportsTasksNoneDueInPeriod: "لا توجد مهام مستحقة في هذه الفترة.",
+  reportsTasksWithoutDueDate: "مهام بلا تاريخ استحقاق",
+  reportsTasksWithoutDueDateHint:
+    "{{open}} من {{total}} ما زالت مفتوحة. هذه المهام ليست ضمن الأرقام أعلاه.",
 };
 
 export default ar;

@@ -23,41 +23,39 @@ type AuthenticatedRequest = Request & { user: IJwtPayload };
  * using the existing Role / Permission / RolePermission schema
  * (schema.prisma) — not a parallel authorization system.
  *
- * ROLLOUT COMPATIBILITY SHIM — READ BEFORE TOUCHING
- * ---------------------------------------------------
- * This schema has existed with a complete data model but zero
- * enforcement and zero role-assignment UI, so every user in this system
- * has roleId: null today. Hard-requiring a permission the instant this
- * guard shipped would lock out every existing non-owner user with no
- * self-service way to recover (granting a role is itself owner-only —
- * see RoleController). `isLegacyUnrestrictedUser()` below is that
- * compatibility shim, and ONLY that: it is not a permission, it is not
- * a role, and it is not meant to be a permanent bypass. It exists
- * solely so a user who has never been assigned a role keeps today's
- * access until an owner deliberately assigns one. The moment ANY role
- * is assigned to a user, this path no longer applies to them and full
- * enforcement (isRoleAuthorized()) takes over. There is no bypass once
- * a role is assigned, including for permissions that role doesn't have.
+ * ROLE-LESS USERS (roleId: null) — READ-ONLY POLICY (decision D2)
+ * ---------------------------------------------------------------
+ * A non-owner with no role assigned used to be treated as fully
+ * unrestricted (a rollout shim from before roles had any enforcement).
+ * That is no longer the case: such a user is now READ-ONLY on the CRM
+ * resource routes this guard protects. They pass only when EVERY
+ * permission the route declares has the action "read"; any create /
+ * update / delete (or any other action) is denied with the same 403 a
+ * role without that permission gets.
  *
- * Every hit of the compatibility path is logged at `debug` (not
- * `warn`/`log`, since with zero roles assigned yet this fires on
- * essentially every non-owner request — it is meant to be queryable
- * when checking rollout progress, not noise in production logs by
- * default) so RBAC adoption is observable: as an operator, if you want
- * to confirm the shim is no longer load-bearing, enable debug logging
- * for this class and confirm nothing logs.
+ * Why this matters beyond legacy rows: RoleRepository.softDelete sets
+ * roleId = null on every holder of a deleted role, and an owner can
+ * assign roleId = null explicitly. Under the old shim both silently
+ * ESCALATED the user to full access; under this policy they degrade to
+ * read-only instead, so deleting a role can never grant permissions.
+ *
+ * Scope: only routes that opt into this guard (the CRM resources:
+ * contact, lead, deal, task, activity, calendar). Self-service account
+ * settings (language, appearance, notification preferences, own profile)
+ * do not use this guard and are unaffected. Owners are unaffected.
+ *
+ * Every hit of the role-less path is logged at `debug` so the remaining
+ * role-less population stays observable.
  *
  * Full decision order:
  *   1. Owner → always passes (matches OwnerGuard's existing
  *      convention: owners are fully trusted within their own tenant).
- *   2. Non-owner, no role assigned → isLegacyUnrestrictedUser() —
- *      compatibility shim, logged, passes.
+ *   2. Non-owner, no role assigned → read-only policy (see above):
+ *      passes only for "read" permissions.
  *   3. Non-owner, role assigned → isRoleAuthorized() — real
  *      enforcement against that role's granted permissions.
  *   4. roleId set but no longer resolves to a live Role → fails
- *      closed (denied), never falls back to (2). See
- *      RoleRepository.softDelete for the normal cleanup path that
- *      avoids this case entirely.
+ *      closed (denied), never falls back to (2).
  *
  * Always re-reads the DB rather than trusting the JWT, so a permission
  * change (or role reassignment) takes effect on the very next request —
@@ -108,36 +106,45 @@ export class PermissionsGuard implements CanActivate {
     }
 
     if (!user.roleId) {
-      return this.isLegacyUnrestrictedUser(jwtUser, required);
+      return this.isRoleLessReadOnlyAllowed(jwtUser, required);
     }
 
     return this.isRoleAuthorized(jwtUser, user.roleId, required);
   }
 
   /**
-   * TEMPORARY COMPATIBILITY PATH — not enforcement. See class comment.
-   * Grants access purely because no role has ever been assigned to this
-   * user, regardless of what permission was required. Every call is
-   * logged so this remaining as load-bearing traffic is visible rather
-   * than silent.
+   * READ-ONLY POLICY for a non-owner with no role assigned (decision D2).
+   * Allows the request only when every required permission is a "read";
+   * otherwise denies with the standard 403. Never grants create / update
+   * / delete, and never consults any role. Logged at `debug`.
    */
-  private isLegacyUnrestrictedUser(
+  private isRoleLessReadOnlyAllowed(
     jwtUser: IJwtPayload,
     required: RequiredPermission[],
   ): boolean {
-    this.logger.debug(
-      `RBAC compatibility fallback used: user=${jwtUser.sub} company=${jwtUser.companyId} ` +
-        `required=[${required.map((p) => `${p.resource}:${p.action}`).join(', ')}] ` +
-        `reason=no-role-assigned`,
+    const readOnly = required.every(
+      (permission) => permission.action === 'read',
     );
+
+    this.logger.debug(
+      `RBAC role-less read-only policy: user=${jwtUser.sub} company=${jwtUser.companyId} ` +
+        `required=[${required.map((p) => `${p.resource}:${p.action}`).join(', ')}] ` +
+        `result=${readOnly ? 'allowed' : 'denied'}`,
+    );
+
+    if (!readOnly) {
+      throw new ForbiddenException(
+        'You do not have permission to perform this action.',
+      );
+    }
 
     return true;
   }
 
   /**
    * REAL ENFORCEMENT. Only reached once a role has actually been
-   * assigned to this user — the compatibility shim above no longer
-   * applies to them at all from this point on.
+   * assigned to this user — the role-less read-only policy above no
+   * longer applies to them at all from this point on.
    */
   private async isRoleAuthorized(
     jwtUser: IJwtPayload,
@@ -161,7 +168,7 @@ export class PermissionsGuard implements CanActivate {
 
     if (!role) {
       // Dangling roleId (should be rare — see RoleRepository.softDelete).
-      // Fails closed: never silently falls back to the legacy path.
+      // Fails closed: never silently falls back to the role-less path.
       throw new ForbiddenException('Assigned role no longer exists.');
     }
 

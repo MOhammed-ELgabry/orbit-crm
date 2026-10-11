@@ -1,4 +1,3 @@
-
 /**
  * Mirrors backend/src/modules/task/entities/task.entity.ts and its DTOs
  * exactly — field-for-field, including which fields are nullable vs
@@ -104,4 +103,3 @@ export interface TaskQuery {
   leadId?: string;
   dealId?: string;
 }
-

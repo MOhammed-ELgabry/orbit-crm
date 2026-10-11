@@ -57,6 +57,8 @@ export class LeadController {
   }
 
   @Get()
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: 'lead', action: 'read' })
   @ApiOperation({
     summary: 'Get leads',
     description:
@@ -74,6 +76,8 @@ export class LeadController {
   }
 
   @Get(':id')
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: 'lead', action: 'read' })
   @ApiOperation({
     summary: 'Get lead by id',
     description:

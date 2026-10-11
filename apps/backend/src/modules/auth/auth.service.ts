@@ -82,7 +82,7 @@ export interface ISafeAuthUser {
   /**
    * "resource:action" strings this user is currently granted — the same
    * decision PermissionsGuard makes on every protected request (Owner
-   * bypass, then the roleId-null legacy compatibility shim, then the
+   * bypass, then the roleId-null read-only policy (D2), then the
    * role's actual granted permissions), computed once here so the
    * frontend can use it for its own "should I show this button" UX
    * without duplicating that request-time logic. Read-only and
@@ -852,7 +852,7 @@ export class AuthService implements OnModuleInit {
   /**
    * See ISafeAuthUser.permissions for what this is for. Mirrors
    * PermissionsGuard's exact 3-branch decision (Owner / roleId:null
-   * legacy shim / role's granted permissions) so the array is always
+   * read-only policy / role's granted permissions) so the array is always
    * consistent with what that guard would actually allow — but this
    * method never grants or denies a request itself; it only describes
    * the outcome PermissionsGuard would already produce.
@@ -869,17 +869,20 @@ export class AuthService implements OnModuleInit {
     }
 
     if (!user.roleId) {
-      // Mirrors PermissionsGuard's roleId:null legacy rollout-
-      // compatibility shim exactly (see that guard for the full
-      // explanation) — a temporary full-access state, not a real role.
-      // Populated here (not left empty) so the frontend doesn't hide
-      // buttons this user can actually use; the guard, not this array,
-      // is what actually grants it.
-      const allPermissions = await this.prisma.permission.findMany({
+      // Mirrors PermissionsGuard's roleId:null READ-ONLY policy (decision
+      // D2; see that guard for the full explanation). A role-less user
+      // may read CRM resources but never create/update/delete/manage.
+      // Populated here (not left empty) so the frontend still shows the
+      // views this user can actually open; the guard, not this array, is
+      // what actually grants it.
+      const readPermissions = await this.prisma.permission.findMany({
+        where: { action: 'read' },
         select: { resource: true, action: true },
       });
 
-      return allPermissions.map((p) => `${p.resource}:${p.action}`);
+      return readPermissions
+        .filter((p) => p.action === 'read')
+        .map((p) => `${p.resource}:${p.action}`);
     }
 
     const role = await this.prisma.role.findUnique({

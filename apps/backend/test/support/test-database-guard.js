@@ -86,7 +86,9 @@ function parseConnectionUrl(raw, label) {
   try {
     database = decodeURIComponent(url.pathname.replace(/^\//, ''));
   } catch {
-    throw new TestDatabaseGuardError(`${label} has an undecodable database name.`);
+    throw new TestDatabaseGuardError(
+      `${label} has an undecodable database name.`,
+    );
   }
 
   return {
@@ -132,7 +134,9 @@ function assertSafeTestDatabaseUrl(testUrl, otherUrls = []) {
     );
   }
 
-  const forbidden = parsed.params.filter((p) => FORBIDDEN_QUERY_PARAMS.includes(p));
+  const forbidden = parsed.params.filter((p) =>
+    FORBIDDEN_QUERY_PARAMS.includes(p),
+  );
   if (forbidden.length > 0) {
     throw new TestDatabaseGuardError(
       `Query parameter(s) not allowed because they can redirect the connection: ${forbidden.join(', ')}.`,
@@ -155,7 +159,10 @@ function assertSafeTestDatabaseUrl(testUrl, otherUrls = []) {
         );
       }
     } catch (error) {
-      if (error instanceof TestDatabaseGuardError && /same host|identical/.test(error.message)) {
+      if (
+        error instanceof TestDatabaseGuardError &&
+        /same host|identical/.test(error.message)
+      ) {
         throw error;
       }
       // An unparsable DATABASE_URL is not this guard's concern; the
@@ -174,7 +181,10 @@ function parseEnvFile(content) {
     if (!trimmed || trimmed.startsWith('#')) continue;
     const eq = trimmed.indexOf('=');
     if (eq === -1) continue;
-    const key = trimmed.slice(0, eq).trim().replace(/^export\s+/, '');
+    const key = trimmed
+      .slice(0, eq)
+      .trim()
+      .replace(/^export\s+/, '');
     let value = trimmed.slice(eq + 1).trim();
     if (
       (value.startsWith('"') && value.endsWith('"') && value.length >= 2) ||

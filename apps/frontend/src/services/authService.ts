@@ -72,8 +72,8 @@ export interface AuthUser {
   /**
    * "resource:action" strings (e.g. "lead:create") the backend currently
    * grants this user — see ISafeAuthUser.permissions on the backend for
-   * exactly how it's resolved (Owner bypass / legacy roleId:null shim /
-   * role's granted permissions). UX only: every actual permission check
+   * exactly how it's resolved (Owner bypass / roleId:null read-only
+   * policy / role's granted permissions). UX only: every actual permission check
    * still happens server-side regardless of what this array says.
    */
   permissions: string[];

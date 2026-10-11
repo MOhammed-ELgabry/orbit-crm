@@ -61,8 +61,9 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
   const path =
-    safeDashboardPath(event.notification.data && event.notification.data.path) ||
-    "/dashboard";
+    safeDashboardPath(
+      event.notification.data && event.notification.data.path,
+    ) || "/dashboard";
   const target = new URL(path, self.location.origin).href;
 
   event.waitUntil(

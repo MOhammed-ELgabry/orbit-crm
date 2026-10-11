@@ -44,8 +44,8 @@ export interface IUser {
    * which is the only query the Team Members page reads from — every
    * other repository method still returns the plain scalar user, so
    * this is `undefined` there. `null` specifically means "this user
-   * has roleId: null" (see PermissionsGuard's roleId-null compatibility
-   * shim for what that means for their access, and the Team page's
+   * has roleId: null" (see PermissionsGuard's roleId-null read-only
+   * policy for what that means for their access, and the Team page's
    * "Not Assigned" label for how it's shown). Consumers should treat
    * undefined and null the same way: no role information to show.
    */

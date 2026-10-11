@@ -50,7 +50,10 @@ export const getCalendarEvent = async (id: string): Promise<CalendarEvent> => {
 export const createCalendarEvent = async (
   input: CreateCalendarEventInput,
 ): Promise<CalendarEvent> => {
-  const response = await api.post<ApiEnvelope<CalendarEvent>>("/calendar", input);
+  const response = await api.post<ApiEnvelope<CalendarEvent>>(
+    "/calendar",
+    input,
+  );
   return response.data.data;
 };
 

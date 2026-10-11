@@ -17,6 +17,7 @@ import { ActivityModule } from '../activity/activity.module';
 import { NotificationModule } from '../notification/notification.module';
 import { RoleModule } from '../role/role.module';
 import { PermissionModule } from '../permission/permission.module';
+import { ReportModule } from '../report/report.module';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -67,6 +68,8 @@ import { AuthModule } from '../auth/auth.module';
     RoleModule,
 
     PermissionModule,
+
+    ReportModule,
   ],
 
   controllers: [AppController],

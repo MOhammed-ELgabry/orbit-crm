@@ -13,10 +13,10 @@ import { RequiredPermission } from './permissions.decorator';
  *
  *   1. No @RequirePermissions() on the route -> always allowed.
  *   2. isOwner -> always allowed, no DB lookups at all.
- *   3. Non-owner, roleId: null -> the TEMPORARY compatibility shim
- *      allows it. This is the one case a future removal of the shim is
- *      expected to change; every other case in this file describes
- *      permanent behavior.
+ *   3. Non-owner, roleId: null -> READ-ONLY policy (decision D2): allowed
+ *      only when every required permission is a "read"; create / update
+ *      / delete (or any mix containing one) is denied, and no Role is
+ *      ever looked up.
  *   4. Non-owner, role assigned, role HAS the permission -> allowed.
  *   5. Non-owner, role assigned, role LACKS the permission -> denied.
  *   6. roleId set but the Role no longer resolves (deleted / wrong
@@ -87,24 +87,75 @@ describe('PermissionsGuard', () => {
     expect(prisma.role.findFirst).not.toHaveBeenCalled();
   });
 
-  it('[TEMPORARY SHIM] allows a non-owner with no role assigned', async () => {
-    reflector.getAllAndOverride.mockReturnValue([contactCreate]);
-    prisma.user.findFirst.mockResolvedValue({ roleId: null });
+  describe('non-owner with no role assigned (roleId: null) — read-only policy', () => {
+    const roleLessUser = {
+      sub: 'user-1',
+      companyId,
+      email: 'user@test.com',
+      isOwner: false,
+    } as IJwtPayload;
 
-    const allowed = await guard.canActivate(
-      buildContext({
-        sub: 'user-1',
-        companyId,
-        email: 'user@test.com',
-        isOwner: false,
-      } as IJwtPayload),
+    it.each(['contact', 'lead', 'deal', 'task', 'activity', 'calendar'])(
+      'ALLOWS read on %s',
+      async (resource) => {
+        reflector.getAllAndOverride.mockReturnValue([
+          { resource, action: 'read' },
+        ]);
+        prisma.user.findFirst.mockResolvedValue({ roleId: null });
+
+        const allowed = await guard.canActivate(buildContext(roleLessUser));
+
+        expect(allowed).toBe(true);
+        // Never reaches a Role lookup: there is no role to look up.
+        expect(prisma.role.findFirst).not.toHaveBeenCalled();
+      },
     );
 
-    expect(allowed).toBe(true);
-    // This is the ONE case backed by the compatibility shim, not real
-    // enforcement — it must never reach a Role lookup, since there's no
-    // role to look up.
-    expect(prisma.role.findFirst).not.toHaveBeenCalled();
+    it.each(['create', 'update', 'delete', 'manage'])(
+      'DENIES %s (403), without any Role lookup',
+      async (action) => {
+        reflector.getAllAndOverride.mockReturnValue([
+          { resource: 'contact', action },
+        ]);
+        prisma.user.findFirst.mockResolvedValue({ roleId: null });
+
+        await expect(
+          guard.canActivate(buildContext(roleLessUser)),
+        ).rejects.toThrow(ForbiddenException);
+        expect(prisma.role.findFirst).not.toHaveBeenCalled();
+      },
+    );
+
+    it('DENIES when a "read" is declared together with any non-read permission', async () => {
+      reflector.getAllAndOverride.mockReturnValue([
+        { resource: 'contact', action: 'read' },
+        { resource: 'deal', action: 'update' },
+      ]);
+      prisma.user.findFirst.mockResolvedValue({ roleId: null });
+
+      await expect(
+        guard.canActivate(buildContext(roleLessUser)),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('scopes the user lookup to the caller’s own company', async () => {
+      reflector.getAllAndOverride.mockReturnValue([
+        { resource: 'deal', action: 'read' },
+      ]);
+      prisma.user.findFirst.mockResolvedValue({ roleId: null });
+
+      await guard.canActivate(buildContext(roleLessUser));
+
+      expect(prisma.user.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: 'user-1',
+            companyId,
+            deletedAt: null,
+          }),
+        }),
+      );
+    });
   });
 
   it('allows a non-owner whose assigned role HAS the required permission', async () => {
@@ -180,7 +231,7 @@ describe('PermissionsGuard', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
-  it('fails CLOSED (denied) when roleId is set but the Role no longer resolves, never falling back to the shim', async () => {
+  it('fails CLOSED (denied) when roleId is set but the Role no longer resolves, never falling back to the role-less policy', async () => {
     reflector.getAllAndOverride.mockReturnValue([contactCreate]);
     prisma.user.findFirst.mockResolvedValue({ roleId: 'deleted-role' });
     prisma.role.findFirst.mockResolvedValue(null);

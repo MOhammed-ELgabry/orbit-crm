@@ -98,8 +98,7 @@ const en = {
   realEstateDescription: "Manage properties, leads, clients and deals.",
 
   autoSpareParts: "Auto Spare Parts",
-  autoSparePartsDescription:
-    "Manage inventory, suppliers, orders and sales.",
+  autoSparePartsDescription: "Manage inventory, suppliers, orders and sales.",
 
   continue: "Continue",
 
@@ -146,8 +145,7 @@ const en = {
     "We couldn't resend the verification code. Please try again.",
 
   businessTypeSuccessTitle: "Business Type Saved",
-  businessTypeSuccessMessage:
-    "Your business type has been saved successfully.",
+  businessTypeSuccessMessage: "Your business type has been saved successfully.",
   businessTypeFailedTitle: "Couldn't Save Business Type",
   businessTypeFailedMessage:
     "We couldn't save your business type. Please try again.",
@@ -331,8 +329,7 @@ const en = {
   calendarNoAccessTitle: "You don't have access to Calendar",
   calendarNoAccessDescription:
     "Ask a manager or owner to grant you Calendar access.",
-  calendarShowingFirstResults:
-    "Showing the first 500 events in this range.",
+  calendarShowingFirstResults: "Showing the first 500 events in this range.",
   deleteCalendarEventConfirm: "Delete this event? This cannot be undone.",
 
   // Activity timeline
@@ -368,7 +365,8 @@ const en = {
   roleNameSupport: "Support",
   roleNameEmployee: "Employee",
   teamMemberAdded: "Team member added",
-  addTeamMemberDescription: "New members can sign in immediately with the password you set here.",
+  addTeamMemberDescription:
+    "New members can sign in immediately with the password you set here.",
   noTeamMembersYet: "No team members yet",
   you: "You",
 
@@ -385,13 +383,15 @@ const en = {
 
   // Settings — Language
   languageSettingsTitle: "Language",
-  languageSettingsDescription: "Choose the language used throughout the application.",
+  languageSettingsDescription:
+    "Choose the language used throughout the application.",
   currentLanguageLabel: "Interface language",
   saveLanguage: "Save Language",
 
   // Settings — Appearance
   appearanceSettingsTitle: "Appearance",
-  appearanceSettingsDescription: "Choose a background color for the main content area. A readable text color is applied automatically.",
+  appearanceSettingsDescription:
+    "Choose a background color for the main content area. A readable text color is applied automatically.",
   backgroundColorLabel: "Background color",
   backgroundColorHexLabel: "Hex value",
   backgroundColorInvalid: "Enter a valid 6-digit hex color, e.g. #F6F8FC.",
@@ -416,7 +416,8 @@ const en = {
   reportsNavLabel: "Reports",
   settingsNavLabel: "Settings",
   logoutConfirmTitle: "Log out?",
-  logoutConfirmMessage: "You'll need to sign in again to access your dashboard.",
+  logoutConfirmMessage:
+    "You'll need to sign in again to access your dashboard.",
   loadMore: "Load more",
 
   // Notifications
@@ -438,15 +439,19 @@ const en = {
   notificationSettingsTitle: "Notifications",
   notificationSettingsDescription:
     "Choose how you want to be told when something needs your attention.",
-  notificationsSettingsLoadError: "We couldn't load your notification settings.",
-  notificationsSettingsSaveError: "We couldn't save that change. Please try again.",
+  notificationsSettingsLoadError:
+    "We couldn't load your notification settings.",
+  notificationsSettingsSaveError:
+    "We couldn't save that change. Please try again.",
   notificationsInAppLabel: "In-app notifications",
   notificationsInAppAlwaysOn: "Always on.",
   emailNotificationsLabel: "Email notifications",
   emailNotificationsDescription: "Get an email for important updates.",
-  emailNotificationsUnavailable: "Email notifications are not available right now.",
+  emailNotificationsUnavailable:
+    "Email notifications are not available right now.",
   pushNotificationsLabel: "Push notifications",
-  pushNotificationsDescription: "Get browser notifications, even when Orbit is closed.",
+  pushNotificationsDescription:
+    "Get browser notifications, even when Orbit is closed.",
   pushThisDeviceLabel: "This device",
   pushThisDeviceEnabled: "Push notifications are enabled on this device.",
   pushThisDeviceDisabled: "Push notifications are not enabled on this device.",
@@ -457,7 +462,76 @@ const en = {
   pushPermissionDenied:
     "Notifications are blocked for this site. Allow them in your browser settings to enable push.",
   pushNotConfigured: "Push notifications are not available right now.",
-  pushFailed: "We couldn't update push notifications on this device. Please try again.",
+  pushFailed:
+    "We couldn't update push notifications on this device. Please try again.",
+
+  // Reports
+  reportsNoAccessTitle: "You don't have access to any reports",
+  reportsNoAccessDescription:
+    "Ask your account owner to grant you read access to deals, leads or tasks.",
+  reportsPeriodLabel: "Period",
+  reportsPresetLast7: "Last 7 days",
+  reportsPresetLast30: "Last 30 days",
+  reportsPresetThisMonth: "This month",
+  reportsPresetLastMonth: "Last month",
+  reportsFromLabel: "From",
+  reportsToLabel: "To",
+  reportsApply: "Apply",
+  reportsRangeIncomplete: "Choose both a start and an end date.",
+  reportsRangeInvalidOrder: "The start date must not be after the end date.",
+  reportsRangeTooLong: "The range may span at most {{days}} days.",
+  reportsTimezoneNote: "Days are counted in your time zone ({{timezone}}).",
+  reportsEmptyTitle: "Nothing to show for this period",
+  reportsEmptyDescription: "Try a different date range.",
+
+  reportsPipelineTitle: "Pipeline snapshot",
+  reportsPipelineBasis:
+    "Open deals right now — not limited to the selected period.",
+  reportsOpenDeals: "Open deals",
+  reportsOpenValue: "Open deals value",
+  reportsNoCurrencyNote:
+    "Sum of deal amounts as entered; no currency conversion.",
+  reportsValueByStage: "Open value by stage",
+  reportsDealsLabel: "Deals",
+  reportsValueLabel: "Value",
+  reportsShareOfValue: "Share of value",
+  reportsUnrecognizedStageNote:
+    "{{count}} deal(s) have a stage this report does not recognise and are not counted above.",
+  reportsCreatedInRangeTitle: "Deals created in the selected period",
+  reportsCreatedInRangeBasis:
+    "Deals created in this period, in any stage — a different question from the snapshot above.",
+  reportsCreatedCount: "Deals created",
+  reportsCreatedValue: "Value of deals created",
+
+  reportsLeadsTitle: "Leads overview",
+  reportsLeadsBasis: "Leads created in the selected period.",
+  reportsLeadsTotal: "Leads created",
+  reportsLeadsWithDeal: "Leads with a linked deal",
+  reportsLeadsWithDealHint:
+    "Distinct leads with at least one deal. This is not a conversion rate.",
+  reportsPercentOfLeads: "{{value}} of leads",
+  reportsStatusDistribution: "Current status",
+  reportsLeadStatusBasis:
+    "Each lead's status today — the system does not keep status history.",
+  reportsUnrecognizedStatusNote:
+    "{{count}} lead(s) have a status this report does not recognise.",
+  reportsSources: "Sources",
+  reportsSourceUnspecified: "Not specified",
+  reportsSourceOtherBucket: "Other sources ({{count}})",
+
+  reportsTasksTitle: "Tasks overview",
+  reportsTasksBasis: "Tasks due in the selected period.",
+  reportsTasksDue: "Tasks due",
+  reportsCompletionRate: "Completion rate",
+  reportsCompletionRateHint: "Completed ÷ (due − cancelled).",
+  reportsCompletionRateNotAvailable:
+    "Not available: no tasks to measure (cancelled tasks are excluded).",
+  reportsTasksStatusBreakdown: "Tasks by status",
+  reportsTaskStatusOther: "Other",
+  reportsTasksNoneDueInPeriod: "No tasks are due in this period.",
+  reportsTasksWithoutDueDate: "Tasks without a due date",
+  reportsTasksWithoutDueDateHint:
+    "{{open}} of {{total}} are still open. These are not part of the figures above.",
 };
 
 export default en;

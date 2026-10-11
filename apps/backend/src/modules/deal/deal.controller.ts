@@ -57,6 +57,8 @@ export class DealController {
   }
 
   @Get()
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: 'deal', action: 'read' })
   @ApiOperation({
     summary: 'Get deals',
     description:
@@ -74,6 +76,8 @@ export class DealController {
   }
 
   @Get(':id')
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: 'deal', action: 'read' })
   @ApiOperation({
     summary: 'Get deal by id',
     description:

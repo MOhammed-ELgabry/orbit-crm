@@ -14,6 +14,11 @@ import {
   type AuthUser,
 } from "../services/authService";
 import { getMyCompany, type Company } from "../services/companyService";
+import {
+  markSessionActive,
+  markSessionInactive,
+  setSessionEndedListener,
+} from "../services/api";
 import { identifyAnalyticsUser, resetAnalyticsIdentity } from "../lib/posthog";
 import { detachPushOnLogout } from "../lib/push";
 import i18n from "i18next";
@@ -126,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        markSessionActive();
         setUser(response.user);
 
         try {
@@ -189,7 +195,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const login = useCallback((nextUser: AuthUser) => {
+    markSessionActive();
     setUser(nextUser);
+  }, []);
+
+  // Single place the app reacts to "the server says this session is over"
+  // (refresh refused after a 401 — e.g. the account was deactivated, or the
+  // refresh token was revoked/expired). Clears local state only: the
+  // cookies are already invalid server-side, so calling /auth/logout here
+  // would just be another 401. Setting `user` to null makes ProtectedRoute
+  // redirect to /login through the router, so there is no hard navigation
+  // and no redirect loop. api.ts guarantees this fires once per session.
+  useEffect(() => {
+    return setSessionEndedListener(() => {
+      setUser(null);
+      setCompany(null);
+      resetAnalyticsIdentity();
+    });
   }, []);
 
   const logout = useCallback(async () => {
@@ -201,6 +223,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // user's intent is satisfied either way, so this isn't surfaced as
       // an error to the caller.
     } finally {
+      markSessionInactive();
       setUser(null);
       setCompany(null);
       resetAnalyticsIdentity();

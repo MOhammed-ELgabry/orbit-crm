@@ -30,9 +30,12 @@
  * - CSRF is double-submit: the `orbit_csrf_token` cookie (kept by the agent)
  *   must equal the `x-csrf-token` header. Unauthenticated requests are
  *   rejected by JwtAuthGuard (401) before CSRF is evaluated.
- * - Users here are `isOwner: false`, `roleId: null`. PermissionsGuard lets a
- *   role-less non-owner through (legacy shim), so no Roles/RolePermissions are
- *   needed. This file therefore tests tenant isolation, NOT RBAC.
+ * - Users here are `isOwner: false` and each holds a per-company Role granting
+ *   contact:create/read/update/delete. (A role-less user is READ-ONLY under
+ *   decision D2 and could not exercise these writes at all — see the RBAC
+ *   suite for that policy.) This file therefore tests tenant isolation, NOT
+ *   RBAC: the role exists only so the permission gate lets the request reach
+ *   the tenant checks under test.
  *
  * Every assertion on a cross-tenant attempt also checks the database through
  * Prisma, not only the HTTP status. Records are created with marker
@@ -137,6 +140,34 @@ describe('Contacts write-side tenant isolation (integration)', () => {
     });
     harness.registerCompany(company.id);
 
+    // READ-ONLY lookup of the shared Permission catalog; this test never
+    // creates, edits or deletes those rows.
+    const permissions = await harness.prisma.permission.findMany({
+      where: {
+        resource: 'contact',
+        action: { in: ['create', 'read', 'update', 'delete'] },
+      },
+      select: { id: true },
+    });
+    if (permissions.length !== 4) {
+      throw new Error(
+        'The global Permission table in orbitcrm_test is missing contact:create/read/update/delete.',
+      );
+    }
+    const role = await harness.prisma.role.create({
+      data: {
+        companyId: company.id,
+        name: harness.uniqueName(`write-role-${label}`),
+        rolePermissions: {
+          createMany: {
+            data: permissions.map((p) => ({ permissionId: p.id })),
+          },
+        },
+      },
+      select: { id: true },
+    });
+    harness.registerRole(role.id);
+
     const email = harness.uniqueEmail(`write-user-${label}`);
     const user = await harness.prisma.user.create({
       data: {
@@ -147,7 +178,7 @@ describe('Contacts write-side tenant isolation (integration)', () => {
         isEmailVerified: true,
         isActive: true,
         isOwner: false,
-        roleId: null,
+        roleId: role.id,
         companyId: company.id,
       },
       select: { id: true },

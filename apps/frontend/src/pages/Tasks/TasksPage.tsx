@@ -90,8 +90,7 @@ export default function TasksPage() {
           search: search.trim() || undefined,
           status: (statusFilter || undefined) as Task["status"] | undefined,
           priority: (priorityFilter || undefined) as
-            | Task["priority"]
-            | undefined,
+            Task["priority"] | undefined,
           // Soonest-due-first is far more useful for a task queue than
           // creation order (which is what Deal's own list defaults
           // to) — tasks with no due date sort last, which is exactly
@@ -142,7 +141,9 @@ export default function TasksPage() {
       const updated = await updateTask(modalMode.id, input as UpdateTaskInput);
       trackEvent("task_updated", { status: updated.status });
       trackStatusOutcome(previousStatus, updated);
-      setTasks((prev) => prev.map((tk) => (tk.id === updated.id ? updated : tk)));
+      setTasks((prev) =>
+        prev.map((tk) => (tk.id === updated.id ? updated : tk)),
+      );
     } else {
       const created = await createTask(input as CreateTaskInput);
       trackEvent("task_created", {
@@ -161,18 +162,23 @@ export default function TasksPage() {
   // mainstream todo app treats un-completing an item; changing to
   // "in_progress"/"cancelled" specifically is still done via Edit.
   const handleToggleComplete = async (task: Task) => {
-    const nextStatus: TaskStatus = task.status === "completed" ? "todo" : "completed";
+    const nextStatus: TaskStatus =
+      task.status === "completed" ? "todo" : "completed";
     const previous = tasks;
 
     setTasks((prev) =>
-      prev.map((tk) => (tk.id === task.id ? { ...tk, status: nextStatus } : tk)),
+      prev.map((tk) =>
+        tk.id === task.id ? { ...tk, status: nextStatus } : tk,
+      ),
     );
 
     try {
       const updated = await updateTask(task.id, { status: nextStatus });
       trackEvent("task_updated", { status: updated.status });
       trackStatusOutcome(task.status, updated);
-      setTasks((prev) => prev.map((tk) => (tk.id === updated.id ? updated : tk)));
+      setTasks((prev) =>
+        prev.map((tk) => (tk.id === updated.id ? updated : tk)),
+      );
     } catch (error) {
       setTasks(previous);
       errorAlert({
@@ -273,7 +279,10 @@ export default function TasksPage() {
         {status === "loading" && (
           <div className="space-y-3 p-5">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="h-12 animate-pulse rounded-xl bg-slate-50" />
+              <div
+                key={i}
+                className="h-12 animate-pulse rounded-xl bg-slate-50"
+              />
             ))}
           </div>
         )}

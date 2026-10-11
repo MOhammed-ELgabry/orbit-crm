@@ -97,8 +97,8 @@ export class UserRepository implements IUserRepository {
       }
 
       // A team member created through this path must never default to
-      // PermissionsGuard's roleId: null compatibility shim (unrestricted
-      // contact/activity access) — they get the company's own EMPLOYEE
+      // PermissionsGuard's roleId: null policy (read-only access to CRM
+      // resources, decision D2) — they get the company's own EMPLOYEE
       // role instead, the least-privileged default. Resolved here,
       // inside this same transaction, via the exact (companyId, name)
       // compound key ensureDefaultRolesForCompany already upserts on —
