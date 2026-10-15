@@ -99,6 +99,19 @@ export class CompanyEntity implements ICompany {
   deletedAt: Date | null;
 
   constructor(data: ICompany) {
-    Object.assign(this, data);
-  }
+  this.id = data.id;
+  this.name = data.name;
+  this.contactEmail = data.contactEmail;
+  this.phone = data.phone;
+  this.address = data.address;
+  this.logo = data.logo;
+  this.website = data.website;
+  this.taxNumber = data.taxNumber;
+  this.description = data.description;
+  this.businessType = data.businessType;
+  this.isActive = data.isActive;
+  this.createdAt = data.createdAt;
+  this.updatedAt = data.updatedAt;
+  this.deletedAt = data.deletedAt;
+}
 }
