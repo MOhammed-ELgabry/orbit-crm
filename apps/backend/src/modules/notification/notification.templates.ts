@@ -1,4 +1,5 @@
 import {
+  CHAT_SNIPPET_MAX_LENGTH,
   MAX_TITLE_LENGTH,
   type NotificationEntityType,
   type NotificationType,
@@ -23,6 +24,14 @@ export interface RenderContext {
   title?: string | null;
   /** ISO date string (calendar events). */
   startAt?: string | null;
+  /**
+   * Chat only: bounded preview of the message. Passed by the in-app inbox
+   * ONLY; the push and email renderers never receive it, so message text
+   * can never leave the app through them.
+   */
+  snippet?: string | null;
+  /** Chat only: which kind of conversation the notification is about. */
+  conversationType?: string | null;
 }
 
 export interface RenderedNotification {
@@ -63,6 +72,65 @@ export function sanitizeText(
   if (cleaned.length <= maxLength) return cleaned;
 
   return `${cleaned.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+}
+
+// Invisible formatting characters that add nothing readable and are used to
+// hide or spoof text: soft hyphen, ZWSP, LRM/RLM, word joiner, invisible
+// operators, BOM. ZWNJ (U+200C) and ZWJ (U+200D) are deliberately KEPT:
+// they are part of correct Persian/Urdu/Arabic-script spelling and of
+// multi-person / skin-tone emoji sequences, and stripping them corrupts
+// legitimate text.
+const INVISIBLE_CHARS = /[\u00ad\u200b\u200e\u200f\u2060-\u2064\ufeff]/g;
+
+// A UTF-16 surrogate that is not part of a valid pair.
+const LONE_SURROGATE =
+  /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/g;
+
+function splitGraphemes(text: string): string[] {
+  try {
+    const segmenter = new Intl.Segmenter(undefined, {
+      granularity: 'grapheme',
+    });
+    return Array.from(segmenter.segment(text), (part) => part.segment);
+  } catch {
+    return Array.from(text);
+  }
+}
+
+/**
+ * Safe, bounded preview of a chat message for the in-app inbox.
+ *
+ * Unicode-normalised (NFC), no control / bidi-override / zero-width /
+ * lone-surrogate characters, no line breaks, collapsed whitespace, and
+ * truncated at a GRAPHEME boundary (an emoji or an Arabic letter with its
+ * diacritics is never cut in half). Idempotent: sanitising an already
+ * sanitised snippet returns it unchanged, so it is safe to apply both when
+ * storing and when rendering.
+ */
+export function sanitizeChatSnippet(
+  input: unknown,
+  maxLength: number = CHAT_SNIPPET_MAX_LENGTH,
+): string {
+  if (typeof input !== 'string') return '';
+
+  const cleaned = input
+    .replace(LONE_SURROGATE, '')
+    .normalize('NFC')
+    .replace(INVISIBLE_CHARS, '')
+    .replace(UNSAFE_CHARS, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (cleaned.length === 0) return '';
+
+  const graphemes = splitGraphemes(cleaned);
+
+  if (graphemes.length <= maxLength) return cleaned;
+
+  return `${graphemes
+    .slice(0, Math.max(0, maxLength - 1))
+    .join('')
+    .trimEnd()}…`;
 }
 
 export function escapeHtml(input: string): string {
@@ -107,6 +175,12 @@ export function buildNotificationPath(
         : '/dashboard/leads';
     case 'calendar_event':
       return '/dashboard/calendar';
+    case 'chat_conversation':
+      // Opens the conversation through the chat page's own ?c= handling,
+      // which ignores an id that is not one of the viewer's conversations.
+      return id
+        ? `/dashboard/chat?c=${encodeURIComponent(id)}`
+        : '/dashboard/chat';
     default:
       return null;
   }
@@ -128,8 +202,10 @@ const FALLBACK_TITLE: Record<NotificationLanguage, string> = {
 
 interface CatalogEntry {
   title: string;
-  /** `{actor}`, `{title}` and `{when}` are substituted. */
+  /** `{actor}`, `{title}`, `{snippet}` and `{when}` are substituted. */
   body: string;
+  /** Chat only: used when there is no snippet (push, email, empty text). */
+  bodyWithoutSnippet?: string;
 }
 
 const CATALOG: Record<
@@ -223,6 +299,33 @@ const CATALOG: Record<
       body: 'ألغى {actor} الحدث "{title}" ({when}).',
     },
   },
+  // Direct (1:1) chat message.
+  'chat.message': {
+    en: {
+      title: 'New message',
+      body: '{actor}: {snippet}',
+      bodyWithoutSnippet: '{actor} sent you a message.',
+    },
+    ar: {
+      title: 'رسالة جديدة',
+      body: '{actor}: {snippet}',
+      bodyWithoutSnippet: 'أرسل إليك {actor} رسالة.',
+    },
+  },
+};
+
+/** The same type, rendered for the team conversation. */
+const CHAT_TEAM_ENTRY: Record<NotificationLanguage, CatalogEntry> = {
+  en: {
+    title: 'New messages in the team chat',
+    body: '{actor}: {snippet}',
+    bodyWithoutSnippet: '{actor} wrote in the team chat.',
+  },
+  ar: {
+    title: 'رسائل جديدة في دردشة الفريق',
+    body: '{actor}: {snippet}',
+    bodyWithoutSnippet: 'كتب {actor} في دردشة الفريق.',
+  },
 };
 
 function formatWhen(
@@ -272,9 +375,32 @@ export function renderNotification(
     };
   }
 
-  const entry = CATALOG[type][language];
-
   const actor = sanitizeText(context.actorName, 80) || FALLBACK_ACTOR[language];
+
+  if (type === 'chat.message') {
+    const chatEntry =
+      context.conversationType === 'TEAM'
+        ? CHAT_TEAM_ENTRY[language]
+        : CATALOG[type][language];
+    const snippet = sanitizeChatSnippet(context.snippet);
+
+    // The user's text goes in through function replacers and AFTER the
+    // template is chosen, so no cleanup regex below can touch it and a
+    // "$&" in a message stays literal.
+    const template = snippet
+      ? chatEntry.body
+      : (chatEntry.bodyWithoutSnippet ?? chatEntry.body);
+
+    return {
+      title: chatEntry.title,
+      body: template
+        .replace('{actor}', () => actor)
+        .replace('{snippet}', () => snippet)
+        .trim(),
+    };
+  }
+
+  const entry = CATALOG[type][language];
   const title = sanitizeText(context.title) || FALLBACK_TITLE[language];
   const when = formatWhen(context.startAt, language);
 
@@ -378,13 +504,27 @@ export function renderPushPayload(
   context: RenderContext,
   path: string | null,
   notificationId: string,
+  entityId?: string | null,
 ): PushPayload {
-  const rendered = renderNotification(type, languageInput, context);
+  // Message text must never reach a push payload (lock screens, push
+  // services): whatever the caller passed, chat renders its snippet-less
+  // wording here.
+  const rendered = renderNotification(type, languageInput, {
+    ...context,
+    ...(type === 'chat.message' && { snippet: null }),
+  });
+
+  // One tag per chat conversation: a newer push replaces the previous one
+  // instead of stacking a notification per message.
+  const tag =
+    type === 'chat.message' && entityId && SAFE_ID.test(entityId)
+      ? `chat-${entityId}`
+      : `notification-${notificationId}`;
 
   return {
     title: rendered.title,
     body: rendered.body,
     path,
-    tag: `notification-${notificationId}`,
+    tag,
   };
 }

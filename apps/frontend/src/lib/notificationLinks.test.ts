@@ -8,6 +8,8 @@ describe("safeDashboardPath", () => {
     "/dashboard/tasks",
     "/dashboard/deals/abc-123",
     "/dashboard/leads/L_1?x=1",
+    "/dashboard/chat",
+    "/dashboard/chat?c=0b9f6a52-1c1e-4f43-9a55-3c9a1d1e7a10",
   ])("accepts the in-app path %s", (path) => {
     expect(safeDashboardPath(path)).toBe(path);
   });

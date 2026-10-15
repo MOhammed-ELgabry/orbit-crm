@@ -6,6 +6,7 @@ import {
   FiBriefcase,
   FiCalendar,
   FiCheckSquare,
+  FiMessageSquare,
   FiUser,
 } from "react-icons/fi";
 
@@ -16,6 +17,7 @@ function TypeIcon({ type }: { type: string }) {
   if (type.startsWith("deal.")) return <FiBriefcase size={15} />;
   if (type.startsWith("lead.")) return <FiUser size={15} />;
   if (type.startsWith("calendar.")) return <FiCalendar size={15} />;
+  if (type.startsWith("chat.")) return <FiMessageSquare size={15} />;
   return <FiAlertCircle size={15} />;
 }
 

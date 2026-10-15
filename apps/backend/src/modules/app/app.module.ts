@@ -15,6 +15,7 @@ import { TaskModule } from '../task/task.module';
 import { CalendarModule } from '../calendar/calendar.module';
 import { ActivityModule } from '../activity/activity.module';
 import { NotificationModule } from '../notification/notification.module';
+import { ChatModule } from '../chat/chat.module';
 import { RoleModule } from '../role/role.module';
 import { PermissionModule } from '../permission/permission.module';
 import { ReportModule } from '../report/report.module';
@@ -64,6 +65,8 @@ import { AuthModule } from '../auth/auth.module';
     ActivityModule,
 
     NotificationModule,
+
+    ChatModule,
 
     RoleModule,
 

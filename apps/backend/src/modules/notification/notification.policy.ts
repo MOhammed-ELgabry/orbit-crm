@@ -1,4 +1,6 @@
 import {
+  CHAT_PUSH_DEFAULT_DELAY_MS,
+  CHAT_PUSH_MAX_DELAY_MS,
   DELIVERY_EXPIRY_MS,
   EMAIL_MAX_ATTEMPTS,
   EMAIL_RETRY_BACKOFF_MS,
@@ -83,6 +85,36 @@ export function decideDeliveries(input: ChannelDecisionInput): DeliverySpec[] {
   }
 
   return deliveries;
+}
+
+/**
+ * Chat push is OFF unless the deployment explicitly sets
+ * CHAT_PUSH_ENABLED=true. It gates BOTH the creation of chat push
+ * deliveries (NotificationService) and their sending (NotificationWorker),
+ * so turning it off also stops deliveries that were queued earlier.
+ */
+export function isChatPushEnabled(value: string | undefined | null): boolean {
+  return value === 'true';
+}
+
+/**
+ * How long a DIRECT chat push waits before it may be sent. A message read
+ * within this window is never pushed. Invalid / negative values fall back
+ * to the default; the value is capped so a typo cannot park pushes for
+ * hours (the 24 h delivery expiry would silently drop them).
+ */
+export function resolveChatPushDelayMs(
+  value: string | undefined | null,
+): number {
+  if (value === undefined || value === null || value.trim() === '') {
+    return CHAT_PUSH_DEFAULT_DELAY_MS;
+  }
+
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed) || parsed < 0) return CHAT_PUSH_DEFAULT_DELAY_MS;
+
+  return Math.min(Math.floor(parsed), CHAT_PUSH_MAX_DELAY_MS);
 }
 
 export function maxAttemptsFor(channel: string): number {

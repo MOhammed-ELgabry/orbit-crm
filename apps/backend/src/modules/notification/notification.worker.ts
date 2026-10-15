@@ -26,6 +26,7 @@ import {
 } from './constants/notification.constants';
 import type { NotificationParams } from './entities/notification.entity';
 import {
+  isChatPushEnabled,
   isDeliveryExpired,
   maxAttemptsFor,
   nextRetryDelayMs,
@@ -256,6 +257,17 @@ export class NotificationWorker implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
+    // Chat-only rules. Every other notification type skips this block, so
+    // their behaviour is exactly what it was.
+    if (notification.type === 'chat.message') {
+      const skipCode = this.chatSkipCode(channel, notification.readAt);
+
+      if (skipCode) {
+        await this.repository.markDeliverySkipped(id, attempts, skipCode);
+        return;
+      }
+    }
+
     if (channel === 'email') {
       await this.deliverEmail(claimed, context, now);
     } else if (channel === 'push') {
@@ -267,6 +279,31 @@ export class NotificationWorker implements OnModuleInit, OnModuleDestroy {
         'unknown_channel',
       );
     }
+  }
+
+  /**
+   * Why a chat delivery must NOT be sent right now, or null.
+   *  - chat never emails;
+   *  - the deployment switch CHAT_PUSH_ENABLED is re-read at send time, so
+   *    turning it off also stops pushes queued earlier;
+   *  - the notification was already read (the recipient read the message in
+   *    the chat, or opened the notification) during the grace delay.
+   */
+  private chatSkipCode(
+    channel: string,
+    readAt: Date | null | undefined,
+  ): string | null {
+    if (channel !== 'push') return 'channel_disabled';
+
+    if (
+      !isChatPushEnabled(this.configService.get<string>('CHAT_PUSH_ENABLED'))
+    ) {
+      return 'channel_disabled';
+    }
+
+    if (readAt) return 'already_read';
+
+    return null;
   }
 
   // --- Email -----------------------------------------------------------
@@ -426,6 +463,7 @@ export class NotificationWorker implements OnModuleInit, OnModuleDestroy {
       this.renderContext(notification),
       buildNotificationPath(notification.entityType, notification.entityId),
       notification.id,
+      notification.entityId,
     );
 
     try {

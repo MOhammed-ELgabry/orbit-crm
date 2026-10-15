@@ -30,10 +30,44 @@ export interface PublishNotificationInput {
   startAt?: Date;
 }
 
+/**
+ * What ChatService hands to NotificationService.publishChatMessage().
+ *
+ * The caller (the chat module) has already derived the recipients on the
+ * server from the conversation / audience rules; nothing here comes from a
+ * client. `body` is the message text: it is reduced to a bounded, sanitised
+ * snippet before anything is stored and is never logged.
+ */
+export interface PublishChatMessageInput {
+  companyId: string;
+  /** The sender: never notified, shown as the actor. */
+  senderId: string;
+  conversationId: string;
+  conversationType: 'DIRECT' | 'TEAM';
+  messageId: string;
+  /** ChatMessage.sequence: orders messages and ties notifications to reads. */
+  sequence: number;
+  body: string;
+  /** Null/undefined/duplicates/the sender are dropped. */
+  recipientIds: ReadonlyArray<string | null | undefined>;
+}
+
+export interface PublishChatMessageResult {
+  /** Recipients whose inbox row was created or advanced by THIS call. */
+  notifiedUserIds: string[];
+}
+
 /** Small, non-sensitive facts stored in Notification.params. */
 export interface NotificationParams {
   title?: string;
   startAt?: string;
+  /** Chat only (all strings, JSON-safe). */
+  messageId?: string;
+  /** Chat only: ChatMessage.sequence as a decimal string. */
+  sequence?: string;
+  /** Chat only: bounded, sanitised preview; shown in-app only. */
+  snippet?: string;
+  conversationType?: 'DIRECT' | 'TEAM';
 }
 
 /** One inbox item as returned by the API (text already rendered). */

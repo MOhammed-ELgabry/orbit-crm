@@ -29,6 +29,10 @@ model Company {
   // Status
   isActive Boolean @default(true)
 
+  // A monotonic boundary for team-chat eligibility changes. Membership
+  // intervals and message audience snapshots use this epoch.
+  chatMembershipEpoch BigInt @default(0) @db.BigInt
+
   // Relations
   users            User[]
   roles            Role[]
@@ -44,6 +48,11 @@ model Company {
   notifications           Notification[]
   notificationPreferences NotificationPreference[]
   pushSubscriptions       PushSubscription[]
+  chatConversations       ChatConversation[]
+  teamMembershipIntervals TeamMembershipInterval[]
+  chatTeamReadCursors     ChatTeamReadCursor[]
+  chatPresenceLeases      ChatPresenceLease[]
+  chatUserPresences       ChatUserPresence[]
 
   // Audit
   createdAt DateTime  @default(now())
@@ -150,6 +159,13 @@ model User {
   notificationsTriggered  Notification[]           @relation("NotificationActor")
   notificationPreferences NotificationPreference[]
   pushSubscriptions       PushSubscription[]
+
+  // Chat relations are display/data relations only. Chat eligibility is
+  // separately checked from current user and company state.
+  chatParticipants   ChatParticipant[]   @relation("ChatParticipantUser")
+  chatMessagesSent   ChatMessage[]       @relation("ChatMessageSender")
+  directReads        DirectMessageRead[] @relation("DirectMessageReader")
+  chatPresenceLeases ChatPresenceLease[] @relation("ChatPresenceUser")
 
   // Audit
   createdAt DateTime  @default(now())
@@ -914,4 +930,147 @@ model PushSubscription {
   updatedAt DateTime @updatedAt
 
   @@index([companyId, userId])
+}
+
+// ---------------------------------------------------------------------
+// Team chat
+// ---------------------------------------------------------------------
+
+enum ChatConversationType {
+  TEAM
+  DIRECT
+}
+
+model ChatConversation {
+  id                String               @id @default(cuid())
+  companyId         String
+  company           Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  type              ChatConversationType
+  conversationKey   String
+  directUserLowKey  String?
+  directUserHighKey String?
+  nextSequence      BigInt               @default(0) @db.BigInt
+  participants      ChatParticipant[]
+  messages          ChatMessage[]
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@unique([companyId, conversationKey])
+  @@index([companyId, updatedAt])
+}
+
+// participantKey is a durable copy of the original user ID. userId is only
+// a live relation and becomes null on hard user deletion; historical
+// conversation identity is retained.
+model ChatParticipant {
+  id             String           @id @default(cuid())
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Restrict)
+  participantKey String
+  userId         String?
+  user           User?            @relation("ChatParticipantUser", fields: [userId], references: [id], onDelete: SetNull)
+  readSequence   BigInt           @default(0) @db.BigInt
+  createdAt      DateTime         @default(now())
+
+  @@unique([conversationId, participantKey])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id              String           @id @default(cuid())
+  conversationId  String
+  conversation    ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Restrict)
+  sequence        BigInt           @db.BigInt
+  senderKey       String
+  senderId        String?
+  sender          User?            @relation("ChatMessageSender", fields: [senderId], references: [id], onDelete: SetNull)
+  senderName      String
+  senderAvatar    String?
+  clientMessageId String
+  body            String           @db.VarChar(8000)
+  audienceEpoch   BigInt?          @db.BigInt
+  createdAt       DateTime         @default(now())
+
+  directRead DirectMessageRead?
+
+  @@unique([conversationId, sequence])
+  @@unique([conversationId, senderKey, clientMessageId])
+  @@index([conversationId, createdAt, sequence])
+}
+
+// Direct conversations have one recipient, so one durable read record per
+// message is sufficient. readerKey survives account hard deletion; the
+// optional live relation is nulled. Message deletion is restricted so a
+// read receipt cannot be orphaned by normal deletion.
+model DirectMessageRead {
+  messageId    String      @id
+  message      ChatMessage @relation(fields: [messageId], references: [id], onDelete: Restrict)
+  readerKey    String
+  readerUserId String?
+  reader       User?       @relation("DirectMessageReader", fields: [readerUserId], references: [id], onDelete: SetNull)
+  readAt       DateTime    @default(now())
+
+  @@index([readerKey, readAt])
+}
+
+// These rows are historical audience membership, not live User relations.
+// The immutable userKey is retained after a hard delete so old message
+// audiences and receipt calculations remain stable.
+model TeamMembershipInterval {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  userKey   String
+  fromEpoch BigInt   @db.BigInt
+  toEpoch   BigInt?  @db.BigInt
+  createdAt DateTime @default(now())
+
+  @@unique([companyId, userKey, fromEpoch])
+  @@index([companyId, fromEpoch, toEpoch])
+}
+
+model ChatTeamReadCursor {
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  userKey          String
+  lastReadSequence BigInt   @default(0) @db.BigInt
+  updatedAt        DateTime @updatedAt
+
+  @@id([companyId, userKey])
+}
+
+// Presence is ephemeral. Unlike chat history, leases may be removed with
+// their live user/company records.
+//
+// There is deliberately NO sessionId column: the existing access JWT does not
+// carry an AuthSession id and the refresh cookie (Path=/auth) never reaches
+// the chat socket, so a truthful session reference cannot be stored without
+// changing the auth system. A connection is bound to the verified user +
+// company instead (see ChatRealtimeServer).
+model ChatPresenceLease {
+  connectionKey String   @id
+  userKey       String
+  userId        String?
+  user          User?    @relation("ChatPresenceUser", fields: [userId], references: [id], onDelete: Cascade)
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  lastHeartbeat DateTime
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  @@index([companyId, userKey, expiresAt])
+  @@index([expiresAt])
+}
+
+// Last time a user had no live connection left. One row per (company, user),
+// written when the user's LAST lease goes away (disconnect or expiry), so
+// "last seen" survives lease deletion. userKey is the immutable user id.
+model ChatUserPresence {
+  companyId  String
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userKey    String
+  lastSeenAt DateTime
+  updatedAt  DateTime @updatedAt
+
+  @@id([companyId, userKey])
 }

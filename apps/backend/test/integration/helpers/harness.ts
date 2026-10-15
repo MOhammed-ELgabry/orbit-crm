@@ -19,6 +19,10 @@
  *     `roleId: { in: ... }` for RolePermission, which has no `id`).
  *   - An empty ID list never reaches Prisma.
  *   - No TRUNCATE / DROP / raw DELETE / updateMany / deleteMany({}) anywhere.
+ *     (The one raw statement is `SET LOCAL orbit.chat_purge = 'on'`, the
+ *     explicit opt-in the chat history triggers require for any DELETE; the
+ *     deletes it enables are still typed deleteMany calls scoped by
+ *     validated company IDs.)
  *   - Permission rows and `_prisma_migrations` are never touched.
  *
  * Typical use (see the integration specs):
@@ -90,6 +94,7 @@ interface IdLedger {
 export type CreatedIds = { [K in keyof IdLedger]: string[] };
 
 export interface DeletedCounts {
+  chatRows: number;
   authSession: number;
   contact: number;
   rolePermission: number;
@@ -116,6 +121,12 @@ export interface TestHarness {
   registerCompany(id: string): void;
   registerRole(id: string): void;
   registerUser(id: string): void;
+  /**
+   * For a test that itself hard-deletes a user it created: drops the id from
+   * the ledger (the lineage check refuses ids that no longer exist). Only ids
+   * that were registered are affected.
+   */
+  forgetUser(id: string): void;
   registerContact(id: string): void;
   registerSession(id: string): void;
   createdIds(): CreatedIds;
@@ -144,6 +155,7 @@ function mergeLedger(target: IdLedger, source: IdLedger): void {
 
 function emptyCounts(): DeletedCounts {
   return {
+    chatRows: 0,
     authSession: 0,
     contact: 0,
     rolePermission: 0,
@@ -420,6 +432,63 @@ async function deleteByIds(
 }
 
 /**
+ * Team chat history is append-only in the database (see the
+ * 20261011180000_add_team_chat migration): chat rows reference the company
+ * with ON DELETE RESTRICT and the history tables reject DELETE unless the
+ * transaction opts in with `SET LOCAL orbit.chat_purge = 'on'`. Test data is
+ * the one legitimate purge, so it is removed here, by validated company IDs
+ * only, in ONE transaction (SET LOCAL lives and dies with it).
+ */
+async function purgeChatData(
+  prisma: PrismaClient,
+  companyIds: string[],
+): Promise<number> {
+  if (companyIds.length === 0) return 0;
+
+  try {
+    const results = await prisma.$transaction([
+      prisma.$executeRaw`SELECT set_config('orbit.chat_purge', 'on', true)`,
+      prisma.directMessageRead.deleteMany({
+        where: { message: { conversation: { companyId: { in: companyIds } } } },
+      }),
+      prisma.chatMessage.deleteMany({
+        where: { conversation: { companyId: { in: companyIds } } },
+      }),
+      prisma.chatParticipant.deleteMany({
+        where: { conversation: { companyId: { in: companyIds } } },
+      }),
+      prisma.chatConversation.deleteMany({
+        where: { companyId: { in: companyIds } },
+      }),
+      prisma.chatTeamReadCursor.deleteMany({
+        where: { companyId: { in: companyIds } },
+      }),
+      prisma.teamMembershipInterval.deleteMany({
+        where: { companyId: { in: companyIds } },
+      }),
+      prisma.chatPresenceLease.deleteMany({
+        where: { companyId: { in: companyIds } },
+      }),
+      prisma.chatUserPresence.deleteMany({
+        where: { companyId: { in: companyIds } },
+      }),
+    ]);
+
+    return results
+      .slice(1)
+      .reduce<number>(
+        (sum, r) => sum + (r as unknown as { count: number }).count,
+        0,
+      );
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new HarnessSafetyError(
+      `Cleanup stopped while purging chat data: ${reason}`,
+    );
+  }
+}
+
+/**
  * Discover -> validate EVERY id -> delete by IDs, children first.
  * Validation finishes before the first DELETE; if it fails nothing is deleted.
  *
@@ -444,6 +513,10 @@ async function deleteLedger(
   await assertLedgerIsTestData(prisma, ledger);
 
   const counts = emptyCounts();
+
+  // Chat history (RESTRICT FKs to Company) goes first, by validated company
+  // IDs; it also references users only through nullable / key columns.
+  counts.chatRows = await purgeChatData(prisma, [...ledger.createdCompanyIds]);
 
   counts.authSession = await deleteByIds(
     'AuthSession',
@@ -593,6 +666,9 @@ export async function createTestHarness(): Promise<TestHarness> {
     },
     registerUser: (id) => {
       ledger.createdUserIds.add(assertValidId('user', id));
+    },
+    forgetUser: (id) => {
+      ledger.createdUserIds.delete(assertValidId('user', id));
     },
     registerContact: (id) => {
       ledger.createdContactIds.add(assertValidId('contact', id));

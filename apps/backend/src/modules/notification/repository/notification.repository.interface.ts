@@ -61,7 +61,22 @@ export interface CreateNotificationInput {
   entityId: string;
   params: Record<string, string>;
   dedupeKey: string;
-  deliveries: Array<{ channel: 'email' | 'push'; target: string }>;
+  deliveries: Array<{
+    channel: 'email' | 'push';
+    target: string;
+    /** Omitted = due immediately (every existing type). */
+    nextAttemptAt?: Date;
+  }>;
+}
+
+export interface UpsertChatTeamNotificationsInput {
+  companyId: string;
+  actorId: string;
+  conversationId: string;
+  dedupeKey: string;
+  /** JSON-safe params; `sequence` is a decimal string and MUST be present. */
+  params: Record<string, string>;
+  userIds: string[];
 }
 
 export interface UpsertPushSubscriptionInput {
@@ -98,6 +113,8 @@ export interface DeliveryContext {
     entityId: string | null;
     params: unknown;
     createdAt: Date;
+    /** Read time; set once the user (or the chat read cursor) read it. */
+    readAt?: Date | null;
     actor: { firstName: string; lastName: string } | null;
   };
   recipient: {
@@ -152,6 +169,30 @@ export interface INotificationRepository {
   createWithDeliveries(
     input: CreateNotificationInput,
   ): Promise<{ id: string } | null>;
+
+  /**
+   * TEAM chat: ONE inbox row per (recipient, conversation), advanced in a
+   * single atomic statement (INSERT .. ON CONFLICT DO UPDATE). A newer
+   * message re-opens it as unread with the latest actor / snippet / message
+   * id; an older or repeated message changes nothing. Recipients are
+   * re-validated in the same statement (same company, active, not deleted).
+   * Returns the recipients whose row was created or advanced.
+   */
+  upsertChatTeamNotifications(
+    input: UpsertChatTeamNotificationsInput,
+  ): Promise<string[]>;
+
+  /**
+   * Chat -> notification read direction only. Marks the caller's unread
+   * chat notifications of ONE conversation whose message sequence is
+   * <= `upToSequence`. Returns how many rows changed.
+   */
+  markChatConversationRead(
+    companyId: string,
+    userId: string,
+    conversationId: string,
+    upToSequence: number,
+  ): Promise<number>;
 
   // Preferences ---------------------------------------------------------
   getChannelPreferences(

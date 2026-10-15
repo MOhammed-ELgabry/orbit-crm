@@ -18,6 +18,7 @@ import type {
   PushSubscriptionRow,
   PushSubscriptionSendRow,
   PushSubscriptionTarget,
+  UpsertChatTeamNotificationsInput,
   UpsertPushSubscriptionInput,
 } from './notification.repository.interface';
 
@@ -28,6 +29,37 @@ function isUniqueViolation(error: unknown): boolean {
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === UNIQUE_VIOLATION
   );
+}
+
+const UTC_NOW = Prisma.sql`(now() AT TIME ZONE 'UTC')`;
+
+/**
+ * `params.sequence` as a number, or NULL when it is missing / not a plain
+ * decimal. CASE guarantees the cast is only attempted on a safe value
+ * (PostgreSQL does not promise short-circuit evaluation of AND).
+ */
+const sequenceOf = (column: Prisma.Sql) =>
+  Prisma.sql`(CASE WHEN ${column} ~ '^[0-9]{1,18}$' THEN (${column})::bigint END)`;
+
+/** A deadlock between two concurrent multi-row upserts: safe to run again. */
+function isDeadlock(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+
+  const candidate = error as {
+    message?: unknown;
+    meta?: { code?: unknown; message?: unknown } | null;
+    cause?: unknown;
+  };
+
+  if (candidate.meta?.code === '40P01') return true;
+
+  const text = [candidate.message, candidate.meta?.message]
+    .filter((value): value is string => typeof value === 'string')
+    .join(' ');
+
+  if (/\b40P01\b|deadlock detected/i.test(text)) return true;
+
+  return candidate.cause ? isDeadlock(candidate.cause) : false;
 }
 
 @Injectable()
@@ -189,6 +221,9 @@ export class NotificationRepository implements INotificationRepository {
             create: input.deliveries.map((delivery) => ({
               channel: delivery.channel,
               target: delivery.target,
+              ...(delivery.nextAttemptAt && {
+                nextAttemptAt: delivery.nextAttemptAt,
+              }),
             })),
           },
         },
@@ -202,6 +237,71 @@ export class NotificationRepository implements INotificationRepository {
       if (isUniqueViolation(error)) return null;
       throw error;
     }
+  }
+
+  async upsertChatTeamNotifications(
+    input: UpsertChatTeamNotificationsInput,
+  ): Promise<string[]> {
+    if (input.userIds.length === 0) return [];
+
+    const params = JSON.stringify(input.params);
+
+    const run = () =>
+      this.prisma.$queryRaw<Array<{ userId: string }>>(Prisma.sql`
+        INSERT INTO "Notification" AS n
+          ("id", "companyId", "userId", "actorId", "type", "entityType",
+           "entityId", "params", "dedupeKey", "readAt", "createdAt")
+        SELECT gen_random_uuid()::text, usr."companyId", usr."id",
+               ${input.actorId}, 'chat.message', 'chat_conversation',
+               ${input.conversationId}, ${params}::jsonb, ${input.dedupeKey},
+               NULL, ${UTC_NOW}
+        FROM "User" usr
+        WHERE usr."companyId" = ${input.companyId}
+          AND usr."isActive" = TRUE
+          AND usr."deletedAt" IS NULL
+          AND usr."id" IN (${Prisma.join(input.userIds)})
+        ORDER BY usr."id"
+        ON CONFLICT ("userId", "dedupeKey") DO UPDATE
+          SET "actorId" = EXCLUDED."actorId",
+              "params" = EXCLUDED."params",
+              "readAt" = NULL,
+              "createdAt" = EXCLUDED."createdAt"
+          WHERE COALESCE(${sequenceOf(Prisma.sql`n."params"->>'sequence'`)}, 0)
+              < COALESCE(${sequenceOf(Prisma.sql`EXCLUDED."params"->>'sequence'`)}, 0)
+        RETURNING n."userId"`);
+
+    // ORDER BY above keeps the lock order identical across statements;
+    // a deadlock is still retried (bounded) rather than surfaced.
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        const rows = await run();
+        return rows.map((row) => row.userId);
+      } catch (error) {
+        if (attempt >= 3 || !isDeadlock(error)) throw error;
+      }
+    }
+  }
+
+  async markChatConversationRead(
+    companyId: string,
+    userId: string,
+    conversationId: string,
+    upToSequence: number,
+  ): Promise<number> {
+    if (!Number.isFinite(upToSequence) || upToSequence < 1) return 0;
+
+    // Scope is the caller's own rows of ONE conversation: company, user,
+    // type, entity and read-state are all part of the predicate.
+    return this.prisma.$executeRaw(Prisma.sql`
+      UPDATE "Notification"
+      SET "readAt" = ${UTC_NOW}
+      WHERE "companyId" = ${companyId}
+        AND "userId" = ${userId}
+        AND "type" = 'chat.message'
+        AND "entityType" = 'chat_conversation'
+        AND "entityId" = ${conversationId}
+        AND "readAt" IS NULL
+        AND ${sequenceOf(Prisma.sql`"params"->>'sequence'`)} <= ${BigInt(Math.floor(upToSequence))}`);
   }
 
   // ---------------------------------------------------------------------
@@ -471,6 +571,7 @@ export class NotificationRepository implements INotificationRepository {
             entityId: true,
             params: true,
             createdAt: true,
+            readAt: true,
             actor: { select: { firstName: true, lastName: true } },
             user: {
               select: {

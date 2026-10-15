@@ -4,6 +4,7 @@ import { FiMenu } from "react-icons/fi";
 
 import DatePickerComponent from "./DatePicker";
 import NotificationBell from "../Notification/NotificationBell";
+import ChatButton from "../Chat/ChatButton";
 import { useAuth } from "../../context/AuthContext";
 import { getBusinessTypeCopy } from "../../config/businessType";
 
@@ -28,6 +29,7 @@ export default function DashboardHeader({
     "/dashboard/calendar": "calendarNavLabel",
     "/dashboard/reports": "reportsNavLabel",
     "/dashboard/notifications": "notificationsNavLabel",
+    "/dashboard/chat": "chatNavLabel",
     "/dashboard/settings": "settingsNavLabel",
   };
 
@@ -71,6 +73,8 @@ export default function DashboardHeader({
 
       <div className="flex shrink-0 items-center gap-2">
         <NotificationBell />
+
+        <ChatButton />
 
         <div className="hidden items-center sm:flex">
           <DatePickerComponent />

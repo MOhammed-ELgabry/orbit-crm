@@ -20,6 +20,9 @@ export const NOTIFICATION_TYPES = [
   'calendar.assigned',
   'calendar.rescheduled',
   'calendar.cancelled',
+  // Team Chat. Created ONLY by NotificationService.publishChatMessage()
+  // (never by the generic publish()): see ChatService.
+  'chat.message',
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
@@ -30,6 +33,8 @@ export const NOTIFICATION_ENTITY_TYPES = [
   'deal',
   'lead',
   'calendar_event',
+  /** entityId = the conversation id; the link is /dashboard/chat?c=<id>. */
+  'chat_conversation',
 ] as const;
 
 export type NotificationEntityType = (typeof NOTIFICATION_ENTITY_TYPES)[number];
@@ -74,10 +79,27 @@ export const NOTIFICATION_TYPE_CHANNELS: Record<
   'calendar.assigned': { email: true, push: false },
   'calendar.rescheduled': { email: true, push: true },
   'calendar.cancelled': { email: true, push: true },
+  // Chat never emails. Push is only ever attempted for DIRECT messages and
+  // only while CHAT_PUSH_ENABLED=true (see NotificationService).
+  'chat.message': { email: false, push: true },
 };
 
 /** Sanitized entity title stored in Notification.params. */
 export const MAX_TITLE_LENGTH = 120;
+
+// ---------------------------------------------------------------------
+// Team Chat
+// ---------------------------------------------------------------------
+
+/** In-app message preview stored in Notification.params (graphemes). */
+export const CHAT_SNIPPET_MAX_LENGTH = 80;
+
+/** Push for a DIRECT message waits this long, so a message read within it never pings. */
+export const CHAT_PUSH_DEFAULT_DELAY_MS = 45_000;
+export const CHAT_PUSH_MAX_DELAY_MS = 10 * 60 * 1000;
+
+/** Dedupe-key prefix of the single per-company TEAM notification row. */
+export const CHAT_TEAM_DEDUPE_PREFIX = 'team:';
 
 // ---------------------------------------------------------------------
 // Inbox
