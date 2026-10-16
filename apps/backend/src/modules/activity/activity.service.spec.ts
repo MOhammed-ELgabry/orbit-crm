@@ -45,6 +45,8 @@ describe('ActivityService', () => {
     activityRepository = {
       create: jest.fn(),
       createDealEvent: jest.fn(),
+      createTaskEvent: jest.fn(),
+      createCalendarEvent: jest.fn(),
       findAll: jest.fn(),
       findById: jest.fn(),
       update: jest.fn(),

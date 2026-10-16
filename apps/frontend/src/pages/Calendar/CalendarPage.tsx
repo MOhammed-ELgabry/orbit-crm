@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 import { ar, enUS } from "date-fns/locale";
@@ -45,6 +45,7 @@ import { getErrorMessage } from "../../lib/errors";
 import { trackEvent } from "../../lib/posthog";
 
 type LoadStatus = "loading" | "ready" | "error" | "forbidden";
+type LoadOutcome = Exclude<LoadStatus, "loading">;
 type ViewMode = "month" | "agenda";
 
 export default function CalendarPage() {
@@ -63,7 +64,15 @@ export default function CalendarPage() {
   );
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [hasMore, setHasMore] = useState(false);
-  const [status, setStatus] = useState<LoadStatus>("loading");
+  // How the most recent *finished* request ended, tagged with the request
+  // it belongs to. "loading" is never stored: it is derived below as "the
+  // request for what is on screen has not finished yet" (see `status`).
+  const [result, setResult] = useState<{
+    key: string;
+    outcome: LoadOutcome;
+  } | null>(null);
+  // Bumped by Retry so the same visible range is requested again.
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   const [modalState, setModalState] = useState<"create" | CalendarEvent | null>(
     null,
@@ -149,28 +158,47 @@ export default function CalendarPage() {
     return { rangeFrom: from, rangeTo: to };
   }, [visibleMonth]);
 
-  const load = useCallback(async () => {
-    setStatus("loading");
-    try {
-      const result = await listCalendarEvents({
-        from: rangeFrom.toISOString(),
-        to: rangeTo.toISOString(),
-      });
-      setEvents(result.events);
-      setHasMore(result.meta.hasMore);
-      setStatus("ready");
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 403) {
-        setStatus("forbidden");
-      } else {
-        setStatus("error");
-      }
-    }
-  }, [rangeFrom, rangeTo]);
+  // Identifies one request: the visible range plus the Retry attempt.
+  const requestKey = `${rangeFrom.getTime()}:${rangeTo.getTime()}:${loadAttempt}`;
+
+  // Loading is derived, not set: whenever the month (or the Retry attempt)
+  // changes, `requestKey` changes in the same render, so the page is in the
+  // loading state until a result for *this* key arrives — no setState is
+  // needed inside the effect to show the skeleton.
+  const status: LoadStatus =
+    result?.key === requestKey ? result.outcome : "loading";
 
   useEffect(() => {
-    load();
-  }, [load]);
+    // Set by the cleanup when the month / attempt changes (or the page
+    // unmounts) before this request settles, so a late answer for a month
+    // the user has already left can never overwrite what is on screen.
+    let isStale = false;
+
+    listCalendarEvents({
+      from: rangeFrom.toISOString(),
+      to: rangeTo.toISOString(),
+    })
+      .then((response) => {
+        if (isStale) return;
+        setEvents(response.events);
+        setHasMore(response.meta.hasMore);
+        setResult({ key: requestKey, outcome: "ready" });
+      })
+      .catch((error: unknown) => {
+        if (isStale) return;
+        setResult({
+          key: requestKey,
+          outcome:
+            axios.isAxiosError(error) && error.response?.status === 403
+              ? "forbidden"
+              : "error",
+        });
+      });
+
+    return () => {
+      isStale = true;
+    };
+  }, [rangeFrom, rangeTo, requestKey]);
 
   const openCreateModal = (initialStart?: Date) => {
     setModalInitialStart(initialStart);
@@ -389,7 +417,7 @@ export default function CalendarPage() {
             <p className="text-sm text-slate-500">{t("somethingWentWrong")}</p>
             <button
               type="button"
-              onClick={() => load()}
+              onClick={() => setLoadAttempt((attempt) => attempt + 1)}
               className="text-xs font-semibold text-blue-600 hover:underline"
             >
               {t("retry")}

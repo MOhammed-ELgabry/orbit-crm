@@ -82,7 +82,7 @@ describe('ensureDefaultRolesForCompany', () => {
   it('upserts exactly the 4 default roles, never an OWNER role', async () => {
     const prisma = makePrismaMock();
 
-    await ensureDefaultRolesForCompany(prisma, companyId);
+    await ensureDefaultRolesForCompany(prisma as never, companyId);
 
     expect(prisma.role.upsert).toHaveBeenCalledTimes(4);
 
@@ -99,7 +99,7 @@ describe('ensureDefaultRolesForCompany', () => {
   it('scopes every upsert to the given companyId via the companyId_name compound key', async () => {
     const prisma = makePrismaMock();
 
-    await ensureDefaultRolesForCompany(prisma, companyId);
+    await ensureDefaultRolesForCompany(prisma as never, companyId);
 
     for (const [args] of prisma.role.upsert.mock.calls) {
       expect(args.where.companyId_name.companyId).toBe(companyId);
@@ -110,7 +110,7 @@ describe('ensureDefaultRolesForCompany', () => {
   it('never touches an already-existing role: update is an empty no-op', async () => {
     const prisma = makePrismaMock();
 
-    await ensureDefaultRolesForCompany(prisma, companyId);
+    await ensureDefaultRolesForCompany(prisma as never, companyId);
 
     for (const [args] of prisma.role.upsert.mock.calls) {
       expect(args.update).toEqual({});
@@ -120,7 +120,7 @@ describe('ensureDefaultRolesForCompany', () => {
   it("MANAGER's create payload attaches exactly its 24 default permission ids (contact + lead + deal + task + calendar + activity CRUD)", async () => {
     const prisma = makePrismaMock();
 
-    await ensureDefaultRolesForCompany(prisma, companyId);
+    await ensureDefaultRolesForCompany(prisma as never, companyId);
 
     const managerCall = prisma.role.upsert.mock.calls.find(
       ([args]) => args.create.name === 'MANAGER',
@@ -166,7 +166,7 @@ describe('ensureDefaultRolesForCompany', () => {
   it("EMPLOYEE's create payload is read-only (contact:read + lead:read + deal:read + task:read + calendar:read + activity:read)", async () => {
     const prisma = makePrismaMock();
 
-    await ensureDefaultRolesForCompany(prisma, companyId);
+    await ensureDefaultRolesForCompany(prisma as never, companyId);
 
     const employeeCall = prisma.role.upsert.mock.calls.find(
       ([args]) => args.create.name === 'EMPLOYEE',
@@ -194,7 +194,7 @@ describe('ensureDefaultRolesForCompany', () => {
   it('sets isSystemRole: true on every default role it creates — this is the only place in the codebase that ever does', async () => {
     const prisma = makePrismaMock();
 
-    await ensureDefaultRolesForCompany(prisma, companyId);
+    await ensureDefaultRolesForCompany(prisma as never, companyId);
 
     expect(prisma.role.upsert).toHaveBeenCalledTimes(4);
     for (const [args] of prisma.role.upsert.mock.calls) {
@@ -226,7 +226,7 @@ describe('ensureDefaultRolesForCompany', () => {
   it('never calls permission.upsert when the catalog already has everything a default role needs (steady-state cost is unchanged)', async () => {
     const prisma = makePrismaMock();
 
-    await ensureDefaultRolesForCompany(prisma, companyId);
+    await ensureDefaultRolesForCompany(prisma as never, companyId);
 
     expect(prisma.permission.upsert).not.toHaveBeenCalled();
     expect(prisma.permission.findMany).toHaveBeenCalledTimes(1);
@@ -250,7 +250,7 @@ describe('ensureDefaultRolesForCompany', () => {
       Promise.resolve({ id: `perm-${create.resource}-${create.action}` }),
     );
 
-    await ensureDefaultRolesForCompany(prisma, companyId);
+    await ensureDefaultRolesForCompany(prisma as never, companyId);
 
     // Only the 4 missing lead:* rows were upserted — nothing already
     // present (contact/activity/user/company/role) was touched.

@@ -51,6 +51,9 @@ describe('DealService', () => {
     const activityService = {
       logDealEvent: jest.fn().mockResolvedValue({ id: 'activity-1' }),
     };
+    const notificationService = {
+      publish: jest.fn().mockResolvedValue(undefined),
+    };
 
     const service = new DealService(
       dealRepository as never,
@@ -58,6 +61,7 @@ describe('DealService', () => {
       leadService as never,
       userService as never,
       activityService as never,
+      notificationService as never,
     );
 
     return {
@@ -67,6 +71,7 @@ describe('DealService', () => {
       leadService,
       userService,
       activityService,
+      notificationService,
     };
   }
 
@@ -364,6 +369,175 @@ describe('DealService', () => {
 
       expect(dealRepository.softDelete).not.toHaveBeenCalled();
       expect(activityService.logDealEvent).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('notifications (publish contract derived from DealService)', () => {
+    it('create: publishes deal.assigned to the assignee only when the created deal has an assignee', async () => {
+      const { service, dealRepository, notificationService } = buildService();
+      dealRepository.create.mockResolvedValue(
+        new DealEntity({ ...baseDeal, assignedToId: 'user-2' }),
+      );
+
+      await service.create(companyId, createdById, {
+        title: 'New deal',
+        assignedToId: 'user-2',
+      });
+
+      expect(notificationService.publish).toHaveBeenCalledTimes(1);
+      expect(notificationService.publish).toHaveBeenCalledWith({
+        type: 'deal.assigned',
+        companyId,
+        actorId: createdById,
+        recipientIds: ['user-2'],
+        entityType: 'deal',
+        entityId: dealId,
+        title: baseDeal.title,
+        occurrenceId: 'activity-1',
+      });
+    });
+
+    it('create: publishes nothing when the created deal has no assignee', async () => {
+      const { service, notificationService } = buildService();
+
+      await service.create(companyId, createdById, { title: 'New deal' });
+
+      expect(notificationService.publish).not.toHaveBeenCalled();
+    });
+
+    it('update to closed_won: publishes deal.won to the creator and the owner, keyed on the transition Activity', async () => {
+      const { service, dealRepository, notificationService } = buildService();
+      dealRepository.findById.mockResolvedValue(
+        new DealEntity({ ...baseDeal, assignedToId: 'user-2' }),
+      );
+      dealRepository.update.mockResolvedValue(
+        new DealEntity({
+          ...baseDeal,
+          assignedToId: 'user-2',
+          stage: 'closed_won',
+        }),
+      );
+
+      await service.update(
+        companyId,
+        dealId,
+        { stage: 'closed_won' },
+        'user-3',
+      );
+
+      expect(notificationService.publish).toHaveBeenCalledTimes(1);
+      expect(notificationService.publish).toHaveBeenCalledWith({
+        type: 'deal.won',
+        companyId,
+        actorId: 'user-3',
+        recipientIds: [createdById, 'user-2'],
+        entityType: 'deal',
+        entityId: dealId,
+        title: baseDeal.title,
+        occurrenceId: 'activity-1',
+      });
+    });
+
+    it('update to closed_lost: publishes deal.lost to the creator and the owner', async () => {
+      const { service, dealRepository, notificationService } = buildService();
+      dealRepository.findById.mockResolvedValue(
+        new DealEntity({ ...baseDeal, assignedToId: 'user-2' }),
+      );
+      dealRepository.update.mockResolvedValue(
+        new DealEntity({
+          ...baseDeal,
+          assignedToId: 'user-2',
+          stage: 'closed_lost',
+        }),
+      );
+
+      await service.update(
+        companyId,
+        dealId,
+        { stage: 'closed_lost' },
+        'user-3',
+      );
+
+      expect(notificationService.publish).toHaveBeenCalledTimes(1);
+      expect(notificationService.publish).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'deal.lost',
+          actorId: 'user-3',
+          recipientIds: [createdById, 'user-2'],
+          occurrenceId: 'activity-1',
+        }),
+      );
+    });
+
+    it('update to a non-terminal stage: publishes nothing', async () => {
+      const { service, dealRepository, notificationService } = buildService();
+      dealRepository.update.mockResolvedValue(
+        new DealEntity({ ...baseDeal, stage: 'proposal' }),
+      );
+
+      await service.update(
+        companyId,
+        dealId,
+        { stage: 'proposal' },
+        createdById,
+      );
+
+      expect(notificationService.publish).not.toHaveBeenCalled();
+    });
+
+    it('update that assigns a user: publishes deal.assigned to that user only', async () => {
+      const { service, dealRepository, notificationService } = buildService();
+      dealRepository.update.mockResolvedValue(
+        new DealEntity({ ...baseDeal, assignedToId: 'user-2' }),
+      );
+
+      await service.update(
+        companyId,
+        dealId,
+        { assignedToId: 'user-2' },
+        createdById,
+      );
+
+      expect(notificationService.publish).toHaveBeenCalledTimes(1);
+      expect(notificationService.publish).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'deal.assigned',
+          recipientIds: ['user-2'],
+          occurrenceId: 'activity-1',
+        }),
+      );
+    });
+
+    it('update that unassigns: publishes nothing (only an assignment notifies)', async () => {
+      const { service, dealRepository, notificationService } = buildService();
+      dealRepository.findById.mockResolvedValue(
+        new DealEntity({ ...baseDeal, assignedToId: 'user-2' }),
+      );
+      dealRepository.update.mockResolvedValue(
+        new DealEntity({ ...baseDeal, assignedToId: null }),
+      );
+
+      await service.update(
+        companyId,
+        dealId,
+        { assignedToId: null },
+        createdById,
+      );
+
+      expect(notificationService.publish).not.toHaveBeenCalled();
+    });
+
+    it('update that changes only unrelated fields: publishes nothing', async () => {
+      const { service, notificationService } = buildService();
+
+      await service.update(
+        companyId,
+        dealId,
+        { title: 'Renamed' },
+        createdById,
+      );
+
+      expect(notificationService.publish).not.toHaveBeenCalled();
     });
   });
 });

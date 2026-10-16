@@ -56,6 +56,9 @@ describe('TaskService', () => {
     const activityService = {
       logTaskEvent: jest.fn().mockResolvedValue({ id: 'activity-1' }),
     };
+    const notificationService = {
+      publish: jest.fn().mockResolvedValue(undefined),
+    };
 
     const service = new TaskService(
       taskRepository,
@@ -64,6 +67,7 @@ describe('TaskService', () => {
       dealService as never,
       userService as never,
       activityService as never,
+      notificationService as never,
     );
 
     return {
@@ -74,6 +78,7 @@ describe('TaskService', () => {
       dealService,
       userService,
       activityService,
+      notificationService,
     };
   }
 
@@ -523,6 +528,147 @@ describe('TaskService', () => {
 
       expect(taskRepository.softDelete).not.toHaveBeenCalled();
       expect(activityService.logTaskEvent).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('notifications (publish contract derived from TaskService)', () => {
+    it('create: publishes task.assigned to the assignee when the created task has one', async () => {
+      const { service, taskRepository, notificationService } = buildService();
+      taskRepository.create.mockResolvedValue(
+        new TaskEntity({ ...baseTask, assignedToId: 'user-2' }),
+      );
+
+      await service.create(companyId, createdById, {
+        title: 'T',
+        assignedToId: 'user-2',
+      });
+
+      expect(notificationService.publish).toHaveBeenCalledTimes(1);
+      expect(notificationService.publish).toHaveBeenCalledWith({
+        type: 'task.assigned',
+        companyId,
+        actorId: createdById,
+        recipientIds: ['user-2'],
+        entityType: 'task',
+        entityId: taskId,
+        title: baseTask.title,
+        occurrenceId: 'activity-1',
+      });
+    });
+
+    it('create: publishes nothing for an unassigned task', async () => {
+      const { service, notificationService } = buildService();
+
+      await service.create(companyId, createdById, { title: 'T' });
+
+      expect(notificationService.publish).not.toHaveBeenCalled();
+    });
+
+    it('update to completed: publishes task.completed to the task creator only', async () => {
+      const { service, taskRepository, notificationService } = buildService();
+      taskRepository.update.mockResolvedValue(
+        new TaskEntity({ ...baseTask, status: 'completed' }),
+      );
+
+      await service.update(
+        companyId,
+        taskId,
+        { status: 'completed' },
+        'user-3',
+      );
+
+      expect(notificationService.publish).toHaveBeenCalledTimes(1);
+      expect(notificationService.publish).toHaveBeenCalledWith({
+        type: 'task.completed',
+        companyId,
+        actorId: 'user-3',
+        recipientIds: [createdById],
+        entityType: 'task',
+        entityId: taskId,
+        title: baseTask.title,
+        occurrenceId: 'activity-1',
+      });
+    });
+
+    it('update to cancelled or a generic status change: publishes nothing', async () => {
+      const { service, taskRepository, notificationService } = buildService();
+
+      taskRepository.update.mockResolvedValueOnce(
+        new TaskEntity({ ...baseTask, status: 'cancelled' }),
+      );
+      await service.update(
+        companyId,
+        taskId,
+        { status: 'cancelled' },
+        createdById,
+      );
+
+      taskRepository.update.mockResolvedValueOnce(
+        new TaskEntity({ ...baseTask, status: 'in_progress' }),
+      );
+      await service.update(
+        companyId,
+        taskId,
+        { status: 'in_progress' },
+        createdById,
+      );
+
+      expect(notificationService.publish).not.toHaveBeenCalled();
+    });
+
+    it('update that assigns a user: publishes task.assigned to that user only', async () => {
+      const { service, taskRepository, notificationService } = buildService();
+      taskRepository.update.mockResolvedValue(
+        new TaskEntity({ ...baseTask, assignedToId: 'user-2' }),
+      );
+
+      await service.update(
+        companyId,
+        taskId,
+        { assignedToId: 'user-2' },
+        createdById,
+      );
+
+      expect(notificationService.publish).toHaveBeenCalledTimes(1);
+      expect(notificationService.publish).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'task.assigned',
+          recipientIds: ['user-2'],
+          occurrenceId: 'activity-1',
+        }),
+      );
+    });
+
+    it('update that unassigns: publishes nothing', async () => {
+      const { service, taskRepository, notificationService } = buildService();
+      taskRepository.findById.mockResolvedValue(
+        new TaskEntity({ ...baseTask, assignedToId: 'user-2' }),
+      );
+      taskRepository.update.mockResolvedValue(
+        new TaskEntity({ ...baseTask, assignedToId: null }),
+      );
+
+      await service.update(
+        companyId,
+        taskId,
+        { assignedToId: null },
+        createdById,
+      );
+
+      expect(notificationService.publish).not.toHaveBeenCalled();
+    });
+
+    it('update that changes only unrelated fields: publishes nothing', async () => {
+      const { service, notificationService } = buildService();
+
+      await service.update(
+        companyId,
+        taskId,
+        { title: 'Renamed' },
+        createdById,
+      );
+
+      expect(notificationService.publish).not.toHaveBeenCalled();
     });
   });
 });

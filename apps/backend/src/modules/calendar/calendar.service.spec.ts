@@ -62,6 +62,9 @@ describe('CalendarService', () => {
     const activityService = {
       logCalendarEvent: jest.fn().mockResolvedValue({ id: 'activity-1' }),
     };
+    const notificationService = {
+      publish: jest.fn().mockResolvedValue(undefined),
+    };
 
     const service = new CalendarService(
       calendarEventRepository as never,
@@ -70,6 +73,7 @@ describe('CalendarService', () => {
       dealService as never,
       userService as never,
       activityService as never,
+      notificationService as never,
     );
 
     return {
@@ -80,6 +84,7 @@ describe('CalendarService', () => {
       dealService,
       userService,
       activityService,
+      notificationService,
     };
   }
 
@@ -629,6 +634,240 @@ describe('CalendarService', () => {
         service.remove(companyId, eventId, createdById),
       ).rejects.toThrow(NotFoundException);
       expect(activityService.logCalendarEvent).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('notifications (publish contract derived from CalendarService)', () => {
+    const evt = (overrides: Partial<CalendarEventEntity> = {}) =>
+      new CalendarEventEntity({ ...baseEvent, ...overrides });
+
+    it('create: publishes calendar.assigned (with startAt) when the created event has an assignee', async () => {
+      const { service, calendarEventRepository, notificationService } =
+        buildService();
+      calendarEventRepository.create.mockResolvedValue(
+        evt({ assignedToId: 'user-2' }),
+      );
+
+      await service.create(companyId, createdById, {
+        title: 'Product demo',
+        startAt: startAt.toISOString(),
+        endAt: endAt.toISOString(),
+        assignedToId: 'user-2',
+      });
+
+      expect(notificationService.publish).toHaveBeenCalledTimes(1);
+      expect(notificationService.publish).toHaveBeenCalledWith({
+        type: 'calendar.assigned',
+        companyId,
+        actorId: createdById,
+        recipientIds: ['user-2'],
+        entityType: 'calendar_event',
+        entityId: eventId,
+        title: baseEvent.title,
+        startAt,
+        occurrenceId: 'activity-1',
+      });
+    });
+
+    it('create: publishes nothing for an unassigned event', async () => {
+      const { service, notificationService } = buildService();
+
+      await service.create(companyId, createdById, {
+        title: 'Product demo',
+        startAt: startAt.toISOString(),
+        endAt: endAt.toISOString(),
+      });
+
+      expect(notificationService.publish).not.toHaveBeenCalled();
+    });
+
+    it('update to cancelled: publishes calendar.cancelled to the assignee', async () => {
+      const { service, calendarEventRepository, notificationService } =
+        buildService();
+      calendarEventRepository.findById.mockResolvedValue(
+        evt({ assignedToId: 'user-2' }),
+      );
+      calendarEventRepository.update.mockResolvedValue(
+        evt({ assignedToId: 'user-2', status: 'cancelled' }),
+      );
+
+      await service.update(
+        companyId,
+        eventId,
+        { status: 'cancelled' },
+        'user-3',
+      );
+
+      expect(notificationService.publish).toHaveBeenCalledTimes(1);
+      expect(notificationService.publish).toHaveBeenCalledWith({
+        type: 'calendar.cancelled',
+        companyId,
+        actorId: 'user-3',
+        recipientIds: ['user-2'],
+        entityType: 'calendar_event',
+        entityId: eventId,
+        title: baseEvent.title,
+        startAt,
+        occurrenceId: 'activity-1',
+      });
+    });
+
+    it('update to completed or a generic status change: publishes nothing', async () => {
+      const { service, calendarEventRepository, notificationService } =
+        buildService();
+      calendarEventRepository.update.mockResolvedValue(
+        evt({ status: 'completed' }),
+      );
+
+      await service.update(
+        companyId,
+        eventId,
+        { status: 'completed' },
+        createdById,
+      );
+
+      expect(notificationService.publish).not.toHaveBeenCalled();
+    });
+
+    it('update that assigns a user: publishes calendar.assigned to that user', async () => {
+      const { service, calendarEventRepository, notificationService } =
+        buildService();
+      calendarEventRepository.update.mockResolvedValue(
+        evt({ assignedToId: 'user-2' }),
+      );
+
+      await service.update(
+        companyId,
+        eventId,
+        { assignedToId: 'user-2' },
+        createdById,
+      );
+
+      expect(notificationService.publish).toHaveBeenCalledTimes(1);
+      expect(notificationService.publish).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'calendar.assigned',
+          recipientIds: ['user-2'],
+          startAt,
+          occurrenceId: 'activity-1',
+        }),
+      );
+    });
+
+    it('update that assigns a user to an already-cancelled event: logs but does not notify', async () => {
+      const { service, calendarEventRepository, notificationService } =
+        buildService();
+      calendarEventRepository.findById.mockResolvedValue(
+        evt({ status: 'cancelled' }),
+      );
+      calendarEventRepository.update.mockResolvedValue(
+        evt({ status: 'cancelled', assignedToId: 'user-2' }),
+      );
+
+      await service.update(
+        companyId,
+        eventId,
+        { assignedToId: 'user-2' },
+        createdById,
+      );
+
+      expect(notificationService.publish).not.toHaveBeenCalled();
+    });
+
+    it('update that unassigns: publishes nothing', async () => {
+      const { service, calendarEventRepository, notificationService } =
+        buildService();
+      calendarEventRepository.findById.mockResolvedValue(
+        evt({ assignedToId: 'user-2' }),
+      );
+      calendarEventRepository.update.mockResolvedValue(
+        evt({ assignedToId: null }),
+      );
+
+      await service.update(
+        companyId,
+        eventId,
+        { assignedToId: null },
+        createdById,
+      );
+
+      expect(notificationService.publish).not.toHaveBeenCalled();
+    });
+
+    const newStart = new Date('2026-10-02T13:00:00.000Z');
+    const newEnd = new Date('2026-10-02T14:00:00.000Z');
+    const reschedulePatch = {
+      startAt: newStart.toISOString(),
+      endAt: newEnd.toISOString(),
+    };
+
+    it('reschedule with an unchanged assignee: publishes calendar.rescheduled with the NEW startAt', async () => {
+      const { service, calendarEventRepository, notificationService } =
+        buildService();
+      calendarEventRepository.findById.mockResolvedValue(
+        evt({ assignedToId: 'user-2' }),
+      );
+      calendarEventRepository.update.mockResolvedValue(
+        evt({ assignedToId: 'user-2', startAt: newStart, endAt: newEnd }),
+      );
+
+      await service.update(companyId, eventId, reschedulePatch, 'user-3');
+
+      expect(notificationService.publish).toHaveBeenCalledTimes(1);
+      expect(notificationService.publish).toHaveBeenCalledWith({
+        type: 'calendar.rescheduled',
+        companyId,
+        actorId: 'user-3',
+        recipientIds: ['user-2'],
+        entityType: 'calendar_event',
+        entityId: eventId,
+        title: baseEvent.title,
+        startAt: newStart,
+        occurrenceId: 'activity-1',
+      });
+    });
+
+    it('reschedule that also assigns a new person: only calendar.assigned is published (no rescheduled)', async () => {
+      const { service, calendarEventRepository, notificationService } =
+        buildService();
+      calendarEventRepository.update.mockResolvedValue(
+        evt({ assignedToId: 'user-2', startAt: newStart, endAt: newEnd }),
+      );
+
+      await service.update(
+        companyId,
+        eventId,
+        { ...reschedulePatch, assignedToId: 'user-2' },
+        createdById,
+      );
+
+      expect(notificationService.publish).toHaveBeenCalledTimes(1);
+      expect(notificationService.publish).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'calendar.assigned',
+          startAt: newStart,
+        }),
+      );
+    });
+
+    it('reschedule of a cancelled event: publishes nothing', async () => {
+      const { service, calendarEventRepository, notificationService } =
+        buildService();
+      calendarEventRepository.findById.mockResolvedValue(
+        evt({ assignedToId: 'user-2', status: 'cancelled' }),
+      );
+      calendarEventRepository.update.mockResolvedValue(
+        evt({
+          assignedToId: 'user-2',
+          status: 'cancelled',
+          startAt: newStart,
+          endAt: newEnd,
+        }),
+      );
+
+      await service.update(companyId, eventId, reschedulePatch, createdById);
+
+      expect(notificationService.publish).not.toHaveBeenCalled();
     });
   });
 });
