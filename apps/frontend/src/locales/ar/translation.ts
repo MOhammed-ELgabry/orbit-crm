@@ -573,6 +573,31 @@ const ar = {
   chatReceiptSent: "تم الإرسال",
   chatReceiptSeenBy: "شاهدها {{read}} من {{total}}",
   chatReceiptSeen: "تمت المشاهدة",
+
+  // Customer 360 (contact detail page)
+  contact360Overview: "نظرة عامة",
+  contact360OpenDeals: "الصفقات المفتوحة",
+  contact360OpenValue: "قيمة الصفقات المفتوحة: {{amount}}",
+  contact360OpenTasks: "المهام المفتوحة",
+  contact360OverdueTasks: "{{count}} متأخرة",
+  contact360UpcomingEvents: "الأحداث القادمة",
+  contact360UpcomingWindow: "خلال {{days}} يومًا القادمة",
+  contact360NextEvent: "التالي: {{when}}",
+  contact360LastActivity: "آخر نشاط",
+  contact360NoActivityYet: "لا يوجد نشاط بعد",
+  contact360PartialCount: "بناءً على أول {{count}} سجل فقط.",
+  contact360NoAccessTitle: "ليس لديك صلاحية الوصول إلى هذا القسم",
+  contact360NoAccessDescription: "اطلب من المدير أو المالك منحك صلاحية الوصول.",
+  contact360ContactNoAccess: "ليس لديك صلاحية عرض هذا السجل",
+  contact360NoDeals: "لا توجد صفقات مرتبطة بعد.",
+  contact360NoTasks: "لا توجد مهام مرتبطة بعد.",
+  contact360NoEvents: "لا توجد أحداث قادمة خلال {{days}} يومًا القادمة.",
+  contact360OpenPage: "فتح {{section}}",
+  contact360ViewDeal: "عرض الصفقة",
+  contact360NoDueDate: "بدون تاريخ استحقاق",
+  contact360NotesEdit: "تعديل الملاحظات",
+  contact360NotesPlaceholder: "أضف ملاحظات داخلية…",
+  contact360NotesEmpty: "لا توجد ملاحظات بعد.",
 };
 
 export default ar;

@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
+import axios from "axios";
 import { formatDistanceToNow } from "date-fns";
 import {
   FiPlus,
@@ -22,6 +24,7 @@ import type { Activity, ActivityType } from "../../types/activity";
 import { ACTIVITY_TYPES } from "../../types/activity";
 import { errorAlert, confirmAlert } from "../../lib/swal";
 import { getErrorMessage } from "../../lib/errors";
+import { NO_DATE, parseDate } from "../../lib/contact360";
 
 const TYPE_ICON: Record<string, React.ComponentType<{ size?: number }>> = {
   NOTE: FiFileText,
@@ -52,6 +55,14 @@ interface ActivityTimelineProps {
   contactId?: string;
   /** Allow logging a new activity from this timeline. Defaults to true. */
   canCreate?: boolean;
+  /** Show the per-row delete button. Defaults to true (existing behaviour). */
+  canDelete?: boolean;
+  /**
+   * Optional deep link for a row (e.g. a deal lifecycle event -> its deal).
+   * The caller decides, so permissions stay with the caller; rows for which
+   * it returns null have no link. Needs a Router only when supplied.
+   */
+  linkFor?: (activity: Activity) => { to: string; label: string } | null;
 }
 
 function toDatetimeLocalValue(date: Date): string {
@@ -62,15 +73,21 @@ function toDatetimeLocalValue(date: Date): string {
 export default function ActivityTimeline({
   contactId,
   canCreate = true,
+  canDelete = true,
+  linkFor,
 }: ActivityTimelineProps) {
   const { t } = useTranslation();
 
   const [activities, setActivities] = useState<Activity[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
-  const [status, setStatus] = useState<"loading" | "ready" | "error">(
-    "loading",
-  );
+  const [status, setStatus] = useState<
+    "loading" | "ready" | "error" | "forbidden"
+  >("loading");
+  // Identifies the most recent load. A response that finishes after a newer
+  // load started (contact changed, Retry, "Load more" overlap) or after the
+  // component unmounted is ignored instead of overwriting newer data.
+  const latestLoad = useRef(0);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -88,6 +105,7 @@ export default function ActivityTimeline({
       // react-hooks/set-state-in-effect) — functionally instant
       // either way, since it only defers by one microtask.
       await Promise.resolve();
+      const loadId = ++latestLoad.current;
       setStatus((prev) => (append ? prev : "loading"));
 
       try {
@@ -99,14 +117,22 @@ export default function ActivityTimeline({
           sortOrder: "desc",
         });
 
+        if (loadId !== latestLoad.current) return;
+
         setActivities((prev) =>
           append ? [...prev, ...result.activities] : result.activities,
         );
         setHasMore(result.meta.page < result.meta.totalPages);
         setPage(result.meta.page);
         setStatus("ready");
-      } catch {
-        setStatus("error");
+      } catch (error) {
+        if (loadId !== latestLoad.current) return;
+
+        setStatus(
+          axios.isAxiosError(error) && error.response?.status === 403
+            ? "forbidden"
+            : "error",
+        );
       }
     },
     [contactId],
@@ -122,6 +148,11 @@ export default function ActivityTimeline({
       await load(1, false);
     };
     loadOnMount();
+
+    return () => {
+      // Invalidate whatever is still in flight for the previous contact.
+      latestLoad.current += 1;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contactId]);
 
@@ -320,6 +351,20 @@ export default function ActivityTimeline({
           </div>
         )}
 
+        {status === "forbidden" && (
+          <div
+            role="alert"
+            className="flex flex-col items-center gap-1 py-8 text-center"
+          >
+            <p className="text-sm font-medium text-slate-600">
+              {t("contact360NoAccessTitle")}
+            </p>
+            <p className="text-xs text-slate-400">
+              {t("contact360NoAccessDescription")}
+            </p>
+          </div>
+        )}
+
         {status === "ready" && activities.length === 0 && (
           <div className="flex flex-col items-center gap-1 py-8 text-center">
             <FiActivity className="text-slate-300" size={28} />
@@ -336,6 +381,7 @@ export default function ActivityTimeline({
           <ul className="space-y-4">
             {activities.map((activity) => {
               const Icon = TYPE_ICON[activity.type] ?? FiActivity;
+              const link = linkFor?.(activity) ?? null;
 
               return (
                 <li key={activity.id} className="group flex gap-3">
@@ -356,22 +402,38 @@ export default function ActivityTimeline({
                         )}
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(activity)}
-                        aria-label={t("delete")}
-                        className="shrink-0 rounded-md p-1 text-slate-300 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
-                      >
-                        <FiTrash2 size={14} />
-                      </button>
+                      {canDelete && (
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(activity)}
+                          aria-label={t("delete")}
+                          className="shrink-0 rounded-md p-1 text-slate-300 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+                        >
+                          <FiTrash2 size={14} />
+                        </button>
+                      )}
                     </div>
+
+                    {link && (
+                      <Link
+                        to={link.to}
+                        className="mt-1 inline-block text-[11px] font-semibold text-blue-600 hover:underline"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
 
                     <p className="mt-1 text-[11px] text-slate-400">
                       {t(TYPE_LABEL_KEY[activity.type] ?? "activityTypeOther")}
                       {" · "}
-                      {formatDistanceToNow(new Date(activity.occurredAt), {
-                        addSuffix: true,
-                      })}
+                      {/* An unparsable date shows a dash; date-fns would
+                          otherwise throw and take the page down. */}
+                      {parseDate(activity.occurredAt)
+                        ? formatDistanceToNow(
+                            parseDate(activity.occurredAt) as Date,
+                            { addSuffix: true },
+                          )
+                        : NO_DATE}
                     </p>
                   </div>
                 </li>

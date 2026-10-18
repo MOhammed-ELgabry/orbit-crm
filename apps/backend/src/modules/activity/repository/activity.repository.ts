@@ -12,6 +12,8 @@ import { ActivityQueryDto } from '../dto/activity-query.dto';
 import { UpdateActivityDto } from '../dto/update-activity.dto';
 import { ActivityEntity } from '../entities/activity.entity';
 
+import { buildContactTimelineFilter } from './contact-timeline.filter';
+
 import {
   ActivityRepositoryResult,
   CalendarEventActivityEventInput,
@@ -175,8 +177,13 @@ export class ActivityRepository implements IActivityRepository {
         type: query.type,
       }),
 
+      // A contact's timeline = activities logged for the contact directly
+      // PLUS the lifecycle events of its deals/tasks/calendar events (those
+      // carry only dealId/taskId/calendarEventId). AND-ed in rather than
+      // spread, so the top-level `OR` PrismaQueryBuilder emits for `search`
+      // is preserved. See buildContactTimelineFilter.
       ...(query.contactId !== undefined && {
-        contactId: query.contactId,
+        AND: [buildContactTimelineFilter(companyId, query.contactId)],
       }),
 
       ...((query.dateFrom !== undefined || query.dateTo !== undefined) && {

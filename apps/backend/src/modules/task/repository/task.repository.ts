@@ -115,8 +115,11 @@ export class TaskRepository implements ITaskRepository {
         assignedToId: query.assignedToId,
       }),
 
+      // A contact filter only matches contacts of the caller's company (see
+      // the same note in DealRepository.findAll).
       ...(query.contactId !== undefined && {
         contactId: query.contactId,
+        contact: { is: { companyId } },
       }),
 
       ...(query.leadId !== undefined && {

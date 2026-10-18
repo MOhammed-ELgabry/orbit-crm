@@ -128,8 +128,13 @@ export class DealRepository implements IDealRepository {
         assignedToId: query.assignedToId,
       }),
 
+      // A contact filter only matches contacts of the caller's company. The
+      // deal's own companyId is already enforced above; this also stops a
+      // (legacy / hand-edited) deal of this company that points at another
+      // company's contact from being returned for that foreign contact id.
       ...(query.contactId !== undefined && {
         contactId: query.contactId,
+        contact: { is: { companyId } },
       }),
 
       ...(query.leadId !== undefined && {

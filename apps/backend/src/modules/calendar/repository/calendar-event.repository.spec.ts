@@ -69,6 +69,36 @@ describe('CalendarEventRepository', () => {
       expect('contactId' in callArgs.where).toBe(false);
     });
 
+    it('a contactId filter only matches a contact of the caller company (Customer 360 calendar tab)', async () => {
+      const { repository, prisma } = makeMocks();
+      const from = new Date();
+      const to = new Date(from.getTime() + 1000);
+
+      await repository.findAll('company-b', from, to, from, {
+        contactId: 'contact-of-company-a',
+      });
+
+      const [[callArgs]] = prisma.calendarEvent.findMany.mock.calls as [
+        [{ where: Record<string, unknown> }],
+      ];
+      expect(callArgs.where.companyId).toBe('company-b');
+      expect(callArgs.where.deletedAt).toBeNull();
+      expect(callArgs.where.contactId).toBe('contact-of-company-a');
+      // The behaviour (an empty page for a foreign contact, even when this
+      // company has rows pointing at it) is proven against PostgreSQL in
+      // test/integration/activities/customer360-tenant-isolation.int-spec.ts.
+      expect(callArgs.where.contact).toEqual({
+        is: { companyId: 'company-b' },
+      });
+      // And with no contactId requested, no contact condition is added.
+      await repository.findAll('company-b', from, to, from, {});
+      const [, [secondCall]] = prisma.calendarEvent.findMany.mock.calls as [
+        unknown,
+        [{ where: Record<string, unknown> }],
+      ];
+      expect('contact' in secondCall.where).toBe(false);
+    });
+
     it('fetches one row more than the display limit and reports hasMore without a separate count query', async () => {
       const { repository, prisma } = makeMocks();
       const rows = Array.from({ length: 501 }, (_, i) => ({ id: `e${i}` }));

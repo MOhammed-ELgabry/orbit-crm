@@ -87,8 +87,11 @@ export class CalendarEventRepository implements ICalendarEventRepository {
         ...(filters.assignedToId !== undefined && {
           assignedToId: filters.assignedToId,
         }),
+        // A contact filter only matches contacts of the caller's company
+        // (see the same note in DealRepository.findAll).
         ...(filters.contactId !== undefined && {
           contactId: filters.contactId,
+          contact: { is: { companyId } },
         }),
         ...(filters.leadId !== undefined && { leadId: filters.leadId }),
         ...(filters.dealId !== undefined && { dealId: filters.dealId }),

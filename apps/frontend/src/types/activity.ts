@@ -31,6 +31,13 @@ export interface Activity {
 
   createdById: string;
   contactId: string | null;
+  // Set on system-generated lifecycle events (written by the Deal / Task /
+  // Calendar services); null on activities logged by hand. A lifecycle event
+  // has no contactId of its own - the backend resolves its contact through
+  // this source entity when building a contact's timeline.
+  dealId: string | null;
+  taskId: string | null;
+  calendarEventId: string | null;
 
   createdAt: string;
   updatedAt: string;

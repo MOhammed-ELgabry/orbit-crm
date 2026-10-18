@@ -583,6 +583,31 @@ const en = {
   chatReceiptSent: "Sent",
   chatReceiptSeenBy: "Seen by {{read}} of {{total}}",
   chatReceiptSeen: "Seen",
+
+  // Customer 360 (contact detail page)
+  contact360Overview: "Overview",
+  contact360OpenDeals: "Open deals",
+  contact360OpenValue: "Open value: {{amount}}",
+  contact360OpenTasks: "Open tasks",
+  contact360OverdueTasks: "{{count}} overdue",
+  contact360UpcomingEvents: "Upcoming events",
+  contact360UpcomingWindow: "Next {{days}} days",
+  contact360NextEvent: "Next: {{when}}",
+  contact360LastActivity: "Last activity",
+  contact360NoActivityYet: "No activity yet",
+  contact360PartialCount: "Based on the first {{count}} records only.",
+  contact360NoAccessTitle: "You don't have access to this section",
+  contact360NoAccessDescription: "Ask a manager or owner to grant you access.",
+  contact360ContactNoAccess: "You don't have access to this record",
+  contact360NoDeals: "No deals linked yet.",
+  contact360NoTasks: "No tasks linked yet.",
+  contact360NoEvents: "No upcoming events in the next {{days}} days.",
+  contact360OpenPage: "Open {{section}}",
+  contact360ViewDeal: "View deal",
+  contact360NoDueDate: "No due date",
+  contact360NotesEdit: "Edit notes",
+  contact360NotesPlaceholder: "Add internal notes…",
+  contact360NotesEmpty: "No notes yet.",
 };
 
 export default en;

@@ -80,7 +80,10 @@ export class ActivityQueryDto {
   @ApiPropertyOptional({
     example: 'cm123contact',
     description:
-      'Return only activities associated with this contact (e.g. a Contact timeline)',
+      'Return the contact timeline: activities logged for this contact ' +
+      "directly, plus the lifecycle events of the contact's deals, tasks " +
+      'and calendar events (resolved through the source entity, scoped to ' +
+      "the caller's company).",
   })
   @IsOptional()
   @IsString()
