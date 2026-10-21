@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FiPlus, FiSearch, FiTrash2, FiEdit2 } from "react-icons/fi";
+import { FiPlus, FiSearch, FiTrash2, FiEdit2, FiUpload } from "react-icons/fi";
 
 import { useAuth } from "../../context/AuthContext";
 import { getBusinessTypeCopy } from "../../config/businessType";
@@ -28,7 +28,7 @@ const PAGE_SIZE = 10;
 export default function ContactsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { company } = useAuth();
+  const { company, hasPermission } = useAuth();
   const businessCopy = getBusinessTypeCopy(company?.businessType);
   const contactLabel = t(businessCopy.contactSingular);
   const contactsLabel = t(businessCopy.contactsLabel);
@@ -146,6 +146,20 @@ export default function ContactsPage() {
               </option>
             ))}
           </select>
+
+          {hasPermission("contact:create") && (
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard/contacts/import")}
+              aria-label={t("contactsImportButton")}
+              className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              <FiUpload size={16} />
+              <span className="hidden sm:inline">
+                {t("contactsImportButton")}
+              </span>
+            </button>
+          )}
 
           <button
             type="button"

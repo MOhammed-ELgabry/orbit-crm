@@ -15,6 +15,7 @@ import { ProtectedRoute } from "./Components/ProtectedRoute";
 import DashboardLayout from "./Components/Dashboard/DashboardLayout";
 import ContactsPage from "./pages/Contacts/ContactsPage";
 import ContactDetailPage from "./pages/Contacts/ContactDetailPage";
+import ContactsImportPage from "./pages/Contacts/ContactsImportPage";
 import UsersPage from "./pages/Users/UsersPage";
 import LeadsPage from "./pages/Leads/LeadsPage";
 import LeadDetailPage from "./pages/Leads/LeadDetailPage";
@@ -65,6 +66,11 @@ function App() {
                   <Route index element={<DashboardPage />} />
 
                   <Route path="contacts" element={<ContactsPage />} />
+
+                  <Route
+                    path="contacts/import"
+                    element={<ContactsImportPage />}
+                  />
 
                   <Route path="contacts/:id" element={<ContactDetailPage />} />
 

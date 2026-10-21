@@ -8,16 +8,19 @@ import { PermissionsGuard } from '../../common/security/permissions.guard';
 
 import { CONTACT_REPOSITORY } from './constants/contact.constants';
 import { ContactController } from './contact.controller';
+import { ContactImportController } from './contact-import.controller';
+import { ContactImportService } from './contact-import.service';
 import { ContactRepository } from './repository/contact.repository';
 import { ContactService } from './contact.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, UserModule],
 
-  controllers: [ContactController],
+  controllers: [ContactController, ContactImportController],
 
   providers: [
     ContactService,
+    ContactImportService,
 
     {
       provide: CONTACT_REPOSITORY,
