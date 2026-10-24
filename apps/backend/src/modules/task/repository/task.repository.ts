@@ -16,6 +16,13 @@ import {
   TaskRepositoryResult,
 } from './task.repository.interface';
 
+import {
+  auditCreate,
+  auditDelete,
+  auditUpdate,
+} from '../../audit/audit.writer';
+import type { AuditActor } from '../../audit/audit.types';
+
 @Injectable()
 export class TaskRepository implements ITaskRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -25,31 +32,35 @@ export class TaskRepository implements ITaskRepository {
     createdById: string,
     dto: CreateTaskDto,
     completedAt: Date | null,
+    audit: AuditActor,
   ): Promise<TaskEntity> {
     try {
-      const task = await this.prisma.task.create({
-        data: {
-          companyId,
-          createdById,
+      return await this.prisma.$transaction(async (tx) => {
+        const task = await tx.task.create({
+          data: {
+            companyId,
+            createdById,
 
-          title: dto.title,
+            title: dto.title,
 
-          description: dto.description ?? null,
+            description: dto.description ?? null,
 
-          ...(dto.status !== undefined && { status: dto.status }),
-          ...(dto.priority !== undefined && { priority: dto.priority }),
+            ...(dto.status !== undefined && { status: dto.status }),
+            ...(dto.priority !== undefined && { priority: dto.priority }),
 
-          dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
-          completedAt,
+            dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
+            completedAt,
 
-          contactId: dto.contactId ?? null,
-          leadId: dto.leadId ?? null,
-          dealId: dto.dealId ?? null,
-          assignedToId: dto.assignedToId ?? null,
-        },
+            contactId: dto.contactId ?? null,
+            leadId: dto.leadId ?? null,
+            dealId: dto.dealId ?? null,
+            assignedToId: dto.assignedToId ?? null,
+          },
+        });
+
+        await auditCreate(tx, 'task', companyId, audit, task);
+        return new TaskEntity(task);
       });
-
-      return new TaskEntity(task);
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }
@@ -183,91 +194,108 @@ export class TaskRepository implements ITaskRepository {
     taskId: string,
     dto: UpdateTaskDto,
     completedAt: Date | null | undefined,
+    audit: AuditActor,
   ): Promise<TaskEntity | null> {
     try {
-      const existingTask = await this.prisma.task.findFirst({
-        where: {
-          id: taskId,
-          companyId,
-          deletedAt: null,
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        const existingTask = await tx.task.findFirst({
+          where: {
+            id: taskId,
+            companyId,
+            deletedAt: null,
+          },
+        });
+
+        if (!existingTask) {
+          return null;
+        }
+
+        const task = await tx.task.update({
+          where: {
+            id: taskId,
+            companyId,
+            deletedAt: null,
+          },
+
+          data: {
+            ...(dto.title !== undefined && {
+              title: dto.title,
+            }),
+
+            ...(dto.description !== undefined && {
+              description: dto.description,
+            }),
+
+            ...(dto.status !== undefined && {
+              status: dto.status,
+            }),
+
+            ...(dto.priority !== undefined && {
+              priority: dto.priority,
+            }),
+
+            ...(dto.dueDate !== undefined && {
+              dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
+            }),
+
+            ...(completedAt !== undefined && {
+              completedAt,
+            }),
+
+            ...(dto.contactId !== undefined && {
+              contactId: dto.contactId,
+            }),
+
+            ...(dto.leadId !== undefined && {
+              leadId: dto.leadId,
+            }),
+
+            ...(dto.dealId !== undefined && {
+              dealId: dto.dealId,
+            }),
+
+            ...(dto.assignedToId !== undefined && {
+              assignedToId: dto.assignedToId,
+            }),
+          },
+        });
+
+        await auditUpdate(tx, 'task', companyId, audit, existingTask, task);
+        return new TaskEntity(task);
       });
-
-      if (!existingTask) {
-        return null;
-      }
-
-      const task = await this.prisma.task.update({
-        where: {
-          id: taskId,
-          companyId,
-          deletedAt: null,
-        },
-
-        data: {
-          ...(dto.title !== undefined && {
-            title: dto.title,
-          }),
-
-          ...(dto.description !== undefined && {
-            description: dto.description,
-          }),
-
-          ...(dto.status !== undefined && {
-            status: dto.status,
-          }),
-
-          ...(dto.priority !== undefined && {
-            priority: dto.priority,
-          }),
-
-          ...(dto.dueDate !== undefined && {
-            dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
-          }),
-
-          ...(completedAt !== undefined && {
-            completedAt,
-          }),
-
-          ...(dto.contactId !== undefined && {
-            contactId: dto.contactId,
-          }),
-
-          ...(dto.leadId !== undefined && {
-            leadId: dto.leadId,
-          }),
-
-          ...(dto.dealId !== undefined && {
-            dealId: dto.dealId,
-          }),
-
-          ...(dto.assignedToId !== undefined && {
-            assignedToId: dto.assignedToId,
-          }),
-        },
-      });
-
-      return new TaskEntity(task);
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }
   }
 
-  async softDelete(companyId: string, taskId: string): Promise<boolean> {
+  async softDelete(
+    companyId: string,
+    taskId: string,
+    audit: AuditActor,
+  ): Promise<boolean> {
     try {
-      const result = await this.prisma.task.updateMany({
-        where: {
-          id: taskId,
-          companyId,
-          deletedAt: null,
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        const existing = await tx.task.findFirst({
+          where: { id: taskId, companyId, deletedAt: null },
+        });
 
-        data: {
-          deletedAt: new Date(),
-        },
+        if (!existing) {
+          return false;
+        }
+
+        const result = await tx.task.updateMany({
+          where: { id: taskId, companyId, deletedAt: null },
+          data: { deletedAt: new Date() },
+        });
+
+        if (result.count === 0) {
+          return false;
+        }
+
+        await auditDelete(tx, 'task', companyId, audit, existing);
+
+        return true;
       });
-
-      return result.count > 0;
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }

@@ -24,6 +24,13 @@ import {
 
 type ActivitySortableField = (typeof ACTIVITY_SORTABLE_FIELDS)[number];
 
+import {
+  auditCreate,
+  auditDelete,
+  auditUpdate,
+} from '../../audit/audit.writer';
+import type { AuditActor } from '../../audit/audit.types';
+
 @Injectable()
 export class ActivityRepository implements IActivityRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -32,26 +39,30 @@ export class ActivityRepository implements IActivityRepository {
     companyId: string,
     createdById: string,
     dto: CreateActivityDto,
+    audit: AuditActor,
   ): Promise<ActivityEntity> {
     try {
-      const activity = await this.prisma.activity.create({
-        data: {
-          companyId,
-          createdById,
+      return await this.prisma.$transaction(async (tx) => {
+        const activity = await tx.activity.create({
+          data: {
+            companyId,
+            createdById,
 
-          type: dto.type,
-          title: dto.title,
-          description: dto.description ?? null,
+            type: dto.type,
+            title: dto.title,
+            description: dto.description ?? null,
 
-          ...(dto.occurredAt !== undefined && {
-            occurredAt: new Date(dto.occurredAt),
-          }),
+            ...(dto.occurredAt !== undefined && {
+              occurredAt: new Date(dto.occurredAt),
+            }),
 
-          contactId: dto.contactId ?? null,
-        },
+            contactId: dto.contactId ?? null,
+          },
+        });
+
+        await auditCreate(tx, 'activity', companyId, audit, activity);
+        return new ActivityEntity(activity);
       });
-
-      return new ActivityEntity(activity);
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }
@@ -258,61 +269,85 @@ export class ActivityRepository implements IActivityRepository {
     companyId: string,
     activityId: string,
     dto: UpdateActivityDto,
+    audit: AuditActor,
   ): Promise<ActivityEntity | null> {
     try {
-      const existingActivity = await this.prisma.activity.findFirst({
-        where: {
-          id: activityId,
+      return await this.prisma.$transaction(async (tx) => {
+        const existingActivity = await tx.activity.findFirst({
+          where: {
+            id: activityId,
+            companyId,
+            deletedAt: null,
+          },
+        });
+
+        if (!existingActivity) {
+          return null;
+        }
+
+        const activity = await tx.activity.update({
+          where: {
+            id: activityId,
+            companyId,
+            deletedAt: null,
+          },
+
+          data: {
+            ...(dto.type !== undefined && { type: dto.type }),
+            ...(dto.title !== undefined && { title: dto.title }),
+            ...(dto.description !== undefined && {
+              description: dto.description,
+            }),
+            ...(dto.occurredAt !== undefined && {
+              occurredAt: new Date(dto.occurredAt),
+            }),
+            ...(dto.contactId !== undefined && { contactId: dto.contactId }),
+          },
+        });
+
+        await auditUpdate(
+          tx,
+          'activity',
           companyId,
-          deletedAt: null,
-        },
+          audit,
+          existingActivity,
+          activity,
+        );
+        return new ActivityEntity(activity);
       });
-
-      if (!existingActivity) {
-        return null;
-      }
-
-      const activity = await this.prisma.activity.update({
-        where: {
-          id: activityId,
-          companyId,
-          deletedAt: null,
-        },
-
-        data: {
-          ...(dto.type !== undefined && { type: dto.type }),
-          ...(dto.title !== undefined && { title: dto.title }),
-          ...(dto.description !== undefined && {
-            description: dto.description,
-          }),
-          ...(dto.occurredAt !== undefined && {
-            occurredAt: new Date(dto.occurredAt),
-          }),
-          ...(dto.contactId !== undefined && { contactId: dto.contactId }),
-        },
-      });
-
-      return new ActivityEntity(activity);
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }
   }
 
-  async softDelete(companyId: string, activityId: string): Promise<boolean> {
+  async softDelete(
+    companyId: string,
+    activityId: string,
+    audit: AuditActor,
+  ): Promise<boolean> {
     try {
-      const result = await this.prisma.activity.updateMany({
-        where: {
-          id: activityId,
-          companyId,
-          deletedAt: null,
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        const existing = await tx.activity.findFirst({
+          where: { id: activityId, companyId, deletedAt: null },
+        });
 
-        data: {
-          deletedAt: new Date(),
-        },
+        if (!existing) {
+          return false;
+        }
+
+        const result = await tx.activity.updateMany({
+          where: { id: activityId, companyId, deletedAt: null },
+          data: { deletedAt: new Date() },
+        });
+
+        if (result.count === 0) {
+          return false;
+        }
+
+        await auditDelete(tx, 'activity', companyId, audit, existing);
+
+        return true;
       });
-
-      return result.count > 0;
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }

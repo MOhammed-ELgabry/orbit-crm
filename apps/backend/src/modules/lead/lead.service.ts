@@ -16,6 +16,8 @@ import { UserService } from '../user/user.service';
 import { NotificationService } from '../notification/notification.service';
 import { buildLeadOccurrenceId } from '../notification/notification.policy';
 
+import type { AuditActor } from '../audit/audit.types';
+
 @Injectable()
 export class LeadService {
   constructor(
@@ -52,12 +54,18 @@ export class LeadService {
     companyId: string,
     createdById: string,
     dto: CreateLeadDto,
+    audit: AuditActor,
   ): Promise<LeadEntity> {
     if (dto.assignedToId) {
       await this.assertAssignableInCompany(dto.assignedToId, companyId);
     }
 
-    const lead = await this.leadRepository.create(companyId, createdById, dto);
+    const lead = await this.leadRepository.create(
+      companyId,
+      createdById,
+      dto,
+      audit,
+    );
 
     // Leads have no Activity log, so the occurrence is derived from the
     // persisted row (see buildLeadOccurrenceId). Never throws.
@@ -103,6 +111,7 @@ export class LeadService {
     leadId: string,
     dto: UpdateLeadDto,
     actorId: string,
+    audit: AuditActor,
   ): Promise<LeadEntity> {
     const existingLead = await this.leadRepository.findById(companyId, leadId);
 
@@ -118,6 +127,7 @@ export class LeadService {
       companyId,
       leadId,
       dto,
+      audit,
     );
 
     if (!updatedLead) {
@@ -150,8 +160,16 @@ export class LeadService {
     return updatedLead;
   }
 
-  async remove(companyId: string, leadId: string): Promise<void> {
-    const deleted = await this.leadRepository.softDelete(companyId, leadId);
+  async remove(
+    companyId: string,
+    leadId: string,
+    audit: AuditActor,
+  ): Promise<void> {
+    const deleted = await this.leadRepository.softDelete(
+      companyId,
+      leadId,
+      audit,
+    );
 
     if (!deleted) {
       throw new NotFoundException(`Lead with ID "${leadId}" not found.`);

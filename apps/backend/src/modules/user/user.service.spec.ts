@@ -11,6 +11,9 @@ import { BASIC_PLAN_USER_LIMIT } from './constants/user.constants';
 import { PasswordService } from './services/password.service';
 import { RoleService } from '../role/role.service';
 import type { IAuthSessionRepository } from '../auth/repository/auth-session.repository.interface';
+import type { AuditActor } from '../audit/audit.types';
+
+const audit: AuditActor = { actorUserId: 'actor-1' };
 
 /**
  * Regression test for F1 (account-takeover via UserService.update()).
@@ -100,7 +103,7 @@ describe('UserService', () => {
         id: 'new-user',
       } as never);
 
-      await service.create(dto, companyId);
+      await service.create(dto, companyId, audit);
 
       expect(userRepository.createWithinCompanyLimit).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -110,6 +113,7 @@ describe('UserService', () => {
           isEmailVerified: true,
         }),
         BASIC_PLAN_USER_LIMIT,
+        audit,
       );
     });
 
@@ -118,12 +122,13 @@ describe('UserService', () => {
         id: 'new-user',
       } as never);
 
-      await service.create(dto, companyId);
+      await service.create(dto, companyId, audit);
 
       expect(passwordService.hash).toHaveBeenCalledWith(dto.password);
       expect(userRepository.createWithinCompanyLimit).toHaveBeenCalledWith(
         expect.objectContaining({ passwordHash: 'hashed-password' }),
         BASIC_PLAN_USER_LIMIT,
+        audit,
       );
     });
 
@@ -137,11 +142,12 @@ describe('UserService', () => {
         id: 'new-user',
       } as never);
 
-      await service.create(dto, companyId);
+      await service.create(dto, companyId, audit);
 
       expect(userRepository.createWithinCompanyLimit).toHaveBeenCalledWith(
         expect.anything(),
         BASIC_PLAN_USER_LIMIT,
+        audit,
       );
     });
 
@@ -155,9 +161,9 @@ describe('UserService', () => {
         ),
       );
 
-      await expect(service.create(dto, companyId)).rejects.toBeInstanceOf(
-        ConflictException,
-      );
+      await expect(
+        service.create(dto, companyId, audit),
+      ).rejects.toBeInstanceOf(ConflictException);
     });
 
     it('never trusts isOwner/isActive/isEmailVerified/companyId even if smuggled onto the dto object at runtime', async () => {
@@ -180,7 +186,7 @@ describe('UserService', () => {
         id: 'new-user',
       } as never);
 
-      await service.create(attackerDto, companyId);
+      await service.create(attackerDto, companyId, audit);
 
       expect(userRepository.createWithinCompanyLimit).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -190,6 +196,7 @@ describe('UserService', () => {
           isEmailVerified: true,
         }),
         BASIC_PLAN_USER_LIMIT,
+        audit,
       );
     });
   });
@@ -202,6 +209,7 @@ describe('UserService', () => {
           { password: 'AttackerChosenPassword123!' },
           companyId,
           callerId,
+          audit,
         ),
       ).rejects.toBeInstanceOf(ForbiddenException);
 
@@ -222,6 +230,7 @@ describe('UserService', () => {
           { firstName: 'Renamed' },
           companyId,
           callerId,
+          audit,
         ),
       ).rejects.toBeInstanceOf(ForbiddenException);
 
@@ -241,12 +250,14 @@ describe('UserService', () => {
         { firstName: 'New Name' },
         companyId,
         callerId,
+        audit,
       );
 
       expect(userRepository.update).toHaveBeenCalledWith(
         callerId,
         companyId,
         expect.objectContaining({ firstName: 'New Name' }),
+        audit,
       );
       // A plain profile edit with no `password` field must never
       // revoke sessions — only an actual password change does.
@@ -265,6 +276,7 @@ describe('UserService', () => {
         { password: 'MyOwnNewPassword123!' },
         companyId,
         callerId,
+        audit,
       );
 
       // Test B: the new password is hashed via the existing
@@ -274,6 +286,7 @@ describe('UserService', () => {
         callerId,
         companyId,
         expect.objectContaining({ passwordHash: 'hashed-password' }),
+        audit,
       );
 
       // Test C: after the password update succeeds, all of the
@@ -305,6 +318,7 @@ describe('UserService', () => {
           { password: 'MyOwnNewPassword123!' },
           companyId,
           callerId,
+          audit,
         ),
       ).rejects.toThrow('DB write failed');
 
@@ -318,7 +332,13 @@ describe('UserService', () => {
       userRepository.findByIdAndCompany.mockResolvedValue(null);
 
       await expect(
-        service.update(callerId, { firstName: 'X' }, companyId, callerId),
+        service.update(
+          callerId,
+          { firstName: 'X' },
+          companyId,
+          callerId,
+          audit,
+        ),
       ).rejects.toBeInstanceOf(NotFoundException);
 
       expect(authSessionRepository.revokeAllByUserId).not.toHaveBeenCalled();
@@ -340,7 +360,12 @@ describe('UserService', () => {
         roleId: 'role-in-same-company',
       } as never);
 
-      await service.assignRole(otherUserId, 'role-in-same-company', companyId);
+      await service.assignRole(
+        otherUserId,
+        'role-in-same-company',
+        companyId,
+        audit,
+      );
 
       expect(roleService.findById).toHaveBeenCalledWith(
         companyId,
@@ -350,6 +375,7 @@ describe('UserService', () => {
         otherUserId,
         companyId,
         'role-in-same-company',
+        audit,
       );
     });
 
@@ -368,7 +394,12 @@ describe('UserService', () => {
       );
 
       await expect(
-        service.assignRole(otherUserId, 'role-in-other-company', companyId),
+        service.assignRole(
+          otherUserId,
+          'role-in-other-company',
+          companyId,
+          audit,
+        ),
       ).rejects.toBeInstanceOf(NotFoundException);
 
       // The cross-tenant role must never actually be attached.
@@ -385,13 +416,14 @@ describe('UserService', () => {
         roleId: null,
       } as never);
 
-      await service.assignRole(otherUserId, null, companyId);
+      await service.assignRole(otherUserId, null, companyId, audit);
 
       expect(roleService.findById).not.toHaveBeenCalled();
       expect(userRepository.updateRole).toHaveBeenCalledWith(
         otherUserId,
         companyId,
         null,
+        audit,
       );
     });
 
@@ -399,7 +431,7 @@ describe('UserService', () => {
       userRepository.findByIdAndCompany.mockResolvedValue(null);
 
       await expect(
-        service.assignRole(otherUserId, 'some-role', companyId),
+        service.assignRole(otherUserId, 'some-role', companyId, audit),
       ).rejects.toBeInstanceOf(NotFoundException);
 
       expect(roleService.findById).not.toHaveBeenCalled();

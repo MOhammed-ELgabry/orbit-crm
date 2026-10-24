@@ -2,6 +2,9 @@ import { NotFoundException } from '@nestjs/common';
 
 import { DealService } from './deal.service';
 import { DealEntity } from './entities/deal.entity';
+import type { AuditActor } from '../audit/audit.types';
+
+const audit: AuditActor = { actorUserId: 'actor-1' };
 
 describe('DealService', () => {
   const companyId = 'company-1';
@@ -85,7 +88,12 @@ describe('DealService', () => {
         userService,
       } = buildService();
 
-      await service.create(companyId, createdById, { title: 'New deal' });
+      await service.create(
+        companyId,
+        createdById,
+        { title: 'New deal' },
+        audit,
+      );
 
       expect(contactService.findById).not.toHaveBeenCalled();
       expect(leadService.findById).not.toHaveBeenCalled();
@@ -94,6 +102,7 @@ describe('DealService', () => {
         companyId,
         createdById,
         { title: 'New deal' },
+        audit,
       );
     });
 
@@ -106,12 +115,17 @@ describe('DealService', () => {
         userService,
       } = buildService();
 
-      await service.create(companyId, createdById, {
-        title: 'New deal',
-        contactId: 'contact-1',
-        leadId: 'lead-1',
-        assignedToId: 'user-2',
-      });
+      await service.create(
+        companyId,
+        createdById,
+        {
+          title: 'New deal',
+          contactId: 'contact-1',
+          leadId: 'lead-1',
+          assignedToId: 'user-2',
+        },
+        audit,
+      );
 
       expect(contactService.findById).toHaveBeenCalledWith(
         companyId,
@@ -127,10 +141,15 @@ describe('DealService', () => {
       contactService.findById.mockRejectedValue(new NotFoundException());
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'New deal',
-          contactId: 'contact-from-other-company',
-        }),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'New deal',
+            contactId: 'contact-from-other-company',
+          },
+          audit,
+        ),
       ).rejects.toThrow(NotFoundException);
 
       expect(dealRepository.create).not.toHaveBeenCalled();
@@ -141,10 +160,15 @@ describe('DealService', () => {
       leadService.findById.mockRejectedValue(new NotFoundException());
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'New deal',
-          leadId: 'lead-from-other-company',
-        }),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'New deal',
+            leadId: 'lead-from-other-company',
+          },
+          audit,
+        ),
       ).rejects.toThrow(NotFoundException);
 
       expect(dealRepository.create).not.toHaveBeenCalled();
@@ -155,10 +179,15 @@ describe('DealService', () => {
       userService.findById.mockRejectedValue(new NotFoundException());
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'New deal',
-          assignedToId: 'user-from-other-company',
-        }),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'New deal',
+            assignedToId: 'user-from-other-company',
+          },
+          audit,
+        ),
       ).rejects.toThrow(NotFoundException);
 
       expect(dealRepository.create).not.toHaveBeenCalled();
@@ -167,7 +196,12 @@ describe('DealService', () => {
     it('logs a SYSTEM "Deal created" activity after a successful create', async () => {
       const { service, activityService } = buildService();
 
-      await service.create(companyId, createdById, { title: 'New deal' });
+      await service.create(
+        companyId,
+        createdById,
+        { title: 'New deal' },
+        audit,
+      );
 
       expect(activityService.logDealEvent).toHaveBeenCalledWith(
         companyId,
@@ -205,6 +239,7 @@ describe('DealService', () => {
           dealId,
           { contactId: 'contact-1' },
           createdById,
+          audit,
         ),
       ).rejects.toThrow(NotFoundException);
 
@@ -223,6 +258,7 @@ describe('DealService', () => {
           dealId,
           { contactId: 'contact-from-other-company' },
           createdById,
+          audit,
         ),
       ).rejects.toThrow(NotFoundException);
 
@@ -237,11 +273,17 @@ describe('DealService', () => {
         dealId,
         { title: 'Renamed' },
         createdById,
+        audit,
       );
 
-      expect(dealRepository.update).toHaveBeenCalledWith(companyId, dealId, {
-        title: 'Renamed',
-      });
+      expect(dealRepository.update).toHaveBeenCalledWith(
+        companyId,
+        dealId,
+        {
+          title: 'Renamed',
+        },
+        audit,
+      );
     });
 
     it('logs "Deal won" when stage changes to closed_won, and nothing for an unrelated field edit', async () => {
@@ -255,6 +297,7 @@ describe('DealService', () => {
         dealId,
         { stage: 'closed_won' },
         createdById,
+        audit,
       );
 
       expect(activityService.logDealEvent).toHaveBeenCalledWith(
@@ -278,6 +321,7 @@ describe('DealService', () => {
         dealId,
         { stage: 'closed_lost' },
         createdById,
+        audit,
       );
 
       expect(activityService.logDealEvent).toHaveBeenCalledWith(
@@ -301,6 +345,7 @@ describe('DealService', () => {
         dealId,
         { stage: 'proposal' },
         createdById,
+        audit,
       );
 
       expect(activityService.logDealEvent).toHaveBeenCalledWith(
@@ -321,6 +366,7 @@ describe('DealService', () => {
         dealId,
         { assignedToId: 'user-2' },
         createdById,
+        audit,
       );
 
       expect(activityService.logDealEvent).toHaveBeenCalledWith(
@@ -338,6 +384,7 @@ describe('DealService', () => {
         dealId,
         { title: 'Renamed' },
         createdById,
+        audit,
       );
 
       expect(activityService.logDealEvent).not.toHaveBeenCalled();
@@ -349,7 +396,7 @@ describe('DealService', () => {
       const { service, activityService } = buildService();
 
       await expect(
-        service.remove(companyId, dealId, createdById),
+        service.remove(companyId, dealId, createdById, audit),
       ).resolves.toBeUndefined();
 
       expect(activityService.logDealEvent).toHaveBeenCalledWith(
@@ -364,7 +411,7 @@ describe('DealService', () => {
       dealRepository.findById.mockResolvedValue(null);
 
       await expect(
-        service.remove(otherCompanyId, dealId, createdById),
+        service.remove(otherCompanyId, dealId, createdById, audit),
       ).rejects.toThrow(NotFoundException);
 
       expect(dealRepository.softDelete).not.toHaveBeenCalled();
@@ -379,10 +426,15 @@ describe('DealService', () => {
         new DealEntity({ ...baseDeal, assignedToId: 'user-2' }),
       );
 
-      await service.create(companyId, createdById, {
-        title: 'New deal',
-        assignedToId: 'user-2',
-      });
+      await service.create(
+        companyId,
+        createdById,
+        {
+          title: 'New deal',
+          assignedToId: 'user-2',
+        },
+        audit,
+      );
 
       expect(notificationService.publish).toHaveBeenCalledTimes(1);
       expect(notificationService.publish).toHaveBeenCalledWith({
@@ -400,7 +452,12 @@ describe('DealService', () => {
     it('create: publishes nothing when the created deal has no assignee', async () => {
       const { service, notificationService } = buildService();
 
-      await service.create(companyId, createdById, { title: 'New deal' });
+      await service.create(
+        companyId,
+        createdById,
+        { title: 'New deal' },
+        audit,
+      );
 
       expect(notificationService.publish).not.toHaveBeenCalled();
     });
@@ -423,6 +480,7 @@ describe('DealService', () => {
         dealId,
         { stage: 'closed_won' },
         'user-3',
+        audit,
       );
 
       expect(notificationService.publish).toHaveBeenCalledTimes(1);
@@ -456,6 +514,7 @@ describe('DealService', () => {
         dealId,
         { stage: 'closed_lost' },
         'user-3',
+        audit,
       );
 
       expect(notificationService.publish).toHaveBeenCalledTimes(1);
@@ -480,6 +539,7 @@ describe('DealService', () => {
         dealId,
         { stage: 'proposal' },
         createdById,
+        audit,
       );
 
       expect(notificationService.publish).not.toHaveBeenCalled();
@@ -496,6 +556,7 @@ describe('DealService', () => {
         dealId,
         { assignedToId: 'user-2' },
         createdById,
+        audit,
       );
 
       expect(notificationService.publish).toHaveBeenCalledTimes(1);
@@ -522,6 +583,7 @@ describe('DealService', () => {
         dealId,
         { assignedToId: null },
         createdById,
+        audit,
       );
 
       expect(notificationService.publish).not.toHaveBeenCalled();
@@ -535,6 +597,7 @@ describe('DealService', () => {
         dealId,
         { title: 'Renamed' },
         createdById,
+        audit,
       );
 
       expect(notificationService.publish).not.toHaveBeenCalled();

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
@@ -11,6 +11,8 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { CreateCompanyDto } from '../dto/create-company.dto';
 import { UpdateCompanyDto } from '../dto/update-company.dto';
 import { CompanyEntity } from '../entities/company.entity';
+import { auditDelete, auditUpdate } from '../../audit/audit.writer';
+import type { AuditActor } from '../../audit/audit.types';
 import { ICompanyRepository } from './company.repository.interface';
 
 @Injectable()
@@ -80,7 +82,7 @@ export class CompanyRepository implements ICompanyRepository {
 
     const [companies, total] = await Promise.all([
       this.prisma.company.findMany({
-        where: prismaQuery.where as Prisma.CompanyWhereInput,
+        where: prismaQuery.where,
 
         orderBy: prismaQuery.orderBy,
 
@@ -92,7 +94,7 @@ export class CompanyRepository implements ICompanyRepository {
       }),
 
       this.prisma.company.count({
-        where: prismaQuery.where as Prisma.CompanyWhereInput,
+        where: prismaQuery.where,
       }),
     ]);
 
@@ -118,26 +120,52 @@ export class CompanyRepository implements ICompanyRepository {
     return new CompanyEntity(company);
   }
 
-  async update(id: string, data: UpdateCompanyDto): Promise<CompanyEntity> {
+  async update(
+    id: string,
+    data: UpdateCompanyDto,
+    audit: AuditActor,
+  ): Promise<CompanyEntity> {
     try {
-      const company = await this.prisma.company.update({
-        where: { id },
-        data,
-      });
+      return await this.prisma.$transaction(async (tx) => {
+        const before = await tx.company.findUnique({ where: { id } });
 
-      return new CompanyEntity(company);
+        if (!before) {
+          throw new NotFoundException('Record not found.');
+        }
+
+        const company = await tx.company.update({
+          where: { id },
+          data,
+        });
+
+        // The audit row belongs to the company being changed (`id`), which
+        // the service has already proven equals the caller's own company.
+        await auditUpdate(tx, 'company', id, audit, before, company);
+
+        return new CompanyEntity(company);
+      });
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, audit: AuditActor): Promise<void> {
     try {
-      await this.prisma.company.update({
-        where: { id },
-        data: {
-          deletedAt: new Date(),
-        },
+      await this.prisma.$transaction(async (tx) => {
+        const before = await tx.company.findUnique({ where: { id } });
+
+        if (!before) {
+          throw new NotFoundException('Record not found.');
+        }
+
+        await tx.company.update({
+          where: { id },
+          data: {
+            deletedAt: new Date(),
+          },
+        });
+
+        await auditDelete(tx, 'company', id, audit, before);
       });
     } catch (error) {
       PrismaExceptionMapper.map(error);

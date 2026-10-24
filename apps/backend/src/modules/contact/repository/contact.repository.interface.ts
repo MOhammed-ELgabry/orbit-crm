@@ -1,3 +1,4 @@
+import type { AuditActor } from '../../audit/audit.types';
 import { ContactEntity } from '../entities/contact.entity';
 import { CreateContactDto } from '../dto/create-contact.dto';
 import { UpdateContactDto } from '../dto/update-contact.dto';
@@ -20,6 +21,7 @@ export interface IContactRepository {
     companyId: string,
     createdById: string,
     dto: CreateContactDto,
+    audit: AuditActor,
   ): Promise<ContactEntity>;
 
   findAll(
@@ -33,9 +35,14 @@ export interface IContactRepository {
     companyId: string,
     contactId: string,
     dto: UpdateContactDto,
+    audit: AuditActor,
   ): Promise<ContactEntity | null>;
 
-  softDelete(companyId: string, contactId: string): Promise<boolean>;
+  softDelete(
+    companyId: string,
+    contactId: string,
+    audit: AuditActor,
+  ): Promise<boolean>;
 
   existsByEmail(
     companyId: string,

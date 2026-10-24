@@ -15,6 +15,7 @@ import {
 
 import type { Request } from 'express';
 
+import { auditActorFromRequest } from '../audit/audit-actor.util';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { IJwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { CsrfGuard } from '../../common/security/csrf.guard';
@@ -78,6 +79,7 @@ export class ContactImportController {
       req.user.companyId,
       req.user.sub,
       dto.rows,
+      auditActorFromRequest(req),
     );
   }
 }

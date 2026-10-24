@@ -16,6 +16,13 @@ import {
   LeadRepositoryResult,
 } from './lead.repository.interface';
 
+import {
+  auditCreate,
+  auditDelete,
+  auditUpdate,
+} from '../../audit/audit.writer';
+import type { AuditActor } from '../../audit/audit.types';
+
 @Injectable()
 export class LeadRepository implements ILeadRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -24,30 +31,34 @@ export class LeadRepository implements ILeadRepository {
     companyId: string,
     createdById: string,
     dto: CreateLeadDto,
+    audit: AuditActor,
   ): Promise<LeadEntity> {
     try {
-      const lead = await this.prisma.lead.create({
-        data: {
-          companyId,
-          createdById,
+      return await this.prisma.$transaction(async (tx) => {
+        const lead = await tx.lead.create({
+          data: {
+            companyId,
+            createdById,
 
-          firstName: dto.firstName,
-          lastName: dto.lastName,
+            firstName: dto.firstName,
+            lastName: dto.lastName,
 
-          email: dto.email ?? null,
-          phone: dto.phone ?? null,
+            email: dto.email ?? null,
+            phone: dto.phone ?? null,
 
-          organizationName: dto.organizationName ?? null,
+            organizationName: dto.organizationName ?? null,
 
-          source: dto.source ?? null,
-          notes: dto.notes ?? null,
+            source: dto.source ?? null,
+            notes: dto.notes ?? null,
 
-          ...(dto.status !== undefined && { status: dto.status }),
-          assignedToId: dto.assignedToId ?? null,
-        },
+            ...(dto.status !== undefined && { status: dto.status }),
+            assignedToId: dto.assignedToId ?? null,
+          },
+        });
+
+        await auditCreate(tx, 'lead', companyId, audit, lead);
+        return new LeadEntity(lead);
       });
-
-      return new LeadEntity(lead);
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }
@@ -163,87 +174,104 @@ export class LeadRepository implements ILeadRepository {
     companyId: string,
     leadId: string,
     dto: UpdateLeadDto,
+    audit: AuditActor,
   ): Promise<LeadEntity | null> {
     try {
-      const existingLead = await this.prisma.lead.findFirst({
-        where: {
-          id: leadId,
-          companyId,
-          deletedAt: null,
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        const existingLead = await tx.lead.findFirst({
+          where: {
+            id: leadId,
+            companyId,
+            deletedAt: null,
+          },
+        });
+
+        if (!existingLead) {
+          return null;
+        }
+
+        const lead = await tx.lead.update({
+          where: {
+            id: leadId,
+            companyId,
+            deletedAt: null,
+          },
+
+          data: {
+            ...(dto.firstName !== undefined && {
+              firstName: dto.firstName,
+            }),
+
+            ...(dto.lastName !== undefined && {
+              lastName: dto.lastName,
+            }),
+
+            ...(dto.email !== undefined && {
+              email: dto.email,
+            }),
+
+            ...(dto.phone !== undefined && {
+              phone: dto.phone,
+            }),
+
+            ...(dto.organizationName !== undefined && {
+              organizationName: dto.organizationName,
+            }),
+
+            ...(dto.source !== undefined && {
+              source: dto.source,
+            }),
+
+            ...(dto.status !== undefined && {
+              status: dto.status,
+            }),
+
+            ...(dto.notes !== undefined && {
+              notes: dto.notes,
+            }),
+
+            ...(dto.assignedToId !== undefined && {
+              assignedToId: dto.assignedToId,
+            }),
+          },
+        });
+
+        await auditUpdate(tx, 'lead', companyId, audit, existingLead, lead);
+        return new LeadEntity(lead);
       });
-
-      if (!existingLead) {
-        return null;
-      }
-
-      const lead = await this.prisma.lead.update({
-        where: {
-          id: leadId,
-          companyId,
-          deletedAt: null,
-        },
-
-        data: {
-          ...(dto.firstName !== undefined && {
-            firstName: dto.firstName,
-          }),
-
-          ...(dto.lastName !== undefined && {
-            lastName: dto.lastName,
-          }),
-
-          ...(dto.email !== undefined && {
-            email: dto.email,
-          }),
-
-          ...(dto.phone !== undefined && {
-            phone: dto.phone,
-          }),
-
-          ...(dto.organizationName !== undefined && {
-            organizationName: dto.organizationName,
-          }),
-
-          ...(dto.source !== undefined && {
-            source: dto.source,
-          }),
-
-          ...(dto.status !== undefined && {
-            status: dto.status,
-          }),
-
-          ...(dto.notes !== undefined && {
-            notes: dto.notes,
-          }),
-
-          ...(dto.assignedToId !== undefined && {
-            assignedToId: dto.assignedToId,
-          }),
-        },
-      });
-
-      return new LeadEntity(lead);
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }
   }
 
-  async softDelete(companyId: string, leadId: string): Promise<boolean> {
+  async softDelete(
+    companyId: string,
+    leadId: string,
+    audit: AuditActor,
+  ): Promise<boolean> {
     try {
-      const result = await this.prisma.lead.updateMany({
-        where: {
-          id: leadId,
-          companyId,
-          deletedAt: null,
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        const existing = await tx.lead.findFirst({
+          where: { id: leadId, companyId, deletedAt: null },
+        });
 
-        data: {
-          deletedAt: new Date(),
-        },
+        if (!existing) {
+          return false;
+        }
+
+        const result = await tx.lead.updateMany({
+          where: { id: leadId, companyId, deletedAt: null },
+          data: { deletedAt: new Date() },
+        });
+
+        if (result.count === 0) {
+          return false;
+        }
+
+        await auditDelete(tx, 'lead', companyId, audit, existing);
+
+        return true;
       });
-
-      return result.count > 0;
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }

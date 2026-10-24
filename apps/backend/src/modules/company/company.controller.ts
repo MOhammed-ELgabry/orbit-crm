@@ -14,6 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
+import { auditActorFromRequest } from '../audit/audit-actor.util';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -188,6 +189,7 @@ export class CompanyController {
       id,
       updateCompanyDto,
       request.user.companyId,
+      auditActorFromRequest(request),
     );
   }
 
@@ -216,7 +218,11 @@ export class CompanyController {
     @Param('id') id: string,
     @Req() request: AuthenticatedRequest,
   ): Promise<void> {
-    return this.companyService.delete(id, request.user.companyId);
+    return this.companyService.delete(
+      id,
+      request.user.companyId,
+      auditActorFromRequest(request),
+    );
   }
 
   @Get(':id')

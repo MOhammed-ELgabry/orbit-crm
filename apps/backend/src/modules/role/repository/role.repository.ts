@@ -9,6 +9,12 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { CreateRoleDto } from '../dto/create-role.dto';
 import { UpdateRoleDto } from '../dto/update-role.dto';
 import { RoleEntity } from '../entities/role.entity';
+import {
+  auditCreate,
+  auditDelete,
+  auditUpdate,
+} from '../../audit/audit.writer';
+import type { AuditActor } from '../../audit/audit.types';
 import { IRoleRepository } from './role.repository.interface';
 
 const ROLE_INCLUDE = {
@@ -26,6 +32,12 @@ type RoleWithPermissions = {
     permission: { id: string; resource: string; action: string };
   }[];
 };
+
+/** Sorted `resource:action` strings: the only way permissions are audited. */
+const permissionKeys = (role: RoleWithPermissions): string[] =>
+  role.rolePermissions
+    .map((rp) => `${rp.permission.resource}:${rp.permission.action}`)
+    .sort();
 
 const ROLE_SORTABLE_FIELDS = ['name', 'createdAt', 'updatedAt'] as const;
 
@@ -64,7 +76,11 @@ export class RoleRepository implements IRoleRepository {
     return permissionIds.filter((id) => !foundIds.has(id));
   }
 
-  async create(companyId: string, dto: CreateRoleDto): Promise<RoleEntity> {
+  async create(
+    companyId: string,
+    dto: CreateRoleDto,
+    audit: AuditActor,
+  ): Promise<RoleEntity> {
     try {
       const role = await this.prisma.$transaction(async (tx) => {
         const created = await tx.role.create({
@@ -84,10 +100,18 @@ export class RoleRepository implements IRoleRepository {
           });
         }
 
-        return tx.role.findUniqueOrThrow({
+        const full = await tx.role.findUniqueOrThrow({
           where: { id: created.id },
           include: ROLE_INCLUDE,
         });
+
+        await auditCreate(tx, 'role', companyId, audit, full, {
+          extraChanges: {
+            permissions: { added: permissionKeys(full), removed: [] },
+          },
+        });
+
+        return full;
       });
 
       return this.toEntity(role);
@@ -154,18 +178,21 @@ export class RoleRepository implements IRoleRepository {
     companyId: string,
     roleId: string,
     dto: UpdateRoleDto,
+    audit: AuditActor,
   ): Promise<RoleEntity | null> {
     try {
-      const existing = await this.prisma.role.findFirst({
-        where: { id: roleId, companyId, deletedAt: null },
-        select: { id: true },
-      });
-
-      if (!existing) {
-        return null;
-      }
-
       const role = await this.prisma.$transaction(async (tx) => {
+        // Read inside the transaction: this is the "before" the audit row
+        // compares against (name, description and the permission set).
+        const existing = await tx.role.findFirst({
+          where: { id: roleId, companyId, deletedAt: null },
+          include: ROLE_INCLUDE,
+        });
+
+        if (!existing) {
+          return null;
+        }
+
         await tx.role.update({
           where: { id: roleId, companyId },
           data: {
@@ -194,21 +221,46 @@ export class RoleRepository implements IRoleRepository {
           }
         }
 
-        return tx.role.findUniqueOrThrow({
+        const updated = await tx.role.findUniqueOrThrow({
           where: { id: roleId },
           include: ROLE_INCLUDE,
         });
+
+        const previous = new Set(permissionKeys(existing));
+        const current = new Set(permissionKeys(updated));
+        const added = [...current].filter((key) => !previous.has(key));
+        const removed = [...previous].filter((key) => !current.has(key));
+
+        await auditUpdate(tx, 'role', companyId, audit, existing, updated, {
+          ...(added.length + removed.length > 0 && {
+            extraChanges: { permissions: { added, removed } },
+          }),
+        });
+
+        return updated;
       });
 
-      return this.toEntity(role);
+      return role ? this.toEntity(role) : null;
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }
   }
 
-  async softDelete(companyId: string, roleId: string): Promise<boolean> {
+  async softDelete(
+    companyId: string,
+    roleId: string,
+    audit: AuditActor,
+  ): Promise<boolean> {
     try {
       return await this.prisma.$transaction(async (tx) => {
+        const existing = await tx.role.findFirst({
+          where: { id: roleId, companyId, deletedAt: null },
+        });
+
+        if (!existing) {
+          return false;
+        }
+
         const result = await tx.role.updateMany({
           where: { id: roleId, companyId, deletedAt: null },
           data: { deletedAt: new Date() },
@@ -225,9 +277,13 @@ export class RoleRepository implements IRoleRepository {
         // its former holders out of every permission-gated action
         // instead of returning them to the default (no role assigned)
         // access level.
-        await tx.user.updateMany({
+        const unassigned = await tx.user.updateMany({
           where: { roleId, companyId },
           data: { roleId: null },
+        });
+
+        await auditDelete(tx, 'role', companyId, audit, existing, {
+          metadata: { affectedUsers: unassigned.count },
         });
 
         return true;

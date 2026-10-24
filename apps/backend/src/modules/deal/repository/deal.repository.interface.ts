@@ -1,3 +1,4 @@
+import type { AuditActor } from '../../audit/audit.types';
 import { DealEntity } from '../entities/deal.entity';
 import { CreateDealDto } from '../dto/create-deal.dto';
 import { UpdateDealDto } from '../dto/update-deal.dto';
@@ -20,6 +21,7 @@ export interface IDealRepository {
     companyId: string,
     createdById: string,
     dto: CreateDealDto,
+    audit: AuditActor,
   ): Promise<DealEntity>;
 
   findAll(
@@ -33,7 +35,12 @@ export interface IDealRepository {
     companyId: string,
     dealId: string,
     dto: UpdateDealDto,
+    audit: AuditActor,
   ): Promise<DealEntity | null>;
 
-  softDelete(companyId: string, dealId: string): Promise<boolean>;
+  softDelete(
+    companyId: string,
+    dealId: string,
+    audit: AuditActor,
+  ): Promise<boolean>;
 }

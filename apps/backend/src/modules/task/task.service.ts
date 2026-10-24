@@ -19,6 +19,8 @@ import { DealService } from '../deal/deal.service';
 import { UserService } from '../user/user.service';
 import { NotificationService } from '../notification/notification.service';
 
+import type { AuditActor } from '../audit/audit.types';
+
 @Injectable()
 export class TaskService {
   constructor(
@@ -145,6 +147,7 @@ export class TaskService {
     companyId: string,
     createdById: string,
     dto: CreateTaskDto,
+    audit: AuditActor,
   ): Promise<TaskEntity> {
     await this.assertRelations(companyId, dto);
 
@@ -160,6 +163,7 @@ export class TaskService {
       createdById,
       dto,
       completedAt,
+      audit,
     );
 
     const createdActivity = await this.activityService.logTaskEvent(
@@ -213,6 +217,7 @@ export class TaskService {
     taskId: string,
     dto: UpdateTaskDto,
     actorId: string,
+    audit: AuditActor,
   ): Promise<TaskEntity> {
     const existingTask = await this.taskRepository.findById(companyId, taskId);
 
@@ -237,6 +242,7 @@ export class TaskService {
       taskId,
       dto,
       completedAt,
+      audit,
     );
 
     if (!updatedTask) {
@@ -334,6 +340,7 @@ export class TaskService {
     companyId: string,
     taskId: string,
     actorId: string,
+    audit: AuditActor,
   ): Promise<void> {
     const existingTask = await this.taskRepository.findById(companyId, taskId);
 
@@ -341,7 +348,11 @@ export class TaskService {
       throw new NotFoundException(`Task with ID "${taskId}" not found.`);
     }
 
-    const deleted = await this.taskRepository.softDelete(companyId, taskId);
+    const deleted = await this.taskRepository.softDelete(
+      companyId,
+      taskId,
+      audit,
+    );
 
     if (!deleted) {
       throw new NotFoundException(`Task with ID "${taskId}" not found.`);

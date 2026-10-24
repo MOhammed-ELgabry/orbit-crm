@@ -19,6 +19,7 @@ import { ChatModule } from '../chat/chat.module';
 import { RoleModule } from '../role/role.module';
 import { PermissionModule } from '../permission/permission.module';
 import { ReportModule } from '../report/report.module';
+import { AuditModule } from '../audit/audit.module';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -73,6 +74,8 @@ import { AuthModule } from '../auth/auth.module';
     PermissionModule,
 
     ReportModule,
+
+    AuditModule,
   ],
 
   controllers: [AppController],

@@ -2,6 +2,9 @@ import { NotFoundException } from '@nestjs/common';
 
 import { TaskService } from './task.service';
 import { TaskEntity } from './entities/task.entity';
+import type { AuditActor } from '../audit/audit.types';
+
+const audit: AuditActor = { actorUserId: 'actor-1' };
 
 describe('TaskService', () => {
   const companyId = 'company-1';
@@ -93,7 +96,12 @@ describe('TaskService', () => {
         userService,
       } = buildService();
 
-      await service.create(companyId, createdById, { title: 'New task' });
+      await service.create(
+        companyId,
+        createdById,
+        { title: 'New task' },
+        audit,
+      );
 
       expect(contactService.findById).not.toHaveBeenCalled();
       expect(leadService.findById).not.toHaveBeenCalled();
@@ -104,6 +112,7 @@ describe('TaskService', () => {
         createdById,
         { title: 'New task' },
         null, // no status supplied -> effective "todo" -> completedAt null
+        audit,
       );
     });
 
@@ -117,13 +126,18 @@ describe('TaskService', () => {
         userService,
       } = buildService();
 
-      await service.create(companyId, createdById, {
-        title: 'New task',
-        contactId: 'contact-1',
-        leadId: 'lead-1',
-        dealId: 'deal-1',
-        assignedToId: 'user-2',
-      });
+      await service.create(
+        companyId,
+        createdById,
+        {
+          title: 'New task',
+          contactId: 'contact-1',
+          leadId: 'lead-1',
+          dealId: 'deal-1',
+          assignedToId: 'user-2',
+        },
+        audit,
+      );
 
       expect(contactService.findById).toHaveBeenCalledWith(
         companyId,
@@ -140,10 +154,15 @@ describe('TaskService', () => {
       contactService.findById.mockRejectedValue(new NotFoundException());
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'New task',
-          contactId: 'contact-from-other-company',
-        }),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'New task',
+            contactId: 'contact-from-other-company',
+          },
+          audit,
+        ),
       ).rejects.toThrow(NotFoundException);
 
       expect(taskRepository.create).not.toHaveBeenCalled();
@@ -154,10 +173,15 @@ describe('TaskService', () => {
       leadService.findById.mockRejectedValue(new NotFoundException());
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'New task',
-          leadId: 'lead-from-other-company',
-        }),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'New task',
+            leadId: 'lead-from-other-company',
+          },
+          audit,
+        ),
       ).rejects.toThrow(NotFoundException);
 
       expect(taskRepository.create).not.toHaveBeenCalled();
@@ -168,10 +192,15 @@ describe('TaskService', () => {
       dealService.findById.mockRejectedValue(new NotFoundException());
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'New task',
-          dealId: 'deal-from-other-company',
-        }),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'New task',
+            dealId: 'deal-from-other-company',
+          },
+          audit,
+        ),
       ).rejects.toThrow(NotFoundException);
 
       expect(taskRepository.create).not.toHaveBeenCalled();
@@ -182,10 +211,15 @@ describe('TaskService', () => {
       userService.findById.mockRejectedValue(new NotFoundException());
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'New task',
-          assignedToId: 'user-from-other-company',
-        }),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'New task',
+            assignedToId: 'user-from-other-company',
+          },
+          audit,
+        ),
       ).rejects.toThrow(NotFoundException);
 
       expect(taskRepository.create).not.toHaveBeenCalled();
@@ -211,10 +245,15 @@ describe('TaskService', () => {
       );
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'New task',
-          contactId: 'contact-x',
-        }),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'New task',
+            contactId: 'contact-x',
+          },
+          audit,
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -224,10 +263,15 @@ describe('TaskService', () => {
       contactService.findById.mockRejectedValue(infraError);
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'New task',
-          contactId: 'contact-1',
-        }),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'New task',
+            contactId: 'contact-1',
+          },
+          audit,
+        ),
       ).rejects.toThrow(infraError);
 
       expect(taskRepository.create).not.toHaveBeenCalled();
@@ -239,33 +283,49 @@ describe('TaskService', () => {
       userService.findById.mockRejectedValue(infraError);
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'New task',
-          assignedToId: 'user-2',
-        }),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'New task',
+            assignedToId: 'user-2',
+          },
+          audit,
+        ),
       ).rejects.toThrow(infraError);
     });
 
     it('derives completedAt as a Date when created directly with status "completed"', async () => {
       const { service, taskRepository } = buildService();
 
-      await service.create(companyId, createdById, {
-        title: 'Retroactively logged task',
-        status: 'completed',
-      });
+      await service.create(
+        companyId,
+        createdById,
+        {
+          title: 'Retroactively logged task',
+          status: 'completed',
+        },
+        audit,
+      );
 
       expect(taskRepository.create).toHaveBeenCalledWith(
         companyId,
         createdById,
         expect.objectContaining({ status: 'completed' }),
         expect.any(Date),
+        audit,
       );
     });
 
     it('logs a SYSTEM "Task created" activity after a successful create', async () => {
       const { service, activityService } = buildService();
 
-      await service.create(companyId, createdById, { title: 'New task' });
+      await service.create(
+        companyId,
+        createdById,
+        { title: 'New task' },
+        audit,
+      );
 
       expect(activityService.logTaskEvent).toHaveBeenCalledWith(
         companyId,
@@ -303,6 +363,7 @@ describe('TaskService', () => {
           taskId,
           { contactId: 'contact-1' },
           createdById,
+          audit,
         ),
       ).rejects.toThrow(NotFoundException);
 
@@ -321,6 +382,7 @@ describe('TaskService', () => {
           taskId,
           { dealId: 'deal-from-other-company' },
           createdById,
+          audit,
         ),
       ).rejects.toThrow(NotFoundException);
 
@@ -335,6 +397,7 @@ describe('TaskService', () => {
         taskId,
         { title: 'Renamed' },
         createdById,
+        audit,
       );
 
       expect(taskRepository.update).toHaveBeenCalledWith(
@@ -342,6 +405,7 @@ describe('TaskService', () => {
         taskId,
         { title: 'Renamed' },
         undefined,
+        audit,
       );
     });
 
@@ -356,6 +420,7 @@ describe('TaskService', () => {
         taskId,
         { status: 'completed' },
         createdById,
+        audit,
       );
 
       expect(taskRepository.update).toHaveBeenCalledWith(
@@ -363,6 +428,7 @@ describe('TaskService', () => {
         taskId,
         { status: 'completed' },
         expect.any(Date),
+        audit,
       );
       expect(activityService.logTaskEvent).toHaveBeenCalledWith(
         companyId,
@@ -385,6 +451,7 @@ describe('TaskService', () => {
         taskId,
         { status: 'cancelled' },
         createdById,
+        audit,
       );
 
       expect(taskRepository.update).toHaveBeenCalledWith(
@@ -392,6 +459,7 @@ describe('TaskService', () => {
         taskId,
         { status: 'cancelled' },
         null,
+        audit,
       );
       expect(activityService.logTaskEvent).toHaveBeenCalledWith(
         companyId,
@@ -416,13 +484,20 @@ describe('TaskService', () => {
         new TaskEntity({ ...baseTask, status: 'todo', completedAt: null }),
       );
 
-      await service.update(companyId, taskId, { status: 'todo' }, createdById);
+      await service.update(
+        companyId,
+        taskId,
+        { status: 'todo' },
+        createdById,
+        audit,
+      );
 
       expect(taskRepository.update).toHaveBeenCalledWith(
         companyId,
         taskId,
         { status: 'todo' },
         null,
+        audit,
       );
     });
 
@@ -437,6 +512,7 @@ describe('TaskService', () => {
         taskId,
         { status: 'in_progress' },
         createdById,
+        audit,
       );
 
       expect(activityService.logTaskEvent).toHaveBeenCalledWith(
@@ -457,6 +533,7 @@ describe('TaskService', () => {
         taskId,
         { assignedToId: 'user-2' },
         createdById,
+        audit,
       );
 
       expect(activityService.logTaskEvent).toHaveBeenCalledWith(
@@ -480,6 +557,7 @@ describe('TaskService', () => {
         taskId,
         { assignedToId: null },
         createdById,
+        audit,
       );
 
       expect(activityService.logTaskEvent).toHaveBeenCalledWith(
@@ -497,6 +575,7 @@ describe('TaskService', () => {
         taskId,
         { title: 'Renamed' },
         createdById,
+        audit,
       );
 
       expect(activityService.logTaskEvent).not.toHaveBeenCalled();
@@ -508,7 +587,7 @@ describe('TaskService', () => {
       const { service, activityService } = buildService();
 
       await expect(
-        service.remove(companyId, taskId, createdById),
+        service.remove(companyId, taskId, createdById, audit),
       ).resolves.toBeUndefined();
 
       expect(activityService.logTaskEvent).toHaveBeenCalledWith(
@@ -523,7 +602,7 @@ describe('TaskService', () => {
       taskRepository.findById.mockResolvedValue(null);
 
       await expect(
-        service.remove(otherCompanyId, taskId, createdById),
+        service.remove(otherCompanyId, taskId, createdById, audit),
       ).rejects.toThrow(NotFoundException);
 
       expect(taskRepository.softDelete).not.toHaveBeenCalled();
@@ -538,10 +617,15 @@ describe('TaskService', () => {
         new TaskEntity({ ...baseTask, assignedToId: 'user-2' }),
       );
 
-      await service.create(companyId, createdById, {
-        title: 'T',
-        assignedToId: 'user-2',
-      });
+      await service.create(
+        companyId,
+        createdById,
+        {
+          title: 'T',
+          assignedToId: 'user-2',
+        },
+        audit,
+      );
 
       expect(notificationService.publish).toHaveBeenCalledTimes(1);
       expect(notificationService.publish).toHaveBeenCalledWith({
@@ -559,7 +643,7 @@ describe('TaskService', () => {
     it('create: publishes nothing for an unassigned task', async () => {
       const { service, notificationService } = buildService();
 
-      await service.create(companyId, createdById, { title: 'T' });
+      await service.create(companyId, createdById, { title: 'T' }, audit);
 
       expect(notificationService.publish).not.toHaveBeenCalled();
     });
@@ -575,6 +659,7 @@ describe('TaskService', () => {
         taskId,
         { status: 'completed' },
         'user-3',
+        audit,
       );
 
       expect(notificationService.publish).toHaveBeenCalledTimes(1);
@@ -601,6 +686,7 @@ describe('TaskService', () => {
         taskId,
         { status: 'cancelled' },
         createdById,
+        audit,
       );
 
       taskRepository.update.mockResolvedValueOnce(
@@ -611,6 +697,7 @@ describe('TaskService', () => {
         taskId,
         { status: 'in_progress' },
         createdById,
+        audit,
       );
 
       expect(notificationService.publish).not.toHaveBeenCalled();
@@ -627,6 +714,7 @@ describe('TaskService', () => {
         taskId,
         { assignedToId: 'user-2' },
         createdById,
+        audit,
       );
 
       expect(notificationService.publish).toHaveBeenCalledTimes(1);
@@ -653,6 +741,7 @@ describe('TaskService', () => {
         taskId,
         { assignedToId: null },
         createdById,
+        audit,
       );
 
       expect(notificationService.publish).not.toHaveBeenCalled();
@@ -666,6 +755,7 @@ describe('TaskService', () => {
         taskId,
         { title: 'Renamed' },
         createdById,
+        audit,
       );
 
       expect(notificationService.publish).not.toHaveBeenCalled();

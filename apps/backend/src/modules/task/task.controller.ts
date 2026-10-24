@@ -19,6 +19,7 @@ import {
 
 import type { Request } from 'express';
 
+import { auditActorFromRequest } from '../audit/audit-actor.util';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { IJwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { CsrfGuard } from '../../common/security/csrf.guard';
@@ -53,7 +54,12 @@ export class TaskController {
     description: 'Task created successfully.',
   })
   async create(@Req() req: AuthenticatedRequest, @Body() dto: CreateTaskDto) {
-    return this.taskService.create(req.user.companyId, req.user.sub, dto);
+    return this.taskService.create(
+      req.user.companyId,
+      req.user.sub,
+      dto,
+      auditActorFromRequest(req),
+    );
   }
 
   @Get()
@@ -128,6 +134,7 @@ export class TaskController {
       taskId,
       dto,
       req.user.sub,
+      auditActorFromRequest(req),
     );
   }
 
@@ -151,6 +158,11 @@ export class TaskController {
     @Req() req: AuthenticatedRequest,
     @Param('id') taskId: string,
   ): Promise<void> {
-    return this.taskService.remove(req.user.companyId, taskId, req.user.sub);
+    return this.taskService.remove(
+      req.user.companyId,
+      taskId,
+      req.user.sub,
+      auditActorFromRequest(req),
+    );
   }
 }

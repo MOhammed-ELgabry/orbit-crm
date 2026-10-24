@@ -19,6 +19,8 @@ import type {
 
 import { UserService } from '../user/user.service';
 
+import type { AuditActor } from '../audit/audit.types';
+
 @Injectable()
 export class ContactService {
   constructor(
@@ -53,6 +55,7 @@ export class ContactService {
     companyId: string,
     createdById: string,
     dto: CreateContactDto,
+    audit: AuditActor,
   ): Promise<ContactEntity> {
     if (dto.email) {
       const emailExists = await this.contactRepository.existsByEmail(
@@ -71,7 +74,7 @@ export class ContactService {
       await this.assertAssignableInCompany(dto.assignedToId, companyId);
     }
 
-    return this.contactRepository.create(companyId, createdById, dto);
+    return this.contactRepository.create(companyId, createdById, dto, audit);
   }
 
   async findAll(
@@ -95,6 +98,7 @@ export class ContactService {
     companyId: string,
     contactId: string,
     dto: UpdateContactDto,
+    audit: AuditActor,
   ): Promise<ContactEntity> {
     const existingContact = await this.contactRepository.findById(
       companyId,
@@ -127,6 +131,7 @@ export class ContactService {
       companyId,
       contactId,
       dto,
+      audit,
     );
 
     if (!updatedContact) {
@@ -136,10 +141,15 @@ export class ContactService {
     return updatedContact;
   }
 
-  async remove(companyId: string, contactId: string): Promise<void> {
+  async remove(
+    companyId: string,
+    contactId: string,
+    audit: AuditActor,
+  ): Promise<void> {
     const deleted = await this.contactRepository.softDelete(
       companyId,
       contactId,
+      audit,
     );
 
     if (!deleted) {

@@ -8,6 +8,7 @@ import {
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { PaginationResult } from '../../common/interfaces/pagination-result.interface';
 
+import type { AuditActor } from '../audit/audit.types';
 import { ROLE_REPOSITORY } from './constants/role.constants';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -38,10 +39,14 @@ export class RoleService {
     }
   }
 
-  async create(companyId: string, dto: CreateRoleDto): Promise<RoleEntity> {
+  async create(
+    companyId: string,
+    dto: CreateRoleDto,
+    audit: AuditActor,
+  ): Promise<RoleEntity> {
     await this.assertPermissionIdsExist(dto.permissionIds);
 
-    return this.roleRepository.create(companyId, dto);
+    return this.roleRepository.create(companyId, dto, audit);
   }
 
   async findAll(
@@ -65,6 +70,7 @@ export class RoleService {
     companyId: string,
     roleId: string,
     dto: UpdateRoleDto,
+    audit: AuditActor,
   ): Promise<RoleEntity> {
     const existingRole = await this.roleRepository.findById(companyId, roleId);
 
@@ -78,6 +84,7 @@ export class RoleService {
       companyId,
       roleId,
       dto,
+      audit,
     );
 
     if (!updatedRole) {
@@ -87,8 +94,16 @@ export class RoleService {
     return updatedRole;
   }
 
-  async remove(companyId: string, roleId: string): Promise<void> {
-    const deleted = await this.roleRepository.softDelete(companyId, roleId);
+  async remove(
+    companyId: string,
+    roleId: string,
+    audit: AuditActor,
+  ): Promise<void> {
+    const deleted = await this.roleRepository.softDelete(
+      companyId,
+      roleId,
+      audit,
+    );
 
     if (!deleted) {
       throw new NotFoundException(`Role with ID "${roleId}" not found.`);

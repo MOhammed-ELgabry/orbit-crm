@@ -18,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 import type { Request } from 'express';
 
+import { auditActorFromRequest } from '../audit/audit-actor.util';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { IJwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { CsrfGuard } from '../../common/security/csrf.guard';
@@ -53,7 +54,12 @@ export class ActivityController {
     @Req() req: AuthenticatedRequest,
     @Body() dto: CreateActivityDto,
   ) {
-    return this.activityService.create(req.user.companyId, req.user.sub, dto);
+    return this.activityService.create(
+      req.user.companyId,
+      req.user.sub,
+      dto,
+      auditActorFromRequest(req),
+    );
   }
 
   @Get()
@@ -107,7 +113,12 @@ export class ActivityController {
     @Param('id') activityId: string,
     @Body() dto: UpdateActivityDto,
   ) {
-    return this.activityService.update(req.user.companyId, activityId, dto);
+    return this.activityService.update(
+      req.user.companyId,
+      activityId,
+      dto,
+      auditActorFromRequest(req),
+    );
   }
 
   @Delete(':id')
@@ -124,6 +135,10 @@ export class ActivityController {
     @Req() req: AuthenticatedRequest,
     @Param('id') activityId: string,
   ): Promise<void> {
-    return this.activityService.remove(req.user.companyId, activityId);
+    return this.activityService.remove(
+      req.user.companyId,
+      activityId,
+      auditActorFromRequest(req),
+    );
   }
 }

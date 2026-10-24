@@ -30,6 +30,7 @@ export default function DashboardHeader({
     "/dashboard/reports": "reportsNavLabel",
     "/dashboard/notifications": "notificationsNavLabel",
     "/dashboard/chat": "chatNavLabel",
+    "/dashboard/audit-log": "auditNavLabel",
     "/dashboard/settings": "settingsNavLabel",
   };
 

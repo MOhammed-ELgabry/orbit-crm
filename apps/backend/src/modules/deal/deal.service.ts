@@ -18,6 +18,8 @@ import { LeadService } from '../lead/lead.service';
 import { UserService } from '../user/user.service';
 import { NotificationService } from '../notification/notification.service';
 
+import type { AuditActor } from '../audit/audit.types';
+
 @Injectable()
 export class DealService {
   constructor(
@@ -100,10 +102,16 @@ export class DealService {
     companyId: string,
     createdById: string,
     dto: CreateDealDto,
+    audit: AuditActor,
   ): Promise<DealEntity> {
     await this.assertRelations(companyId, dto);
 
-    const deal = await this.dealRepository.create(companyId, createdById, dto);
+    const deal = await this.dealRepository.create(
+      companyId,
+      createdById,
+      dto,
+      audit,
+    );
 
     const createdActivity = await this.activityService.logDealEvent(
       companyId,
@@ -155,6 +163,7 @@ export class DealService {
     dealId: string,
     dto: UpdateDealDto,
     actorId: string,
+    audit: AuditActor,
   ): Promise<DealEntity> {
     const existingDeal = await this.dealRepository.findById(companyId, dealId);
 
@@ -168,6 +177,7 @@ export class DealService {
       companyId,
       dealId,
       dto,
+      audit,
     );
 
     if (!updatedDeal) {
@@ -278,6 +288,7 @@ export class DealService {
     companyId: string,
     dealId: string,
     actorId: string,
+    audit: AuditActor,
   ): Promise<void> {
     const existingDeal = await this.dealRepository.findById(companyId, dealId);
 
@@ -285,7 +296,11 @@ export class DealService {
       throw new NotFoundException(`Deal with ID "${dealId}" not found.`);
     }
 
-    const deleted = await this.dealRepository.softDelete(companyId, dealId);
+    const deleted = await this.dealRepository.softDelete(
+      companyId,
+      dealId,
+      audit,
+    );
 
     if (!deleted) {
       throw new NotFoundException(`Deal with ID "${dealId}" not found.`);

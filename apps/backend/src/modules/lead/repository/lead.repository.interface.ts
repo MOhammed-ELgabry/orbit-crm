@@ -1,3 +1,4 @@
+import type { AuditActor } from '../../audit/audit.types';
 import { LeadEntity } from '../entities/lead.entity';
 import { CreateLeadDto } from '../dto/create-lead.dto';
 import { UpdateLeadDto } from '../dto/update-lead.dto';
@@ -20,6 +21,7 @@ export interface ILeadRepository {
     companyId: string,
     createdById: string,
     dto: CreateLeadDto,
+    audit: AuditActor,
   ): Promise<LeadEntity>;
 
   findAll(
@@ -33,7 +35,12 @@ export interface ILeadRepository {
     companyId: string,
     leadId: string,
     dto: UpdateLeadDto,
+    audit: AuditActor,
   ): Promise<LeadEntity | null>;
 
-  softDelete(companyId: string, leadId: string): Promise<boolean>;
+  softDelete(
+    companyId: string,
+    leadId: string,
+    audit: AuditActor,
+  ): Promise<boolean>;
 }

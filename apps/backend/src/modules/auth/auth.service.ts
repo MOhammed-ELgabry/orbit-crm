@@ -7,6 +7,7 @@ import {
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
+import type { AuditRequestMeta } from '../audit/audit.types';
 import { ConfigService } from '@nestjs/config';
 import ms from 'ms';
 import { Prisma } from '@prisma/client';
@@ -626,7 +627,7 @@ export class AuthService implements OnModuleInit {
     };
   }
 
-  async resetPassword(dto: ResetPasswordDto) {
+  async resetPassword(dto: ResetPasswordDto, requestMeta?: AuditRequestMeta) {
     const tokenHash = this.tokenHashService.hash(dto.token);
 
     const resetToken =
@@ -658,7 +659,14 @@ export class AuthService implements OnModuleInit {
 
     const passwordHash = await this.passwordService.hash(dto.newPassword);
 
-    await this.userRepository.updatePassword(user.id, passwordHash);
+    // The actor is the account owner proving possession of the one-time
+    // reset token (there is no JWT in this flow). Recorded atomically with
+    // the password change; no password or token value is ever included.
+    await this.userRepository.updatePassword(user.id, passwordHash, {
+      actorUserId: user.id,
+      ...(requestMeta ?? {}),
+      metadata: { method: 'reset_token' },
+    });
 
     await this.authSessionRepository.revokeAllByUserId(user.id);
 

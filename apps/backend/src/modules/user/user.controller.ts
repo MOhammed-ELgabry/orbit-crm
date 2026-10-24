@@ -13,6 +13,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
+import { auditActorFromRequest } from '../audit/audit-actor.util';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -75,7 +76,11 @@ export class UserController {
     @Body() dto: CreateUserDto,
     @Req() request: AuthenticatedRequest,
   ) {
-    return this.userService.create(dto, request.user.companyId);
+    return this.userService.create(
+      dto,
+      request.user.companyId,
+      auditActorFromRequest(request),
+    );
   }
 
   @ApiOperation({
@@ -144,6 +149,7 @@ export class UserController {
       dto,
       request.user.companyId,
       request.user.sub,
+      auditActorFromRequest(request),
     );
   }
 
@@ -238,7 +244,12 @@ export class UserController {
     @Body() dto: UpdateUserStatusDto,
     @Req() request: AuthenticatedRequest,
   ) {
-    return this.userService.updateStatus(id, dto, request.user.companyId);
+    return this.userService.updateStatus(
+      id,
+      dto,
+      request.user.companyId,
+      auditActorFromRequest(request),
+    );
   }
 
   @ApiOperation({
@@ -267,7 +278,12 @@ export class UserController {
     @Body() dto: UpdateUserRoleDto,
     @Req() request: AuthenticatedRequest,
   ) {
-    return this.userService.assignRole(id, dto.roleId, request.user.companyId);
+    return this.userService.assignRole(
+      id,
+      dto.roleId,
+      request.user.companyId,
+      auditActorFromRequest(request),
+    );
   }
 
   @ApiOperation({
@@ -288,6 +304,10 @@ export class UserController {
   @UseGuards(OwnerGuard, CsrfGuard)
   @HttpCode(HttpStatus.OK)
   async delete(@Param('id') id: string, @Req() request: AuthenticatedRequest) {
-    return this.userService.delete(id, request.user.companyId);
+    return this.userService.delete(
+      id,
+      request.user.companyId,
+      auditActorFromRequest(request),
+    );
   }
 }

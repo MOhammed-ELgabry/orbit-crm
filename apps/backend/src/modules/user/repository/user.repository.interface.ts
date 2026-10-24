@@ -1,3 +1,4 @@
+import type { AuditActor } from '../../audit/audit.types';
 import { Prisma } from '@prisma/client';
 
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
@@ -27,6 +28,7 @@ export interface IUserRepository {
   createWithinCompanyLimit(
     data: CreateUserRepositoryDto,
     limit: number,
+    audit: AuditActor,
   ): Promise<UserEntity>;
 
   findAll(
@@ -60,18 +62,21 @@ export interface IUserRepository {
     id: string,
     companyId: string,
     data: UpdateUserRepositoryDto,
+    audit: AuditActor,
   ): Promise<UserEntity>;
 
   updateStatus(
     id: string,
     companyId: string,
     isActive: boolean,
+    audit: AuditActor,
   ): Promise<UserEntity>;
 
   updateRole(
     id: string,
     companyId: string,
     roleId: string | null,
+    audit: AuditActor,
   ): Promise<UserEntity>;
 
   updateLanguage(
@@ -86,7 +91,11 @@ export interface IUserRepository {
     backgroundColor: string,
   ): Promise<UserEntity>;
 
-  updatePassword(id: string, passwordHash: string): Promise<void>;
+  updatePassword(
+    id: string,
+    passwordHash: string,
+    audit: AuditActor,
+  ): Promise<void>;
 
-  delete(id: string, companyId: string): Promise<void>;
+  delete(id: string, companyId: string, audit: AuditActor): Promise<void>;
 }

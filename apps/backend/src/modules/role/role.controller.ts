@@ -12,6 +12,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { auditActorFromRequest } from '../audit/audit-actor.util';
 import {
   ApiBearerAuth,
   ApiForbiddenResponse,
@@ -72,7 +73,11 @@ export class RoleController {
     @Body() dto: CreateRoleDto,
     @Req() request: AuthenticatedRequest,
   ): Promise<RoleEntity> {
-    return this.roleService.create(request.user.companyId, dto);
+    return this.roleService.create(
+      request.user.companyId,
+      dto,
+      auditActorFromRequest(request),
+    );
   }
 
   @Get()
@@ -124,7 +129,12 @@ export class RoleController {
     @Body() dto: UpdateRoleDto,
     @Req() request: AuthenticatedRequest,
   ): Promise<RoleEntity> {
-    return this.roleService.update(request.user.companyId, id, dto);
+    return this.roleService.update(
+      request.user.companyId,
+      id,
+      dto,
+      auditActorFromRequest(request),
+    );
   }
 
   @Delete(':id')
@@ -141,6 +151,10 @@ export class RoleController {
     @Param('id') id: string,
     @Req() request: AuthenticatedRequest,
   ): Promise<void> {
-    return this.roleService.remove(request.user.companyId, id);
+    return this.roleService.remove(
+      request.user.companyId,
+      id,
+      auditActorFromRequest(request),
+    );
   }
 }

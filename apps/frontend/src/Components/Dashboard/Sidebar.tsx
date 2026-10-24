@@ -1,6 +1,13 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FiMenu, FiHome, FiUsers, FiSettings, FiLogOut } from "react-icons/fi";
+import {
+  FiMenu,
+  FiHome,
+  FiUsers,
+  FiSettings,
+  FiLogOut,
+  FiShield,
+} from "react-icons/fi";
 import {
   FaBullseye,
   FaHandshake,
@@ -48,6 +55,17 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       path: "/dashboard/reports",
       icon: FaChartBar,
     },
+    // Owner-only entry (UX only: the backend enforces Owner access on every
+    // /audit-logs request, and the route itself is wrapped in OwnerRoute).
+    ...(user?.isOwner
+      ? [
+          {
+            name: t("auditNavLabel"),
+            path: "/dashboard/audit-log",
+            icon: FiShield,
+          },
+        ]
+      : []),
     {
       name: t("settingsNavLabel"),
       path: "/dashboard/settings",

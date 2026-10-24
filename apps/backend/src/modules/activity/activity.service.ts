@@ -15,6 +15,8 @@ import type {
   TaskActivityEventInput,
 } from './repository/activity.repository.interface';
 
+import type { AuditActor } from '../audit/audit.types';
+
 @Injectable()
 export class ActivityService {
   constructor(
@@ -51,12 +53,13 @@ export class ActivityService {
     companyId: string,
     createdById: string,
     dto: CreateActivityDto,
+    audit: AuditActor,
   ): Promise<ActivityEntity> {
     if (dto.contactId) {
       await this.assertContactInCompany(dto.contactId, companyId);
     }
 
-    return this.activityRepository.create(companyId, createdById, dto);
+    return this.activityRepository.create(companyId, createdById, dto, audit);
   }
 
   /**
@@ -146,6 +149,7 @@ export class ActivityService {
     companyId: string,
     activityId: string,
     dto: UpdateActivityDto,
+    audit: AuditActor,
   ): Promise<ActivityEntity> {
     const existingActivity = await this.activityRepository.findById(
       companyId,
@@ -166,6 +170,7 @@ export class ActivityService {
       companyId,
       activityId,
       dto,
+      audit,
     );
 
     if (!updatedActivity) {
@@ -177,10 +182,15 @@ export class ActivityService {
     return updatedActivity;
   }
 
-  async remove(companyId: string, activityId: string): Promise<void> {
+  async remove(
+    companyId: string,
+    activityId: string,
+    audit: AuditActor,
+  ): Promise<void> {
     const deleted = await this.activityRepository.softDelete(
       companyId,
       activityId,
+      audit,
     );
 
     if (!deleted) {

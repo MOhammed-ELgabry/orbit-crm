@@ -14,18 +14,32 @@ describe('CalendarController (wiring only — see calendar.permissions.spec.ts f
     };
 
     const controller = new CalendarController(calendarService as never);
-    const req = { user: { sub: userId, companyId } } as never;
+    const req = {
+      user: { sub: userId, companyId },
+      ip: '203.0.113.7',
+      headers: { 'user-agent': 'jest' },
+    } as never;
+    const audit = {
+      actorUserId: userId,
+      ipAddress: '203.0.113.7',
+      userAgent: 'jest',
+    };
 
-    return { controller, calendarService, req };
+    return { controller, calendarService, req, audit };
   }
 
   it('create() delegates to CalendarService.create with companyId, the actor id, and the body', async () => {
-    const { controller, calendarService, req } = buildController();
+    const { controller, calendarService, req, audit } = buildController();
     const dto = { title: 'X', startAt: 'a', endAt: 'b' } as never;
 
     await controller.create(req, dto);
 
-    expect(calendarService.create).toHaveBeenCalledWith(companyId, userId, dto);
+    expect(calendarService.create).toHaveBeenCalledWith(
+      companyId,
+      userId,
+      dto,
+      audit,
+    );
   });
 
   it('findAll() delegates with companyId and the query', async () => {
@@ -46,7 +60,7 @@ describe('CalendarController (wiring only — see calendar.permissions.spec.ts f
   });
 
   it('update() delegates with companyId, id, body, and the actor id — in that order', async () => {
-    const { controller, calendarService, req } = buildController();
+    const { controller, calendarService, req, audit } = buildController();
     const dto = { title: 'Renamed' } as never;
 
     await controller.update(req, 'event-1', dto);
@@ -56,11 +70,12 @@ describe('CalendarController (wiring only — see calendar.permissions.spec.ts f
       'event-1',
       dto,
       userId,
+      audit,
     );
   });
 
   it('remove() delegates with companyId, id, and the actor id', async () => {
-    const { controller, calendarService, req } = buildController();
+    const { controller, calendarService, req, audit } = buildController();
 
     await controller.remove(req, 'event-1');
 
@@ -68,6 +83,7 @@ describe('CalendarController (wiring only — see calendar.permissions.spec.ts f
       companyId,
       'event-1',
       userId,
+      audit,
     );
   });
 });

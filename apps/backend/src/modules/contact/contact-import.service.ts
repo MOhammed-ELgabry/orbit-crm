@@ -5,10 +5,13 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import type { ValidationError } from 'class-validator';
 
+import { AuditService } from '../audit/audit.service';
+import type { AuditActor } from '../audit/audit.types';
 import { CONTACT_REPOSITORY } from './constants/contact.constants';
 import type { IContactRepository } from './repository/contact.repository.interface';
 import { ContactService } from './contact.service';
@@ -61,6 +64,8 @@ export class ContactImportService {
 
   constructor(
     private readonly contactService: ContactService,
+
+    private readonly auditService: AuditService,
 
     @Inject(CONTACT_REPOSITORY)
     private readonly contactRepository: IContactRepository,
@@ -140,8 +145,18 @@ export class ContactImportService {
     companyId: string,
     createdById: string,
     rows: Record<string, unknown>[],
+    audit: AuditActor,
   ): Promise<ContactImportResult> {
     const result: ContactImportRowResult[] = [];
+
+    // One id groups every audit row of this request (per-row `contact.create`
+    // events and the final `contact.import` summary).
+    const correlationId = randomUUID();
+    const rowAudit: AuditActor = {
+      ...audit,
+      correlationId,
+      metadata: { ...(audit.metadata ?? {}), source: 'import' },
+    };
 
     for (const [index, raw] of rows.entries()) {
       const { dto, issues } = await this.prepareRow(raw);
@@ -163,6 +178,7 @@ export class ContactImportService {
           companyId,
           createdById,
           dto,
+          rowAudit,
         );
 
         result.push({
@@ -210,7 +226,41 @@ export class ContactImportService {
       `contacts import: company=${companyId} rows=${rows.length} created=${summary.created} duplicate=${summary.duplicate} invalid=${summary.invalid} failed=${summary.failed}`,
     );
 
+    await this.recordSummary(companyId, rowAudit, rows.length, summary);
+
     return { rows: result, summary };
+  }
+
+  /**
+   * Standalone `contact.import` summary event (counts only). The individual
+   * rows are already audited atomically by ContactService.create, so a failure
+   * to write this derived summary is logged but does NOT fail the request
+   * (the rows are already committed and cannot be undone).
+   */
+  private async recordSummary(
+    companyId: string,
+    audit: AuditActor,
+    totalRows: number,
+    summary: Record<'created' | 'duplicate' | 'invalid' | 'failed', number>,
+  ): Promise<void> {
+    try {
+      await this.auditService.record({
+        companyId,
+        actorUserId: audit.actorUserId,
+        action: 'import',
+        entityType: 'contact',
+        entityId: null,
+        entityLabel: null,
+        changes: null,
+        metadata: { ...(audit.metadata ?? {}), totalRows, ...summary },
+        correlationId: audit.correlationId ?? null,
+        ipAddress: audit.ipAddress ?? null,
+        userAgent: audit.userAgent ?? null,
+      });
+    } catch {
+      // AuditWriter already logged the failure and reported it to Sentry.
+      this.logger.error('contacts import: summary audit entry was not written');
+    }
   }
 
   /**

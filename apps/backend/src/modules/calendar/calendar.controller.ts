@@ -19,6 +19,7 @@ import {
 
 import type { Request } from 'express';
 
+import { auditActorFromRequest } from '../audit/audit-actor.util';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { IJwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { CsrfGuard } from '../../common/security/csrf.guard';
@@ -57,7 +58,12 @@ export class CalendarController {
     @Req() req: AuthenticatedRequest,
     @Body() dto: CreateCalendarEventDto,
   ) {
-    return this.calendarService.create(req.user.companyId, req.user.sub, dto);
+    return this.calendarService.create(
+      req.user.companyId,
+      req.user.sub,
+      dto,
+      auditActorFromRequest(req),
+    );
   }
 
   /**
@@ -139,6 +145,7 @@ export class CalendarController {
       id,
       dto,
       req.user.sub,
+      auditActorFromRequest(req),
     );
   }
 
@@ -163,6 +170,11 @@ export class CalendarController {
     @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
   ): Promise<void> {
-    return this.calendarService.remove(req.user.companyId, id, req.user.sub);
+    return this.calendarService.remove(
+      req.user.companyId,
+      id,
+      req.user.sub,
+      auditActorFromRequest(req),
+    );
   }
 }

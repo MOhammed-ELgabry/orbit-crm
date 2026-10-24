@@ -19,6 +19,7 @@ import {
 
 import type { Request } from 'express';
 
+import { auditActorFromRequest } from '../audit/audit-actor.util';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { IJwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { CsrfGuard } from '../../common/security/csrf.guard';
@@ -53,7 +54,12 @@ export class LeadController {
     description: 'Lead created successfully.',
   })
   async create(@Req() req: AuthenticatedRequest, @Body() dto: CreateLeadDto) {
-    return this.leadService.create(req.user.companyId, req.user.sub, dto);
+    return this.leadService.create(
+      req.user.companyId,
+      req.user.sub,
+      dto,
+      auditActorFromRequest(req),
+    );
   }
 
   @Get()
@@ -126,6 +132,7 @@ export class LeadController {
       leadId,
       dto,
       req.user.sub,
+      auditActorFromRequest(req),
     );
   }
 
@@ -149,6 +156,10 @@ export class LeadController {
     @Req() req: AuthenticatedRequest,
     @Param('id') leadId: string,
   ): Promise<void> {
-    return this.leadService.remove(req.user.companyId, leadId);
+    return this.leadService.remove(
+      req.user.companyId,
+      leadId,
+      auditActorFromRequest(req),
+    );
   }
 }

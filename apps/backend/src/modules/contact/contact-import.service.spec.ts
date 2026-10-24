@@ -1,9 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access -- jest mock call records are untyped (`any`) by design */
 import { BadRequestException, ConflictException, Logger } from '@nestjs/common';
 
 import { ContactImportService } from './contact-import.service';
 import type { ContactService } from './contact.service';
 import type { IContactRepository } from './repository/contact.repository.interface';
 import type { CreateContactDto } from './dto/create-contact.dto';
+import type { AuditActor } from '../audit/audit.types';
+import { AuditWriteFailedException } from '../audit/audit.writer';
+import type { AuditService } from '../audit/audit.service';
+
+const audit: AuditActor = { actorUserId: 'actor-1' };
 
 /**
  * Unit tests (no database, no HTTP): ContactService and the repository are
@@ -16,6 +22,7 @@ describe('ContactImportService', () => {
 
   let create: jest.Mock;
   let existsByEmail: jest.Mock;
+  let record: jest.Mock;
   let service: ContactImportService;
 
   const row = (overrides: Record<string, unknown> = {}) => ({
@@ -32,9 +39,11 @@ describe('ContactImportService', () => {
         Promise.resolve({ id: `id-${dto.firstName}`, ...dto }),
       );
     existsByEmail = jest.fn().mockResolvedValue(false);
+    record = jest.fn().mockResolvedValue(undefined);
 
     service = new ContactImportService(
       { create } as unknown as ContactService,
+      { record } as unknown as AuditService,
       { existsByEmail } as unknown as IContactRepository,
     );
 
@@ -189,7 +198,7 @@ describe('ContactImportService', () => {
 
   describe('import', () => {
     it('creates rows through ContactService.create with companyId and user taken from the caller', async () => {
-      const result = await service.import(companyId, userId, [row()]);
+      const result = await service.import(companyId, userId, [row()], audit);
 
       expect(create).toHaveBeenCalledTimes(1);
       expect(create).toHaveBeenCalledWith(
@@ -199,6 +208,11 @@ describe('ContactImportService', () => {
           firstName: 'Amina',
           lastName: 'Hassan',
           email: 'amina@example.test',
+        }),
+        expect.objectContaining({
+          actorUserId: 'actor-1',
+          metadata: { source: 'import' },
+          correlationId: expect.any(String),
         }),
       );
       expect(result.rows[0]).toMatchObject({
@@ -214,15 +228,91 @@ describe('ContactImportService', () => {
       });
     });
 
-    it('defaults source to "Import" but keeps a source supplied by the file', async () => {
-      await service.import(companyId, userId, [
-        row(),
-        row({
-          firstName: 'Omar',
-          email: 'omar@example.test',
-          source: 'HubSpot',
+    it('gives every row of one request the same correlationId, and a different one to the next request', async () => {
+      await service.import(
+        companyId,
+        userId,
+        [row(), row({ firstName: 'Bilal', email: 'bilal@example.test' })],
+        audit,
+      );
+      await service.import(companyId, userId, [row()], audit);
+
+      const ids = create.mock.calls.map(
+        (call: unknown[]) => (call[3] as AuditActor).correlationId,
+      );
+      expect(ids[0]).toBeDefined();
+      expect(ids[0]).toBe(ids[1]);
+      expect(ids[2]).not.toBe(ids[0]);
+    });
+
+    it('records ONE standalone summary event with counts only, sharing the rows correlationId', async () => {
+      await service.import(
+        companyId,
+        userId,
+        [row(), row({ email: 'not-an-email' })],
+        audit,
+      );
+
+      expect(record).toHaveBeenCalledTimes(1);
+      const [[entry]] = record.mock.calls as [[Record<string, unknown>]];
+      expect(entry).toEqual(
+        expect.objectContaining({
+          companyId,
+          actorUserId: 'actor-1',
+          action: 'import',
+          entityType: 'contact',
+          entityId: null,
+          changes: null,
         }),
-      ]);
+      );
+      expect(entry.metadata).toEqual(
+        expect.objectContaining({
+          source: 'import',
+          totalRows: 2,
+          created: 1,
+          invalid: 1,
+        }),
+      );
+      expect(entry.correlationId).toBe(
+        (create.mock.calls[0][3] as AuditActor).correlationId,
+      );
+      // No row content in the summary.
+      expect(JSON.stringify(entry)).not.toContain('amina@example.test');
+      expect(JSON.stringify(entry)).not.toContain('Amina');
+    });
+
+    it('does not fail the import when only the summary audit write fails', async () => {
+      record.mockRejectedValueOnce(new Error('audit down'));
+      jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+
+      const result = await service.import(companyId, userId, [row()], audit);
+
+      expect(result.summary.created).toBe(1);
+    });
+
+    it('reports a row as failed (not created) when its own atomic audit write fails', async () => {
+      create.mockRejectedValueOnce(new AuditWriteFailedException());
+
+      const result = await service.import(companyId, userId, [row()], audit);
+
+      expect(result.rows[0]).toMatchObject({ outcome: 'failed' });
+      expect(result.summary.created).toBe(0);
+    });
+
+    it('defaults source to "Import" but keeps a source supplied by the file', async () => {
+      await service.import(
+        companyId,
+        userId,
+        [
+          row(),
+          row({
+            firstName: 'Omar',
+            email: 'omar@example.test',
+            source: 'HubSpot',
+          }),
+        ],
+        audit,
+      );
 
       const first = create.mock.calls[0][2] as CreateContactDto;
       const second = create.mock.calls[1][2] as CreateContactDto;
@@ -232,7 +322,7 @@ describe('ContactImportService', () => {
     });
 
     it('does not set a status of its own (the database default "active" applies)', async () => {
-      await service.import(companyId, userId, [row()]);
+      await service.import(companyId, userId, [row()], audit);
 
       expect((create.mock.calls[0][2] as CreateContactDto).status).toBe(
         undefined,
@@ -240,11 +330,16 @@ describe('ContactImportService', () => {
     });
 
     it('never calls create for invalid rows and never lets a row choose the company', async () => {
-      const result = await service.import(companyId, userId, [
-        row({ companyId: 'company-B' }),
-        row({ assignedToId: 'user-2' }),
-        row({ email: 'bad' }),
-      ]);
+      const result = await service.import(
+        companyId,
+        userId,
+        [
+          row({ companyId: 'company-B' }),
+          row({ assignedToId: 'user-2' }),
+          row({ email: 'bad' }),
+        ],
+        audit,
+      );
 
       expect(create).not.toHaveBeenCalled();
       expect(result.rows.map((r) => r.outcome)).toEqual([
@@ -260,7 +355,7 @@ describe('ContactImportService', () => {
         new ConflictException('A contact with this email already exists.'),
       );
 
-      const result = await service.import(companyId, userId, [row()]);
+      const result = await service.import(companyId, userId, [row()], audit);
 
       expect(result.rows[0].outcome).toBe('duplicate');
       expect(result.rows[0].errors).toEqual([]);
@@ -272,10 +367,12 @@ describe('ContactImportService', () => {
         .mockRejectedValueOnce(new BadRequestException('internal detail A'))
         .mockRejectedValueOnce(new Error('connection to db-host-secret lost'));
 
-      const result = await service.import(companyId, userId, [
-        row(),
-        row({ firstName: 'Omar', email: 'omar@example.test' }),
-      ]);
+      const result = await service.import(
+        companyId,
+        userId,
+        [row(), row({ firstName: 'Omar', email: 'omar@example.test' })],
+        audit,
+      );
 
       expect(result.rows.map((r) => r.outcome)).toEqual(['failed', 'failed']);
       expect(result.rows[0].errors[0].code).toBe('saveFailed');
@@ -295,13 +392,18 @@ describe('ContactImportService', () => {
             : Promise.resolve({ id: `id-${dto.firstName}` }),
       );
 
-      const result = await service.import(companyId, userId, [
-        row({ firstName: 'Good', email: 'g@example.test' }),
-        row({ firstName: 'Dup', email: 'd@example.test' }),
-        row({ firstName: 'Bad', email: 'not-email' }),
-        row({ firstName: 'Boom', email: 'b@example.test' }),
-        row({ firstName: 'Last', email: 'l@example.test' }),
-      ]);
+      const result = await service.import(
+        companyId,
+        userId,
+        [
+          row({ firstName: 'Good', email: 'g@example.test' }),
+          row({ firstName: 'Dup', email: 'd@example.test' }),
+          row({ firstName: 'Bad', email: 'not-email' }),
+          row({ firstName: 'Boom', email: 'b@example.test' }),
+          row({ firstName: 'Last', email: 'l@example.test' }),
+        ],
+        audit,
+      );
 
       expect(result.rows.map((r) => [r.index, r.outcome])).toEqual([
         [0, 'created'],
@@ -319,9 +421,12 @@ describe('ContactImportService', () => {
     });
 
     it('imports rows without an email (with the warning)', async () => {
-      const result = await service.import(companyId, userId, [
-        row({ email: undefined }),
-      ]);
+      const result = await service.import(
+        companyId,
+        userId,
+        [row({ email: undefined })],
+        audit,
+      );
 
       expect(result.rows[0]).toMatchObject({
         outcome: 'created',
@@ -332,9 +437,12 @@ describe('ContactImportService', () => {
     it('logs only counts, never row data', async () => {
       const log = jest.spyOn(Logger.prototype, 'log');
 
-      await service.import(companyId, userId, [
-        row({ firstName: 'Zaynab', email: 'zaynab@example.test' }),
-      ]);
+      await service.import(
+        companyId,
+        userId,
+        [row({ firstName: 'Zaynab', email: 'zaynab@example.test' })],
+        audit,
+      );
 
       const logged = JSON.stringify(log.mock.calls);
 

@@ -3,6 +3,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PaginationResult } from '../../common/interfaces/pagination-result.interface';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
+import type { AuditActor } from '../audit/audit.types';
 import { COMPANY_REPOSITORY } from './constants/company.constants';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -45,6 +46,7 @@ export class CompanyService {
     id: string,
     updateCompanyDto: UpdateCompanyDto,
     companyId: string,
+    audit: AuditActor,
   ): Promise<CompanyEntity> {
     if (id !== companyId) {
       throw new NotFoundException('Company not found');
@@ -56,10 +58,14 @@ export class CompanyService {
       throw new NotFoundException('Company not found');
     }
 
-    return this.companyRepository.update(id, updateCompanyDto);
+    return this.companyRepository.update(id, updateCompanyDto, audit);
   }
 
-  async delete(id: string, companyId: string): Promise<void> {
+  async delete(
+    id: string,
+    companyId: string,
+    audit: AuditActor,
+  ): Promise<void> {
     if (id !== companyId) {
       throw new NotFoundException('Company not found');
     }
@@ -70,6 +76,6 @@ export class CompanyService {
       throw new NotFoundException('Company not found');
     }
 
-    await this.companyRepository.delete(id);
+    await this.companyRepository.delete(id, audit);
   }
 }

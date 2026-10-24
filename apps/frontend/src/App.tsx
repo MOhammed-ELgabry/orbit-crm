@@ -28,6 +28,8 @@ import TermsOfServicePage from "./pages/Settings/TermsOfServicePage";
 import PrivacyPolicyPage from "./pages/Settings/PrivacyPolicyPage";
 import NotificationsPage from "./pages/Notifications/NotificationsPage";
 import ChatPage from "./pages/Chat/ChatPage";
+import AuditLogPage from "./pages/AuditLog/AuditLogPage";
+import OwnerRoute from "./Components/Audit/OwnerRoute";
 
 // Loaded on demand: the Reports page is the only consumer of recharts, so
 // keeping it out of the main bundle means every other page ships without it.
@@ -108,6 +110,16 @@ function App() {
                   <Route path="notifications" element={<NotificationsPage />} />
 
                   <Route path="chat" element={<ChatPage />} />
+
+                  {/* Owner-only. OwnerRoute is UX only; the backend decides. */}
+                  <Route
+                    path="audit-log"
+                    element={
+                      <OwnerRoute>
+                        <AuditLogPage />
+                      </OwnerRoute>
+                    }
+                  />
 
                   <Route path="settings" element={<SettingsPage />} />
                 </Route>

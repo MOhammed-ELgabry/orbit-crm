@@ -16,6 +16,13 @@ import {
   IContactRepository,
 } from './contact.repository.interface';
 
+import {
+  auditCreate,
+  auditDelete,
+  auditUpdate,
+} from '../../audit/audit.writer';
+import type { AuditActor } from '../../audit/audit.types';
+
 @Injectable()
 export class ContactRepository implements IContactRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -24,39 +31,43 @@ export class ContactRepository implements IContactRepository {
     companyId: string,
     createdById: string,
     dto: CreateContactDto,
+    audit: AuditActor,
   ): Promise<ContactEntity> {
     try {
-      const contact = await this.prisma.contact.create({
-        data: {
-          companyId,
-          createdById,
+      return await this.prisma.$transaction(async (tx) => {
+        const contact = await tx.contact.create({
+          data: {
+            companyId,
+            createdById,
 
-          firstName: dto.firstName,
-          lastName: dto.lastName,
+            firstName: dto.firstName,
+            lastName: dto.lastName,
 
-          email: dto.email ?? null,
-          phone: dto.phone ?? null,
-          mobile: dto.mobile ?? null,
+            email: dto.email ?? null,
+            phone: dto.phone ?? null,
+            mobile: dto.mobile ?? null,
 
-          jobTitle: dto.jobTitle ?? null,
-          organizationName: dto.organizationName ?? null,
-          website: dto.website ?? null,
+            jobTitle: dto.jobTitle ?? null,
+            organizationName: dto.organizationName ?? null,
+            website: dto.website ?? null,
 
-          address: dto.address ?? null,
-          city: dto.city ?? null,
-          state: dto.state ?? null,
-          country: dto.country ?? null,
-          postalCode: dto.postalCode ?? null,
+            address: dto.address ?? null,
+            city: dto.city ?? null,
+            state: dto.state ?? null,
+            country: dto.country ?? null,
+            postalCode: dto.postalCode ?? null,
 
-          notes: dto.notes ?? null,
-          source: dto.source ?? null,
+            notes: dto.notes ?? null,
+            source: dto.source ?? null,
 
-          ...(dto.status !== undefined && { status: dto.status }),
-          assignedToId: dto.assignedToId ?? null,
-        },
+            ...(dto.status !== undefined && { status: dto.status }),
+            assignedToId: dto.assignedToId ?? null,
+          },
+        });
+
+        await auditCreate(tx, 'contact', companyId, audit, contact);
+        return new ContactEntity(contact);
       });
-
-      return new ContactEntity(contact);
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }
@@ -181,124 +192,147 @@ export class ContactRepository implements IContactRepository {
     companyId: string,
     contactId: string,
     dto: UpdateContactDto,
+    audit: AuditActor,
   ): Promise<ContactEntity | null> {
     try {
-      const existingContact = await this.prisma.contact.findFirst({
-        where: {
-          id: contactId,
+      return await this.prisma.$transaction(async (tx) => {
+        const existingContact = await tx.contact.findFirst({
+          where: {
+            id: contactId,
+            companyId,
+            deletedAt: null,
+          },
+        });
+
+        if (!existingContact) {
+          return null;
+        }
+
+        const contact = await tx.contact.update({
+          where: {
+            id: contactId,
+            companyId,
+            deletedAt: null,
+          },
+
+          data: {
+            ...(dto.firstName !== undefined && {
+              firstName: dto.firstName,
+            }),
+
+            ...(dto.lastName !== undefined && {
+              lastName: dto.lastName,
+            }),
+
+            ...(dto.email !== undefined && {
+              email: dto.email,
+            }),
+
+            ...(dto.phone !== undefined && {
+              phone: dto.phone,
+            }),
+
+            ...(dto.mobile !== undefined && {
+              mobile: dto.mobile,
+            }),
+
+            ...(dto.jobTitle !== undefined && {
+              jobTitle: dto.jobTitle,
+            }),
+
+            ...(dto.organizationName !== undefined && {
+              organizationName: dto.organizationName,
+            }),
+
+            ...(dto.website !== undefined && {
+              website: dto.website,
+            }),
+
+            ...(dto.address !== undefined && {
+              address: dto.address,
+            }),
+
+            ...(dto.city !== undefined && {
+              city: dto.city,
+            }),
+
+            ...(dto.state !== undefined && {
+              state: dto.state,
+            }),
+
+            ...(dto.country !== undefined && {
+              country: dto.country,
+            }),
+
+            ...(dto.postalCode !== undefined && {
+              postalCode: dto.postalCode,
+            }),
+
+            ...(dto.notes !== undefined && {
+              notes: dto.notes,
+            }),
+
+            ...(dto.source !== undefined && {
+              source: dto.source,
+            }),
+
+            ...(dto.status !== undefined && {
+              status: dto.status,
+            }),
+
+            ...(dto.assignedToId !== undefined && {
+              assignedToId: dto.assignedToId,
+            }),
+          },
+        });
+
+        await auditUpdate(
+          tx,
+          'contact',
           companyId,
-          deletedAt: null,
-        },
+          audit,
+          existingContact,
+          contact,
+        );
+        return new ContactEntity(contact);
       });
-
-      if (!existingContact) {
-        return null;
-      }
-
-      const contact = await this.prisma.contact.update({
-        where: {
-          id: contactId,
-          companyId,
-          deletedAt: null,
-        },
-
-        data: {
-          ...(dto.firstName !== undefined && {
-            firstName: dto.firstName,
-          }),
-
-          ...(dto.lastName !== undefined && {
-            lastName: dto.lastName,
-          }),
-
-          ...(dto.email !== undefined && {
-            email: dto.email,
-          }),
-
-          ...(dto.phone !== undefined && {
-            phone: dto.phone,
-          }),
-
-          ...(dto.mobile !== undefined && {
-            mobile: dto.mobile,
-          }),
-
-          ...(dto.jobTitle !== undefined && {
-            jobTitle: dto.jobTitle,
-          }),
-
-          ...(dto.organizationName !== undefined && {
-            organizationName: dto.organizationName,
-          }),
-
-          ...(dto.website !== undefined && {
-            website: dto.website,
-          }),
-
-          ...(dto.address !== undefined && {
-            address: dto.address,
-          }),
-
-          ...(dto.city !== undefined && {
-            city: dto.city,
-          }),
-
-          ...(dto.state !== undefined && {
-            state: dto.state,
-          }),
-
-          ...(dto.country !== undefined && {
-            country: dto.country,
-          }),
-
-          ...(dto.postalCode !== undefined && {
-            postalCode: dto.postalCode,
-          }),
-
-          ...(dto.notes !== undefined && {
-            notes: dto.notes,
-          }),
-
-          ...(dto.source !== undefined && {
-            source: dto.source,
-          }),
-
-          ...(dto.status !== undefined && {
-            status: dto.status,
-          }),
-
-          ...(dto.assignedToId !== undefined && {
-            assignedToId: dto.assignedToId,
-          }),
-        },
-      });
-
-      return new ContactEntity(contact);
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }
   }
 
-  async softDelete(companyId: string, contactId: string): Promise<boolean> {
+  async softDelete(
+    companyId: string,
+    contactId: string,
+    audit: AuditActor,
+  ): Promise<boolean> {
     try {
-      const result = await this.prisma.contact.updateMany({
-        where: {
-          id: contactId,
-          companyId,
-          deletedAt: null,
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        const existing = await tx.contact.findFirst({
+          where: { id: contactId, companyId, deletedAt: null },
+        });
 
-        data: {
-          deletedAt: new Date(),
-        },
+        if (!existing) {
+          return false;
+        }
+
+        const result = await tx.contact.updateMany({
+          where: { id: contactId, companyId, deletedAt: null },
+          data: { deletedAt: new Date() },
+        });
+
+        if (result.count === 0) {
+          return false;
+        }
+
+        await auditDelete(tx, 'contact', companyId, audit, existing);
+
+        return true;
       });
-
-      return result.count > 0;
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }
   }
-
   async existsByEmail(
     companyId: string,
     email: string,

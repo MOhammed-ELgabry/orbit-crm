@@ -20,6 +20,7 @@ import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { UpdateUserLanguageDto } from './dto/update-user-language.dto';
 import { UpdateUserAppearanceDto } from './dto/update-user-appearance.dto';
 
+import type { AuditActor } from '../audit/audit.types';
 import type { IUserRepository } from './repository/user.repository.interface';
 
 import { PasswordService } from './services/password.service';
@@ -42,7 +43,7 @@ export class UserService {
     private readonly authSessionRepository: IAuthSessionRepository,
   ) {}
 
-  async create(dto: CreateUserDto, companyId: string) {
+  async create(dto: CreateUserDto, companyId: string, audit: AuditActor) {
     const repositoryDto: CreateUserRepositoryDto = {
       firstName: dto.firstName,
       lastName: dto.lastName,
@@ -75,6 +76,7 @@ export class UserService {
     return this.userRepository.createWithinCompanyLimit(
       repositoryDto,
       BASIC_PLAN_USER_LIMIT,
+      audit,
     );
   }
 
@@ -101,6 +103,7 @@ export class UserService {
     dto: UpdateUserDto,
     companyId: string,
     callerId: string,
+    audit: AuditActor,
   ) {
     // This is a self-service endpoint: the authenticated caller may only
     // ever update their own profile. Checked first, before any lookup,
@@ -136,6 +139,7 @@ export class UserService {
       id,
       companyId,
       repositoryDto,
+      audit,
     );
 
     if (dto.password) {
@@ -165,10 +169,15 @@ export class UserService {
     return updated;
   }
 
-  async updateStatus(id: string, dto: UpdateUserStatusDto, companyId: string) {
+  async updateStatus(
+    id: string,
+    dto: UpdateUserStatusDto,
+    companyId: string,
+    audit: AuditActor,
+  ) {
     await this.findById(id, companyId);
 
-    return this.userRepository.updateStatus(id, companyId, dto.isActive);
+    return this.userRepository.updateStatus(id, companyId, dto.isActive, audit);
   }
 
   async updateLanguage(
@@ -215,7 +224,12 @@ export class UserService {
     );
   }
 
-  async assignRole(id: string, roleId: string | null, companyId: string) {
+  async assignRole(
+    id: string,
+    roleId: string | null,
+    companyId: string,
+    audit: AuditActor,
+  ) {
     await this.findById(id, companyId);
 
     if (roleId !== null) {
@@ -227,12 +241,12 @@ export class UserService {
       await this.roleService.findById(companyId, roleId);
     }
 
-    return this.userRepository.updateRole(id, companyId, roleId);
+    return this.userRepository.updateRole(id, companyId, roleId, audit);
   }
 
-  async delete(id: string, companyId: string) {
+  async delete(id: string, companyId: string, audit: AuditActor) {
     await this.findById(id, companyId);
 
-    return this.userRepository.delete(id, companyId);
+    return this.userRepository.delete(id, companyId, audit);
   }
 }

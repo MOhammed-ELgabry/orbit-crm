@@ -44,6 +44,9 @@ model Company {
   onboardingTokens OnboardingToken[]
   activities       Activity[]
 
+  // Audit log (append-only; see AuditLog below)
+  auditLogs AuditLog[]
+
   // Notifications
   notifications           Notification[]
   notificationPreferences NotificationPreference[]
@@ -1073,4 +1076,57 @@ model ChatUserPresence {
   updatedAt  DateTime @updatedAt
 
   @@id([companyId, userKey])
+}
+
+// Append-only audit trail of important business and administrative changes.
+//
+// Rows are written ONLY by the audit module's writer, inside the SAME database
+// transaction as the change they describe (see audit/audit.writer.ts), so a
+// change can never commit without its audit row. Rows can never be updated or
+// deleted through the application: the migration installs BEFORE
+// UPDATE/DELETE/TRUNCATE triggers that always raise (no bypass flag). Those
+// triggers stop application bugs and ordinary SQL, but NOT the table owner or
+// a superuser, who can disable them — see IMPLEMENTATION.md for the
+// recommended DB-role separation.
+//
+// - companyId: tenant owner. onDelete: Restrict on purpose: a company can
+//   never be hard-deleted while it still has audit rows (companies are only
+//   ever soft-deleted by the application, which keeps the trail intact).
+// - actorUserId / entityId: plain strings, deliberately WITHOUT foreign keys.
+//   They are historical references; a FK with SetNull would try to UPDATE an
+//   append-only row. Actor names are resolved at read time (users are only
+//   soft-deleted).
+// - changes: only allowlisted fields. Operational fields store old/new
+//   values; personal/free-text fields store only { changed: true }.
+// - metadata: small, non-sensitive context (import counts, password-change
+//   method, affected-user count). Never request bodies or secrets.
+// - correlationId: groups the per-row events and the summary of one import.
+model AuditLog {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  // Stored and returned in UTC.
+  occurredAt DateTime @default(now())
+
+  actorUserId String?
+
+  action      String
+  entityType  String
+  entityId    String?
+  entityLabel String?
+
+  changes  Json?
+  metadata Json?
+
+  correlationId String?
+
+  ipAddress String?
+  userAgent String?
+
+  @@index([companyId, occurredAt(sort: Desc), id(sort: Desc)])
+  @@index([companyId, entityType, entityId, occurredAt(sort: Desc)])
+  @@index([companyId, actorUserId, occurredAt(sort: Desc)])
+  @@index([companyId, correlationId])
 }

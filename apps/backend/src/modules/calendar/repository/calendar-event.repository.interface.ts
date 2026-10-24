@@ -1,3 +1,4 @@
+import type { AuditActor } from '../../audit/audit.types';
 import { CalendarEventEntity } from '../entities/calendar-event.entity';
 
 /**
@@ -58,6 +59,7 @@ export interface ICalendarEventRepository {
   create(
     companyId: string,
     input: CreateCalendarEventInput,
+    audit: AuditActor,
   ): Promise<CalendarEventEntity>;
 
   /**
@@ -81,7 +83,12 @@ export interface ICalendarEventRepository {
     companyId: string,
     id: string,
     input: UpdateCalendarEventInput,
+    audit: AuditActor,
   ): Promise<CalendarEventEntity>;
 
-  softDelete(companyId: string, id: string): Promise<boolean>;
+  softDelete(
+    companyId: string,
+    id: string,
+    audit: AuditActor,
+  ): Promise<boolean>;
 }

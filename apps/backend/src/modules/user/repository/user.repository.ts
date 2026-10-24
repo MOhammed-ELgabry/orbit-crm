@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import { UpdateUserRepositoryDto } from '../dto/update-user-repository.dto';
@@ -13,6 +17,13 @@ import { CreateUserRepositoryDto } from '../dto/create-user-repository.dto';
 import { UserEntity } from '../entities/user.entity';
 import { IUserRepository } from './user.repository.interface';
 import { IAuthUser } from '../../auth/interfaces/auth-user.interface';
+import {
+  auditAction,
+  auditCreate,
+  auditDelete,
+  auditUpdate,
+} from '../../audit/audit.writer';
+import type { AuditActor } from '../../audit/audit.types';
 
 @Injectable()
 export class UserRepository implements IUserRepository {
@@ -79,6 +90,7 @@ export class UserRepository implements IUserRepository {
   async createWithinCompanyLimit(
     data: CreateUserRepositoryDto,
     limit: number,
+    audit: AuditActor,
   ): Promise<UserEntity> {
     return this.prisma.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${data.companyId})::bigint)`;
@@ -130,10 +142,18 @@ export class UserRepository implements IUserRepository {
         );
       }
 
-      return this.createWithTransaction(tx, {
+      const created = await this.createWithTransaction(tx, {
         ...data,
         roleId: employeeRole.id,
       });
+
+      // Same transaction as the seat-limit check and the insert: the user
+      // exists if and only if its audit row does.
+      await auditCreate(tx, 'user', data.companyId, audit, created, {
+        metadata: { roleName: employeeRole.name },
+      });
+
+      return created;
     });
   }
 
@@ -358,17 +378,42 @@ export class UserRepository implements IUserRepository {
     id: string,
     companyId: string,
     data: UpdateUserRepositoryDto,
+    audit: AuditActor,
   ): Promise<UserEntity> {
     try {
-      const user = await this.prisma.user.update({
-        where: {
-          id,
-          companyId,
-        },
-        data,
-      });
+      return await this.prisma.$transaction(async (tx) => {
+        const before = await tx.user.findFirst({ where: { id, companyId } });
 
-      return new UserEntity(user);
+        if (!before) {
+          throw new NotFoundException('Record not found.');
+        }
+
+        const user = await tx.user.update({
+          where: {
+            id,
+            companyId,
+          },
+          data,
+        });
+
+        await auditUpdate(tx, 'user', companyId, audit, before, user);
+
+        // The only caller that sets passwordHash here is the self-service
+        // profile update. The event never carries any password value.
+        if (data.passwordHash !== undefined) {
+          await auditAction(
+            tx,
+            'user',
+            companyId,
+            audit,
+            'password_changed',
+            user,
+            { metadata: { method: 'self_service' } },
+          );
+        }
+
+        return new UserEntity(user);
+      });
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }
@@ -378,19 +423,32 @@ export class UserRepository implements IUserRepository {
     id: string,
     companyId: string,
     isActive: boolean,
+    audit: AuditActor,
   ): Promise<UserEntity> {
     try {
-      const user = await this.prisma.user.update({
-        where: {
-          id,
-          companyId,
-        },
-        data: {
-          isActive,
-        },
-      });
+      return await this.prisma.$transaction(async (tx) => {
+        const before = await tx.user.findFirst({ where: { id, companyId } });
 
-      return new UserEntity(user);
+        if (!before) {
+          throw new NotFoundException('Record not found.');
+        }
+
+        const user = await tx.user.update({
+          where: {
+            id,
+            companyId,
+          },
+          data: {
+            isActive,
+          },
+        });
+
+        await auditUpdate(tx, 'user', companyId, audit, before, user, {
+          action: 'status_change',
+        });
+
+        return new UserEntity(user);
+      });
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }
@@ -400,19 +458,50 @@ export class UserRepository implements IUserRepository {
     id: string,
     companyId: string,
     roleId: string | null,
+    audit: AuditActor,
   ): Promise<UserEntity> {
     try {
-      const user = await this.prisma.user.update({
-        where: {
-          id,
-          companyId,
-        },
-        data: {
-          roleId,
-        },
-      });
+      return await this.prisma.$transaction(async (tx) => {
+        const before = await tx.user.findFirst({ where: { id, companyId } });
 
-      return new UserEntity(user);
+        if (!before) {
+          throw new NotFoundException('Record not found.');
+        }
+
+        const user = await tx.user.update({
+          where: {
+            id,
+            companyId,
+          },
+          data: {
+            roleId,
+          },
+        });
+
+        // Role names are read inside the transaction and ALWAYS scoped to
+        // this company, so a name from another tenant can never be recorded.
+        const roleIds = [before.roleId, roleId].filter(
+          (value): value is string => typeof value === 'string',
+        );
+        const roles = roleIds.length
+          ? await tx.role.findMany({
+              where: { id: { in: roleIds }, companyId },
+              select: { id: true, name: true },
+            })
+          : [];
+        const nameOf = (value: string | null): string | null =>
+          roles.find((role) => role.id === value)?.name ?? null;
+
+        await auditUpdate(tx, 'user', companyId, audit, before, user, {
+          action: 'role_assign',
+          metadata: {
+            previousRoleName: nameOf(before.roleId),
+            newRoleName: nameOf(roleId),
+          },
+        });
+
+        return new UserEntity(user);
+      });
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }
@@ -462,27 +551,80 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  async updatePassword(id: string, passwordHash: string): Promise<void> {
-    await this.prisma.user.update({
-      where: {
-        id,
-      },
-      data: {
-        passwordHash,
-      },
-    });
+  async updatePassword(
+    id: string,
+    passwordHash: string,
+    audit: AuditActor,
+  ): Promise<void> {
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        // updatePassword is keyed by user id only (the reset-token flow has
+        // no company in hand), so the company is read from the row itself.
+        const target = await tx.user.findUnique({
+          where: { id },
+          select: {
+            id: true,
+            companyId: true,
+            firstName: true,
+            lastName: true,
+          },
+        });
+
+        if (!target) {
+          throw new NotFoundException('Record not found.');
+        }
+
+        await tx.user.update({
+          where: {
+            id,
+          },
+          data: {
+            passwordHash,
+          },
+        });
+
+        // A user without a company has no tenant whose Owner could read the
+        // trail, so there is nothing to record for them.
+        if (target.companyId) {
+          await auditAction(
+            tx,
+            'user',
+            target.companyId,
+            audit,
+            'password_changed',
+            target,
+          );
+        }
+      });
+    } catch (error) {
+      PrismaExceptionMapper.map(error);
+    }
   }
 
-  async delete(id: string, companyId: string): Promise<void> {
+  async delete(
+    id: string,
+    companyId: string,
+    audit: AuditActor,
+  ): Promise<void> {
     try {
-      await this.prisma.user.update({
-        where: {
-          id,
-          companyId,
-        },
-        data: {
-          deletedAt: new Date(),
-        },
+      await this.prisma.$transaction(async (tx) => {
+        const before = await tx.user.findFirst({ where: { id, companyId } });
+
+        if (!before) {
+          throw new NotFoundException('Record not found.');
+        }
+
+        await tx.user.update({
+          where: {
+            id,
+            companyId,
+          },
+          data: {
+            deletedAt: new Date(),
+          },
+        });
+
+        await auditDelete(tx, 'user', companyId, audit, before);
       });
     } catch (error) {
       PrismaExceptionMapper.map(error);

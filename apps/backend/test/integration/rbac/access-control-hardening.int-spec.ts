@@ -47,6 +47,9 @@ import { RoleService } from '../../../src/modules/role/role.service';
 
 import { createTestHarness } from '../helpers/harness';
 import type { TestHarness } from '../helpers/harness';
+import type { AuditActor } from '../../../src/modules/audit/audit.types';
+
+const audit: AuditActor = { actorUserId: 'actor-1' };
 
 const ACCESS_COOKIE = 'orbit_access_token';
 const CSRF_COOKIE = 'orbit_csrf_token';
@@ -398,7 +401,7 @@ describe('Access-control hardening D1 / D2 / D3 (integration)', () => {
       // the role and unassigns it from everyone who held it.
       await app!
         .get(RoleService, { strict: false })
-        .remove(companyId, writeRoleId);
+        .remove(companyId, writeRoleId, audit);
       const after = await harness.prisma.user.findUniqueOrThrow({
         where: { id: actor.id },
         select: { roleId: true },

@@ -19,6 +19,7 @@ import {
 
 import type { Request } from 'express';
 
+import { auditActorFromRequest } from '../audit/audit-actor.util';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { IJwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { CsrfGuard } from '../../common/security/csrf.guard';
@@ -53,7 +54,12 @@ export class DealController {
     description: 'Deal created successfully.',
   })
   async create(@Req() req: AuthenticatedRequest, @Body() dto: CreateDealDto) {
-    return this.dealService.create(req.user.companyId, req.user.sub, dto);
+    return this.dealService.create(
+      req.user.companyId,
+      req.user.sub,
+      dto,
+      auditActorFromRequest(req),
+    );
   }
 
   @Get()
@@ -127,6 +133,7 @@ export class DealController {
       dealId,
       dto,
       req.user.sub,
+      auditActorFromRequest(req),
     );
   }
 
@@ -150,6 +157,11 @@ export class DealController {
     @Req() req: AuthenticatedRequest,
     @Param('id') dealId: string,
   ): Promise<void> {
-    return this.dealService.remove(req.user.companyId, dealId, req.user.sub);
+    return this.dealService.remove(
+      req.user.companyId,
+      dealId,
+      req.user.sub,
+      auditActorFromRequest(req),
+    );
   }
 }

@@ -1,3 +1,4 @@
+import type { AuditActor } from '../../audit/audit.types';
 import { ActivityEntity } from '../entities/activity.entity';
 import { CreateActivityDto } from '../dto/create-activity.dto';
 import { UpdateActivityDto } from '../dto/update-activity.dto';
@@ -60,6 +61,7 @@ export interface IActivityRepository {
     companyId: string,
     createdById: string,
     dto: CreateActivityDto,
+    audit: AuditActor,
   ): Promise<ActivityEntity>;
 
   createDealEvent(
@@ -94,7 +96,12 @@ export interface IActivityRepository {
     companyId: string,
     activityId: string,
     dto: UpdateActivityDto,
+    audit: AuditActor,
   ): Promise<ActivityEntity | null>;
 
-  softDelete(companyId: string, activityId: string): Promise<boolean>;
+  softDelete(
+    companyId: string,
+    activityId: string,
+    audit: AuditActor,
+  ): Promise<boolean>;
 }

@@ -1,3 +1,4 @@
+import type { AuditActor } from '../../audit/audit.types';
 import { TaskEntity } from '../entities/task.entity';
 import { CreateTaskDto } from '../dto/create-task.dto';
 import { UpdateTaskDto } from '../dto/update-task.dto';
@@ -28,6 +29,7 @@ export interface ITaskRepository {
     createdById: string,
     dto: CreateTaskDto,
     completedAt: Date | null,
+    audit: AuditActor,
   ): Promise<TaskEntity>;
 
   findAll(
@@ -48,7 +50,12 @@ export interface ITaskRepository {
     taskId: string,
     dto: UpdateTaskDto,
     completedAt: Date | null | undefined,
+    audit: AuditActor,
   ): Promise<TaskEntity | null>;
 
-  softDelete(companyId: string, taskId: string): Promise<boolean>;
+  softDelete(
+    companyId: string,
+    taskId: string,
+    audit: AuditActor,
+  ): Promise<boolean>;
 }

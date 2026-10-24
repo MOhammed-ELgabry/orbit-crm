@@ -19,10 +19,11 @@
  *     `roleId: { in: ... }` for RolePermission, which has no `id`).
  *   - An empty ID list never reaches Prisma.
  *   - No TRUNCATE / DROP / raw DELETE / updateMany / deleteMany({}) anywhere.
- *     (The one raw statement is `SET LOCAL orbit.chat_purge = 'on'`, the
- *     explicit opt-in the chat history triggers require for any DELETE; the
- *     deletes it enables are still typed deleteMany calls scoped by
- *     validated company IDs.)
+ *     (The raw statements are `SET LOCAL orbit.chat_purge = 'on'`, the
+ *     explicit opt-in the chat history triggers require for any DELETE, and
+ *     the `ALTER TABLE "AuditLog" DISABLE/ENABLE TRIGGER USER` pair described
+ *     in purgeAuditData(); the deletes they enable are still typed deleteMany
+ *     calls scoped by validated company IDs.)
  *   - Permission rows and `_prisma_migrations` are never touched.
  *
  * Typical use (see the integration specs):
@@ -95,6 +96,7 @@ export type CreatedIds = { [K in keyof IdLedger]: string[] };
 
 export interface DeletedCounts {
   chatRows: number;
+  auditRows: number;
   authSession: number;
   contact: number;
   rolePermission: number;
@@ -156,6 +158,7 @@ function mergeLedger(target: IdLedger, source: IdLedger): void {
 function emptyCounts(): DeletedCounts {
   return {
     chatRows: 0,
+    auditRows: 0,
     authSession: 0,
     contact: 0,
     rolePermission: 0,
@@ -489,6 +492,48 @@ async function purgeChatData(
 }
 
 /**
+ * The audit log is append-only in the database (see the
+ * 20261022090000_add_audit_log migration): triggers reject UPDATE, DELETE and
+ * TRUNCATE with NO session-level bypass, and AuditLog.companyId is
+ * ON DELETE RESTRICT, so a company that has audit rows can never be deleted
+ * before them. Test data is the one legitimate purge, so it is removed here,
+ * by validated company IDs only, in ONE transaction:
+ *
+ *   ALTER TABLE ... DISABLE TRIGGER USER   (needs the table owner)
+ *   deleteMany({ companyId in <validated ids> })
+ *   ALTER TABLE ... ENABLE TRIGGER USER
+ *
+ * ALTER TABLE is transactional in PostgreSQL, so if ANY step fails the whole
+ * transaction rolls back INCLUDING the DISABLE: the triggers can never be left
+ * disabled by a failed or interrupted cleanup. `DISABLE TRIGGER USER` leaves
+ * the foreign-key (system) triggers alone. Only this test database is ever
+ * touched: cleanup() and recoverOrphans() prove the database identity first.
+ */
+async function purgeAuditData(
+  prisma: PrismaClient,
+  companyIds: string[],
+): Promise<number> {
+  if (companyIds.length === 0) return 0;
+
+  try {
+    const results = await prisma.$transaction([
+      prisma.$executeRaw`ALTER TABLE "AuditLog" DISABLE TRIGGER USER`,
+      prisma.auditLog.deleteMany({
+        where: { companyId: { in: companyIds } },
+      }),
+      prisma.$executeRaw`ALTER TABLE "AuditLog" ENABLE TRIGGER USER`,
+    ]);
+
+    return results[1].count;
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new HarnessSafetyError(
+      `Cleanup stopped while purging audit data: ${reason}`,
+    );
+  }
+}
+
+/**
  * Discover -> validate EVERY id -> delete by IDs, children first.
  * Validation finishes before the first DELETE; if it fails nothing is deleted.
  *
@@ -499,6 +544,7 @@ async function purgeChatData(
  *   User.roleId -> Role (SET NULL)         users before roles
  *   User.companyId -> Company (SET NULL)   users before the company
  *   Role/Contact.companyId -> Company (cascade), company last
+ *   AuditLog.companyId -> Company (RESTRICT) audit rows before the company
  * Permission and `_prisma_migrations` are never touched.
  *
  * Each ID is removed from the ledger as soon as its step succeeds, so after a
@@ -517,6 +563,11 @@ async function deleteLedger(
   // Chat history (RESTRICT FKs to Company) goes first, by validated company
   // IDs; it also references users only through nullable / key columns.
   counts.chatRows = await purgeChatData(prisma, [...ledger.createdCompanyIds]);
+
+  // Audit history (RESTRICT FK to Company, append-only triggers): same rule.
+  counts.auditRows = await purgeAuditData(prisma, [
+    ...ledger.createdCompanyIds,
+  ]);
 
   counts.authSession = await deleteByIds(
     'AuthSession',

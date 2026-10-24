@@ -40,6 +40,8 @@ export interface CalendarEventListResponse {
   meta: CalendarEventListMeta;
 }
 
+import type { AuditActor } from '../audit/audit.types';
+
 @Injectable()
 export class CalendarService {
   constructor(
@@ -58,6 +60,7 @@ export class CalendarService {
     companyId: string,
     createdById: string,
     dto: CreateCalendarEventDto,
+    audit: AuditActor,
   ): Promise<CalendarEventEntity> {
     await this.assertRelations(companyId, dto);
 
@@ -67,22 +70,26 @@ export class CalendarService {
 
     this.validateTiming(startAt, endAt, allDay);
 
-    const event = await this.calendarEventRepository.create(companyId, {
-      title: dto.title,
-      description: dto.description ?? null,
-      location: dto.location ?? null,
+    const event = await this.calendarEventRepository.create(
+      companyId,
+      {
+        title: dto.title,
+        description: dto.description ?? null,
+        location: dto.location ?? null,
 
-      startAt,
-      endAt,
-      allDay,
+        startAt,
+        endAt,
+        allDay,
 
-      contactId: dto.contactId ?? null,
-      leadId: dto.leadId ?? null,
-      dealId: dto.dealId ?? null,
-      assignedToId: dto.assignedToId ?? null,
+        contactId: dto.contactId ?? null,
+        leadId: dto.leadId ?? null,
+        dealId: dto.dealId ?? null,
+        assignedToId: dto.assignedToId ?? null,
 
-      createdById,
-    });
+        createdById,
+      },
+      audit,
+    );
 
     const createdActivity = await this.activityService.logCalendarEvent(
       companyId,
@@ -183,6 +190,7 @@ export class CalendarService {
     id: string,
     dto: UpdateCalendarEventDto,
     actorId: string,
+    audit: AuditActor,
   ): Promise<CalendarEventEntity> {
     const before = await this.calendarEventRepository.findById(companyId, id);
 
@@ -211,28 +219,40 @@ export class CalendarService {
       this.validateTiming(mergedStartAt, mergedEndAt, mergedAllDay);
     }
 
-    const after = await this.calendarEventRepository.update(companyId, id, {
-      ...(dto.title !== undefined && { title: dto.title }),
-      ...(dto.description !== undefined && { description: dto.description }),
-      ...(dto.location !== undefined && { location: dto.location }),
+    const after = await this.calendarEventRepository.update(
+      companyId,
+      id,
+      {
+        ...(dto.title !== undefined && { title: dto.title }),
+        ...(dto.description !== undefined && { description: dto.description }),
+        ...(dto.location !== undefined && { location: dto.location }),
 
-      ...(dto.startAt !== undefined && { startAt: mergedStartAt }),
-      ...(dto.endAt !== undefined && { endAt: mergedEndAt }),
-      ...(dto.allDay !== undefined && { allDay: mergedAllDay }),
-      ...(dto.status !== undefined && { status: dto.status }),
+        ...(dto.startAt !== undefined && { startAt: mergedStartAt }),
+        ...(dto.endAt !== undefined && { endAt: mergedEndAt }),
+        ...(dto.allDay !== undefined && { allDay: mergedAllDay }),
+        ...(dto.status !== undefined && { status: dto.status }),
 
-      ...(dto.contactId !== undefined && { contactId: dto.contactId }),
-      ...(dto.leadId !== undefined && { leadId: dto.leadId }),
-      ...(dto.dealId !== undefined && { dealId: dto.dealId }),
-      ...(dto.assignedToId !== undefined && { assignedToId: dto.assignedToId }),
-    });
+        ...(dto.contactId !== undefined && { contactId: dto.contactId }),
+        ...(dto.leadId !== undefined && { leadId: dto.leadId }),
+        ...(dto.dealId !== undefined && { dealId: dto.dealId }),
+        ...(dto.assignedToId !== undefined && {
+          assignedToId: dto.assignedToId,
+        }),
+      },
+      audit,
+    );
 
     await this.logUpdateEvents(companyId, actorId, before, after);
 
     return after;
   }
 
-  async remove(companyId: string, id: string, actorId: string): Promise<void> {
+  async remove(
+    companyId: string,
+    id: string,
+    actorId: string,
+    audit: AuditActor,
+  ): Promise<void> {
     const existing = await this.calendarEventRepository.findById(companyId, id);
 
     if (!existing) {
@@ -242,6 +262,7 @@ export class CalendarService {
     const deleted = await this.calendarEventRepository.softDelete(
       companyId,
       id,
+      audit,
     );
 
     if (!deleted) {

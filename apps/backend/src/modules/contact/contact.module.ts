@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { PrismaModule } from '../../infrastructure/prisma/prisma.module';
+import { AuditModule } from '../audit/audit.module';
 import { AuthModule } from '../auth/auth.module';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserModule } from '../user/user.module';
@@ -14,7 +15,7 @@ import { ContactRepository } from './repository/contact.repository';
 import { ContactService } from './contact.service';
 
 @Module({
-  imports: [PrismaModule, AuthModule, UserModule],
+  imports: [PrismaModule, AuthModule, UserModule, AuditModule],
 
   controllers: [ContactController, ContactImportController],
 

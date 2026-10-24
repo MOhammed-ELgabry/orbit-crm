@@ -1,3 +1,4 @@
+import type { AuditActor } from '../../audit/audit.types';
 import { PaginationResult } from '../../../common/interfaces/pagination-result.interface';
 
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
@@ -16,7 +17,11 @@ export interface ICompanyRepository {
 
   findById(id: string): Promise<CompanyEntity | null>;
 
-  update(id: string, data: UpdateCompanyDto): Promise<CompanyEntity>;
+  update(
+    id: string,
+    data: UpdateCompanyDto,
+    audit: AuditActor,
+  ): Promise<CompanyEntity>;
 
-  delete(id: string): Promise<void>;
+  delete(id: string, audit: AuditActor): Promise<void>;
 }

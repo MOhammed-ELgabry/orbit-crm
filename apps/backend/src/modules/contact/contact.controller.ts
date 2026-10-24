@@ -19,6 +19,7 @@ import {
 
 import type { Request } from 'express';
 
+import { auditActorFromRequest } from '../audit/audit-actor.util';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { IJwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { CsrfGuard } from '../../common/security/csrf.guard';
@@ -57,7 +58,12 @@ export class ContactController {
     @Req() req: AuthenticatedRequest,
     @Body() dto: CreateContactDto,
   ) {
-    return this.contactService.create(req.user.companyId, req.user.sub, dto);
+    return this.contactService.create(
+      req.user.companyId,
+      req.user.sub,
+      dto,
+      auditActorFromRequest(req),
+    );
   }
 
   @Get()
@@ -123,7 +129,12 @@ export class ContactController {
     @Param('id') contactId: string,
     @Body() dto: UpdateContactDto,
   ) {
-    return this.contactService.update(req.user.companyId, contactId, dto);
+    return this.contactService.update(
+      req.user.companyId,
+      contactId,
+      dto,
+      auditActorFromRequest(req),
+    );
   }
 
   @Delete(':id')
@@ -146,6 +157,10 @@ export class ContactController {
     @Req() req: AuthenticatedRequest,
     @Param('id') contactId: string,
   ): Promise<void> {
-    return this.contactService.remove(req.user.companyId, contactId);
+    return this.contactService.remove(
+      req.user.companyId,
+      contactId,
+      auditActorFromRequest(req),
+    );
   }
 }

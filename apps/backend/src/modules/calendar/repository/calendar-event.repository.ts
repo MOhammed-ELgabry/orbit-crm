@@ -14,6 +14,14 @@ import {
   UpdateCalendarEventInput,
 } from './calendar-event.repository.interface';
 
+import {
+  auditCreate,
+  auditDelete,
+  auditUpdate,
+} from '../../audit/audit.writer';
+import type { AuditActor } from '../../audit/audit.types';
+import { NotFoundException } from '@nestjs/common';
+
 @Injectable()
 export class CalendarEventRepository implements ICalendarEventRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -21,29 +29,33 @@ export class CalendarEventRepository implements ICalendarEventRepository {
   async create(
     companyId: string,
     input: CreateCalendarEventInput,
+    audit: AuditActor,
   ): Promise<CalendarEventEntity> {
     try {
-      const event = await this.prisma.calendarEvent.create({
-        data: {
-          companyId,
-          createdById: input.createdById,
+      return await this.prisma.$transaction(async (tx) => {
+        const event = await tx.calendarEvent.create({
+          data: {
+            companyId,
+            createdById: input.createdById,
 
-          title: input.title,
-          description: input.description,
-          location: input.location,
+            title: input.title,
+            description: input.description,
+            location: input.location,
 
-          startAt: input.startAt,
-          endAt: input.endAt,
-          allDay: input.allDay,
+            startAt: input.startAt,
+            endAt: input.endAt,
+            allDay: input.allDay,
 
-          contactId: input.contactId,
-          leadId: input.leadId,
-          dealId: input.dealId,
-          assignedToId: input.assignedToId,
-        },
+            contactId: input.contactId,
+            leadId: input.leadId,
+            dealId: input.dealId,
+            assignedToId: input.assignedToId,
+          },
+        });
+
+        await auditCreate(tx, 'calendarEvent', companyId, audit, event);
+        return new CalendarEventEntity(event);
       });
-
-      return new CalendarEventEntity(event);
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }
@@ -148,59 +160,84 @@ export class CalendarEventRepository implements ICalendarEventRepository {
     companyId: string,
     id: string,
     input: UpdateCalendarEventInput,
+    audit: AuditActor,
   ): Promise<CalendarEventEntity> {
     try {
-      const event = await this.prisma.calendarEvent.update({
-        where: {
-          id,
-          companyId,
-          deletedAt: null,
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        const before = await tx.calendarEvent.findFirst({
+          where: { id, companyId, deletedAt: null },
+        });
 
-        data: {
-          ...(input.title !== undefined && { title: input.title }),
-          ...(input.description !== undefined && {
-            description: input.description,
-          }),
-          ...(input.location !== undefined && { location: input.location }),
+        if (!before) {
+          throw new NotFoundException('Record not found.');
+        }
 
-          ...(input.startAt !== undefined && { startAt: input.startAt }),
-          ...(input.endAt !== undefined && { endAt: input.endAt }),
-          ...(input.allDay !== undefined && { allDay: input.allDay }),
-          ...(input.status !== undefined && { status: input.status }),
+        const event = await tx.calendarEvent.update({
+          where: {
+            id,
+            companyId,
+            deletedAt: null,
+          },
 
-          ...(input.contactId !== undefined && {
-            contactId: input.contactId,
-          }),
-          ...(input.leadId !== undefined && { leadId: input.leadId }),
-          ...(input.dealId !== undefined && { dealId: input.dealId }),
-          ...(input.assignedToId !== undefined && {
-            assignedToId: input.assignedToId,
-          }),
-        },
+          data: {
+            ...(input.title !== undefined && { title: input.title }),
+            ...(input.description !== undefined && {
+              description: input.description,
+            }),
+            ...(input.location !== undefined && { location: input.location }),
+
+            ...(input.startAt !== undefined && { startAt: input.startAt }),
+            ...(input.endAt !== undefined && { endAt: input.endAt }),
+            ...(input.allDay !== undefined && { allDay: input.allDay }),
+            ...(input.status !== undefined && { status: input.status }),
+
+            ...(input.contactId !== undefined && {
+              contactId: input.contactId,
+            }),
+            ...(input.leadId !== undefined && { leadId: input.leadId }),
+            ...(input.dealId !== undefined && { dealId: input.dealId }),
+            ...(input.assignedToId !== undefined && {
+              assignedToId: input.assignedToId,
+            }),
+          },
+        });
+
+        await auditUpdate(tx, 'calendarEvent', companyId, audit, before, event);
+        return new CalendarEventEntity(event);
       });
-
-      return new CalendarEventEntity(event);
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }
   }
 
-  async softDelete(companyId: string, id: string): Promise<boolean> {
+  async softDelete(
+    companyId: string,
+    id: string,
+    audit: AuditActor,
+  ): Promise<boolean> {
     try {
-      const result = await this.prisma.calendarEvent.updateMany({
-        where: {
-          id,
-          companyId,
-          deletedAt: null,
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        const existing = await tx.calendarEvent.findFirst({
+          where: { id: id, companyId, deletedAt: null },
+        });
 
-        data: {
-          deletedAt: new Date(),
-        },
+        if (!existing) {
+          return false;
+        }
+
+        const result = await tx.calendarEvent.updateMany({
+          where: { id: id, companyId, deletedAt: null },
+          data: { deletedAt: new Date() },
+        });
+
+        if (result.count === 0) {
+          return false;
+        }
+
+        await auditDelete(tx, 'calendarEvent', companyId, audit, existing);
+
+        return true;
       });
-
-      return result.count > 0;
     } catch (error) {
       PrismaExceptionMapper.map(error);
     }

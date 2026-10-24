@@ -13,6 +13,7 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { auditRequestMeta } from '../audit/audit-actor.util';
 import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import { randomBytes } from 'crypto';
@@ -287,8 +288,8 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
-  async resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.authService.resetPassword(dto);
+  async resetPassword(@Body() dto: ResetPasswordDto, @Req() req: Request) {
+    return this.authService.resetPassword(dto, auditRequestMeta(req));
   }
 
   @ApiBearerAuth('JWT')

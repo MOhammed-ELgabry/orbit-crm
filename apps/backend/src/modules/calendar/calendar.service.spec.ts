@@ -2,6 +2,9 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 import { CalendarService } from './calendar.service';
 import { CalendarEventEntity } from './entities/calendar-event.entity';
+import type { AuditActor } from '../audit/audit.types';
+
+const audit: AuditActor = { actorUserId: 'actor-1' };
 
 describe('CalendarService', () => {
   const companyId = 'company-1';
@@ -99,44 +102,58 @@ describe('CalendarService', () => {
         userService,
       } = buildService();
 
-      await service.create(companyId, createdById, {
-        title: 'New event',
-        startAt: startAt.toISOString(),
-        endAt: endAt.toISOString(),
-      });
+      await service.create(
+        companyId,
+        createdById,
+        {
+          title: 'New event',
+          startAt: startAt.toISOString(),
+          endAt: endAt.toISOString(),
+        },
+        audit,
+      );
 
       expect(contactService.findById).not.toHaveBeenCalled();
       expect(leadService.findById).not.toHaveBeenCalled();
       expect(dealService.findById).not.toHaveBeenCalled();
       expect(userService.findById).not.toHaveBeenCalled();
-      expect(calendarEventRepository.create).toHaveBeenCalledWith(companyId, {
-        title: 'New event',
-        description: null,
-        location: null,
-        startAt,
-        endAt,
-        allDay: false,
-        contactId: null,
-        leadId: null,
-        dealId: null,
-        assignedToId: null,
-        createdById,
-      });
+      expect(calendarEventRepository.create).toHaveBeenCalledWith(
+        companyId,
+        {
+          title: 'New event',
+          description: null,
+          location: null,
+          startAt,
+          endAt,
+          allDay: false,
+          contactId: null,
+          leadId: null,
+          dealId: null,
+          assignedToId: null,
+          createdById,
+        },
+        audit,
+      );
     });
 
     it('validates contactId/leadId/dealId/assignedToId against the caller\u2019s own company (IDOR guard)', async () => {
       const { service, contactService, leadService, dealService, userService } =
         buildService();
 
-      await service.create(companyId, createdById, {
-        title: 'New event',
-        startAt: startAt.toISOString(),
-        endAt: endAt.toISOString(),
-        contactId: 'contact-1',
-        leadId: 'lead-1',
-        dealId: 'deal-1',
-        assignedToId: 'user-2',
-      });
+      await service.create(
+        companyId,
+        createdById,
+        {
+          title: 'New event',
+          startAt: startAt.toISOString(),
+          endAt: endAt.toISOString(),
+          contactId: 'contact-1',
+          leadId: 'lead-1',
+          dealId: 'deal-1',
+          assignedToId: 'user-2',
+        },
+        audit,
+      );
 
       expect(contactService.findById).toHaveBeenCalledWith(
         companyId,
@@ -156,12 +173,17 @@ describe('CalendarService', () => {
       );
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'New event',
-          startAt: startAt.toISOString(),
-          endAt: endAt.toISOString(),
-          contactId: 'contact-x',
-        }),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'New event',
+            startAt: startAt.toISOString(),
+            endAt: endAt.toISOString(),
+            contactId: 'contact-x',
+          },
+          audit,
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -172,12 +194,17 @@ describe('CalendarService', () => {
       );
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'New event',
-          startAt: startAt.toISOString(),
-          endAt: endAt.toISOString(),
-          leadId: 'lead-x',
-        }),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'New event',
+            startAt: startAt.toISOString(),
+            endAt: endAt.toISOString(),
+            leadId: 'lead-x',
+          },
+          audit,
+        ),
       ).rejects.toThrow(
         'leadId "lead-x" does not reference a lead in this company.',
       );
@@ -189,12 +216,17 @@ describe('CalendarService', () => {
       dealService.findById.mockRejectedValue(infraError);
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'New event',
-          startAt: startAt.toISOString(),
-          endAt: endAt.toISOString(),
-          dealId: 'deal-1',
-        }),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'New event',
+            startAt: startAt.toISOString(),
+            endAt: endAt.toISOString(),
+            dealId: 'deal-1',
+          },
+          audit,
+        ),
       ).rejects.toThrow(infraError);
     });
 
@@ -202,11 +234,16 @@ describe('CalendarService', () => {
       const { service } = buildService();
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'New event',
-          startAt: '2026-10-01T14:00:00.000Z',
-          endAt: '2026-10-01T13:00:00.000Z',
-        }),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'New event',
+            startAt: '2026-10-01T14:00:00.000Z',
+            endAt: '2026-10-01T13:00:00.000Z',
+          },
+          audit,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -214,11 +251,16 @@ describe('CalendarService', () => {
       const { service } = buildService();
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'New event',
-          startAt: '2026-10-01T13:00:00.000Z',
-          endAt: '2026-10-01T13:00:00.000Z',
-        }),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'New event',
+            startAt: '2026-10-01T13:00:00.000Z',
+            endAt: '2026-10-01T13:00:00.000Z',
+          },
+          audit,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -226,22 +268,32 @@ describe('CalendarService', () => {
       const { service } = buildService();
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'New event',
-          startAt: '2026-10-01T00:00:00.000Z',
-          endAt: '2026-11-05T00:00:00.000Z', // 35 days
-        }),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'New event',
+            startAt: '2026-10-01T00:00:00.000Z',
+            endAt: '2026-11-05T00:00:00.000Z', // 35 days
+          },
+          audit,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('accepts an event exactly at the 31-day boundary', async () => {
       const { service, calendarEventRepository } = buildService();
 
-      await service.create(companyId, createdById, {
-        title: 'New event',
-        startAt: '2026-10-01T00:00:00.000Z',
-        endAt: '2026-11-01T00:00:00.000Z', // exactly 31 days
-      });
+      await service.create(
+        companyId,
+        createdById,
+        {
+          title: 'New event',
+          startAt: '2026-10-01T00:00:00.000Z',
+          endAt: '2026-11-01T00:00:00.000Z', // exactly 31 days
+        },
+        audit,
+      );
 
       expect(calendarEventRepository.create).toHaveBeenCalled();
     });
@@ -250,11 +302,16 @@ describe('CalendarService', () => {
       const { service } = buildService();
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'New event',
-          startAt: 'not-a-date',
-          endAt: endAt.toISOString(),
-        } as never),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'New event',
+            startAt: 'not-a-date',
+            endAt: endAt.toISOString(),
+          } as never,
+          audit,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -262,39 +319,55 @@ describe('CalendarService', () => {
       const { service } = buildService();
 
       await expect(
-        service.create(companyId, createdById, {
-          title: 'All day',
-          allDay: true,
-          startAt: '2026-10-01T08:00:00.000Z',
-          endAt: '2026-10-02T00:00:00.000Z',
-        }),
+        service.create(
+          companyId,
+          createdById,
+          {
+            title: 'All day',
+            allDay: true,
+            startAt: '2026-10-01T08:00:00.000Z',
+            endAt: '2026-10-02T00:00:00.000Z',
+          },
+          audit,
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('accepts a valid single-day all-day event (exclusive end date, both at UTC midnight)', async () => {
       const { service, calendarEventRepository } = buildService();
 
-      await service.create(companyId, createdById, {
-        title: 'All day',
-        allDay: true,
-        startAt: '2026-10-01T00:00:00.000Z',
-        endAt: '2026-10-02T00:00:00.000Z',
-      });
+      await service.create(
+        companyId,
+        createdById,
+        {
+          title: 'All day',
+          allDay: true,
+          startAt: '2026-10-01T00:00:00.000Z',
+          endAt: '2026-10-02T00:00:00.000Z',
+        },
+        audit,
+      );
 
       expect(calendarEventRepository.create).toHaveBeenCalledWith(
         companyId,
         expect.objectContaining({ allDay: true }),
+        audit,
       );
     });
 
     it('logs a "created" activity referencing the new event', async () => {
       const { service, activityService } = buildService();
 
-      const event = await service.create(companyId, createdById, {
-        title: 'New event',
-        startAt: startAt.toISOString(),
-        endAt: endAt.toISOString(),
-      });
+      const event = await service.create(
+        companyId,
+        createdById,
+        {
+          title: 'New event',
+          startAt: startAt.toISOString(),
+          endAt: endAt.toISOString(),
+        },
+        audit,
+      );
 
       expect(activityService.logCalendarEvent).toHaveBeenCalledWith(
         companyId,
@@ -396,6 +469,7 @@ describe('CalendarService', () => {
           eventId,
           { contactId: 'contact-1' },
           createdById,
+          audit,
         ),
       ).rejects.toThrow(NotFoundException);
       expect(contactService.findById).not.toHaveBeenCalled();
@@ -409,12 +483,14 @@ describe('CalendarService', () => {
         eventId,
         { contactId: null },
         createdById,
+        audit,
       );
 
       expect(calendarEventRepository.update).toHaveBeenCalledWith(
         companyId,
         eventId,
         expect.objectContaining({ contactId: null }),
+        audit,
       );
     });
 
@@ -426,6 +502,7 @@ describe('CalendarService', () => {
         eventId,
         { title: 'Renamed' },
         createdById,
+        audit,
       );
 
       const [, , input] = calendarEventRepository.update.mock.calls[0];
@@ -444,6 +521,7 @@ describe('CalendarService', () => {
           eventId,
           { contactId: '' } as never,
           createdById,
+          audit,
         ),
       ).resolves.toBeDefined();
       // '' is falsy, so assertRelations' `if (dto.contactId)` check
@@ -469,6 +547,7 @@ describe('CalendarService', () => {
           eventId,
           { endAt: '2026-10-01T12:00:00.000Z' }, // before the existing startAt
           createdById,
+          audit,
         ),
       ).rejects.toThrow(BadRequestException);
     });
@@ -486,6 +565,7 @@ describe('CalendarService', () => {
           eventId,
           { title: 'Renamed only' },
           createdById,
+          audit,
         ),
       ).resolves.toBeDefined();
     });
@@ -503,6 +583,7 @@ describe('CalendarService', () => {
           eventId,
           { status: 'completed' },
           createdById,
+          audit,
         );
 
         expect(activityService.logCalendarEvent).toHaveBeenCalledWith(
@@ -525,6 +606,7 @@ describe('CalendarService', () => {
           eventId,
           { status: 'scheduled' },
           createdById,
+          audit,
         );
 
         expect(activityService.logCalendarEvent).not.toHaveBeenCalled();
@@ -542,6 +624,7 @@ describe('CalendarService', () => {
           eventId,
           { assignedToId: 'user-2' },
           createdById,
+          audit,
         );
 
         expect(activityService.logCalendarEvent).toHaveBeenCalledWith(
@@ -572,6 +655,7 @@ describe('CalendarService', () => {
             endAt: '2026-10-02T14:00:00.000Z',
           },
           createdById,
+          audit,
         );
 
         expect(activityService.logCalendarEvent).toHaveBeenCalledWith(
@@ -591,6 +675,7 @@ describe('CalendarService', () => {
           eventId,
           { title: 'Renamed' },
           createdById,
+          audit,
         );
 
         expect(activityService.logCalendarEvent).not.toHaveBeenCalled();
@@ -604,7 +689,7 @@ describe('CalendarService', () => {
       calendarEventRepository.findById.mockResolvedValue(null);
 
       await expect(
-        service.remove(otherCompanyId, eventId, createdById),
+        service.remove(otherCompanyId, eventId, createdById, audit),
       ).rejects.toThrow(NotFoundException);
       expect(calendarEventRepository.softDelete).not.toHaveBeenCalled();
     });
@@ -612,7 +697,7 @@ describe('CalendarService', () => {
     it('logs a "deleted" activity using the pre-delete title', async () => {
       const { service, activityService } = buildService();
 
-      await service.remove(companyId, eventId, createdById);
+      await service.remove(companyId, eventId, createdById, audit);
 
       expect(activityService.logCalendarEvent).toHaveBeenCalledWith(
         companyId,
@@ -631,7 +716,7 @@ describe('CalendarService', () => {
       calendarEventRepository.softDelete.mockResolvedValue(false);
 
       await expect(
-        service.remove(companyId, eventId, createdById),
+        service.remove(companyId, eventId, createdById, audit),
       ).rejects.toThrow(NotFoundException);
       expect(activityService.logCalendarEvent).not.toHaveBeenCalled();
     });
@@ -648,12 +733,17 @@ describe('CalendarService', () => {
         evt({ assignedToId: 'user-2' }),
       );
 
-      await service.create(companyId, createdById, {
-        title: 'Product demo',
-        startAt: startAt.toISOString(),
-        endAt: endAt.toISOString(),
-        assignedToId: 'user-2',
-      });
+      await service.create(
+        companyId,
+        createdById,
+        {
+          title: 'Product demo',
+          startAt: startAt.toISOString(),
+          endAt: endAt.toISOString(),
+          assignedToId: 'user-2',
+        },
+        audit,
+      );
 
       expect(notificationService.publish).toHaveBeenCalledTimes(1);
       expect(notificationService.publish).toHaveBeenCalledWith({
@@ -672,11 +762,16 @@ describe('CalendarService', () => {
     it('create: publishes nothing for an unassigned event', async () => {
       const { service, notificationService } = buildService();
 
-      await service.create(companyId, createdById, {
-        title: 'Product demo',
-        startAt: startAt.toISOString(),
-        endAt: endAt.toISOString(),
-      });
+      await service.create(
+        companyId,
+        createdById,
+        {
+          title: 'Product demo',
+          startAt: startAt.toISOString(),
+          endAt: endAt.toISOString(),
+        },
+        audit,
+      );
 
       expect(notificationService.publish).not.toHaveBeenCalled();
     });
@@ -696,6 +791,7 @@ describe('CalendarService', () => {
         eventId,
         { status: 'cancelled' },
         'user-3',
+        audit,
       );
 
       expect(notificationService.publish).toHaveBeenCalledTimes(1);
@@ -724,6 +820,7 @@ describe('CalendarService', () => {
         eventId,
         { status: 'completed' },
         createdById,
+        audit,
       );
 
       expect(notificationService.publish).not.toHaveBeenCalled();
@@ -741,6 +838,7 @@ describe('CalendarService', () => {
         eventId,
         { assignedToId: 'user-2' },
         createdById,
+        audit,
       );
 
       expect(notificationService.publish).toHaveBeenCalledTimes(1);
@@ -769,6 +867,7 @@ describe('CalendarService', () => {
         eventId,
         { assignedToId: 'user-2' },
         createdById,
+        audit,
       );
 
       expect(notificationService.publish).not.toHaveBeenCalled();
@@ -789,6 +888,7 @@ describe('CalendarService', () => {
         eventId,
         { assignedToId: null },
         createdById,
+        audit,
       );
 
       expect(notificationService.publish).not.toHaveBeenCalled();
@@ -811,7 +911,13 @@ describe('CalendarService', () => {
         evt({ assignedToId: 'user-2', startAt: newStart, endAt: newEnd }),
       );
 
-      await service.update(companyId, eventId, reschedulePatch, 'user-3');
+      await service.update(
+        companyId,
+        eventId,
+        reschedulePatch,
+        'user-3',
+        audit,
+      );
 
       expect(notificationService.publish).toHaveBeenCalledTimes(1);
       expect(notificationService.publish).toHaveBeenCalledWith({
@@ -839,6 +945,7 @@ describe('CalendarService', () => {
         eventId,
         { ...reschedulePatch, assignedToId: 'user-2' },
         createdById,
+        audit,
       );
 
       expect(notificationService.publish).toHaveBeenCalledTimes(1);
@@ -865,7 +972,13 @@ describe('CalendarService', () => {
         }),
       );
 
-      await service.update(companyId, eventId, reschedulePatch, createdById);
+      await service.update(
+        companyId,
+        eventId,
+        reschedulePatch,
+        createdById,
+        audit,
+      );
 
       expect(notificationService.publish).not.toHaveBeenCalled();
     });

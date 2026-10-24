@@ -5,6 +5,9 @@ import { ContactService } from '../contact/contact.service';
 import { ActivityService } from './activity.service';
 import { ActivityEntity } from './entities/activity.entity';
 import type { IActivityRepository } from './repository/activity.repository.interface';
+import type { AuditActor } from '../audit/audit.types';
+
+const audit: AuditActor = { actorUserId: 'actor-1' };
 
 /**
  * Tenant-isolation and cross-entity-association tests for ActivityService.
@@ -81,7 +84,7 @@ describe('ActivityService', () => {
       activityRepository.findById.mockResolvedValue(null);
 
       await expect(
-        service.update(companyId, activityId, { title: 'Hijacked' }),
+        service.update(companyId, activityId, { title: 'Hijacked' }, audit),
       ).rejects.toBeInstanceOf(NotFoundException);
 
       expect(activityRepository.update).not.toHaveBeenCalled();
@@ -91,7 +94,7 @@ describe('ActivityService', () => {
       activityRepository.softDelete.mockResolvedValue(false);
 
       await expect(
-        service.remove(companyId, activityId),
+        service.remove(companyId, activityId, audit),
       ).rejects.toBeInstanceOf(NotFoundException);
     });
 
@@ -129,11 +132,16 @@ describe('ActivityService', () => {
       contactService.findById.mockRejectedValue(new NotFoundException());
 
       await expect(
-        service.create(companyId, callerId, {
-          type: 'NOTE',
-          title: 'Should fail',
-          contactId,
-        }),
+        service.create(
+          companyId,
+          callerId,
+          {
+            type: 'NOTE',
+            title: 'Should fail',
+            contactId,
+          },
+          audit,
+        ),
       ).rejects.toBeInstanceOf(NotFoundException);
 
       expect(contactService.findById).toHaveBeenCalledWith(
@@ -147,16 +155,22 @@ describe('ActivityService', () => {
       contactService.findById.mockResolvedValue({} as never);
       activityRepository.create.mockResolvedValue(activity);
 
-      await service.create(companyId, callerId, {
-        type: 'NOTE',
-        title: 'Fine',
-        contactId,
-      });
+      await service.create(
+        companyId,
+        callerId,
+        {
+          type: 'NOTE',
+          title: 'Fine',
+          contactId,
+        },
+        audit,
+      );
 
       expect(activityRepository.create).toHaveBeenCalledWith(
         companyId,
         callerId,
         expect.objectContaining({ contactId }),
+        audit,
       );
     });
 
@@ -165,9 +179,14 @@ describe('ActivityService', () => {
       contactService.findById.mockRejectedValue(new NotFoundException());
 
       await expect(
-        service.update(companyId, activityId, {
-          contactId: 'contact-in-company-b',
-        }),
+        service.update(
+          companyId,
+          activityId,
+          {
+            contactId: 'contact-in-company-b',
+          },
+          audit,
+        ),
       ).rejects.toBeInstanceOf(NotFoundException);
 
       expect(activityRepository.update).not.toHaveBeenCalled();
@@ -176,10 +195,15 @@ describe('ActivityService', () => {
     it('create() does not validate contactId when none is supplied', async () => {
       activityRepository.create.mockResolvedValue(activity);
 
-      await service.create(companyId, callerId, {
-        type: 'NOTE',
-        title: 'No contact',
-      });
+      await service.create(
+        companyId,
+        callerId,
+        {
+          type: 'NOTE',
+          title: 'No contact',
+        },
+        audit,
+      );
 
       expect(contactService.findById).not.toHaveBeenCalled();
     });
@@ -201,15 +225,21 @@ describe('ActivityService', () => {
         title: 'Updated',
       });
 
-      const result = await service.update(companyId, activityId, {
-        title: 'Updated',
-      });
+      const result = await service.update(
+        companyId,
+        activityId,
+        {
+          title: 'Updated',
+        },
+        audit,
+      );
 
       expect(result.title).toBe('Updated');
       expect(activityRepository.update).toHaveBeenCalledWith(
         companyId,
         activityId,
         expect.objectContaining({ title: 'Updated' }),
+        audit,
       );
     });
 
@@ -217,7 +247,7 @@ describe('ActivityService', () => {
       activityRepository.softDelete.mockResolvedValue(true);
 
       await expect(
-        service.remove(companyId, activityId),
+        service.remove(companyId, activityId, audit),
       ).resolves.toBeUndefined();
     });
   });
