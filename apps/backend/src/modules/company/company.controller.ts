@@ -142,7 +142,7 @@ export class CompanyController {
       'Convenience alias for GET /companies/:id that never requires the ' +
       'caller to already know their own companyId — it is taken ' +
       'directly from the authenticated session. Used by the frontend to ' +
-      'resolve businessType for dashboard routing; must be declared ' +
+      'load the signed-in user’s company; must be declared ' +
       'ahead of GET /companies/:id or Nest would match “me” as an id.',
   })
   @ApiOkResponse({

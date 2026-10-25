@@ -11,7 +11,6 @@ import { AuthService } from './auth.service';
 import {
   AUTH_REPOSITORY,
   AUTH_SESSION_REPOSITORY,
-  ONBOARDING_TOKEN_REPOSITORY,
   PASSWORD_RESET_REPOSITORY,
   SOCIAL_ACCOUNT_REPOSITORY,
 } from './constants/auth.constants';
@@ -40,7 +39,6 @@ describe('AuthService', () => {
         { provide: AUTH_SESSION_REPOSITORY, useValue: {} },
         { provide: PASSWORD_RESET_REPOSITORY, useValue: {} },
         { provide: SOCIAL_ACCOUNT_REPOSITORY, useValue: {} },
-        { provide: ONBOARDING_TOKEN_REPOSITORY, useValue: {} },
         { provide: ConfigService, useValue: { get: jest.fn() } },
         { provide: TokenHashService, useValue: {} },
         { provide: OAuthStateService, useValue: {} },

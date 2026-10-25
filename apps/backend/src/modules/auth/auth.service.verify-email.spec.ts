@@ -100,22 +100,38 @@ describe('AuthService.verifyEmail — F4: concurrent verification', () => {
     const prisma = { $transaction: jest.fn(txImpl) };
     const userRepository = {
       findByEmail: jest.fn().mockResolvedValue(baseUser),
+      // Re-read after the transaction commits, for session issuance.
+      findById: jest.fn().mockResolvedValue({
+        ...baseUser,
+        isEmailVerified: true,
+        isActive: true,
+        isOwner: true,
+        companyId: 'company-1',
+        roleId: null,
+        avatar: null,
+        language: 'en',
+        backgroundColor: null,
+      }),
     };
-    const emailVerificationRepository = {
-      findByEmail: jest.fn().mockResolvedValue(baseVerification),
-    };
-    const onboardingTokenRepository = {
-      deleteByCompanyId: jest.fn().mockResolvedValue(undefined),
+    const authSessionRepository = {
       create: jest.fn().mockResolvedValue(undefined),
+    };
+    const configService = {
+      getOrThrow: jest.fn().mockReturnValue('7d'),
     };
     const tokenHashService = {
       hash: jest.fn().mockReturnValue('hashed-token'),
     };
+    const jwtService = {
+      sign: jest.fn().mockReturnValue('signed-jwt'),
+    };
+    const emailVerificationRepository = {
+      findByEmail: jest.fn().mockResolvedValue(baseVerification),
+    };
 
     // Constructed directly, positionally, matching AuthService's real
-    // constructor order — every dependency verifyEmail()/
-    // issueOnboardingToken() don't touch is stubbed with {} and is
-    // never called by the code path under test.
+    // constructor order — every dependency verifyEmail() doesn't touch
+    // is stubbed with {} and is never called by the code path under test.
     const service = new AuthService(
       prisma as never,
       userRepository as never,
@@ -123,20 +139,19 @@ describe('AuthService.verifyEmail — F4: concurrent verification', () => {
       {} as never, // passwordService
       {} as never, // mailService
       {} as never, // authRepository
-      {} as never, // authSessionRepository
+      authSessionRepository as never,
       {} as never, // passwordResetRepository
       {} as never, // socialAccountRepository
-      onboardingTokenRepository as never,
-      {} as never, // configService
+      configService as never,
       tokenHashService as never,
       {} as never, // oauthStateService
       {} as never, // googleAuthProvider
       {} as never, // facebookAuthProvider
       {} as never, // microsoftAuthProvider
-      {} as never, // jwtService
+      jwtService as never,
     );
 
-    return { service };
+    return { service, authSessionRepository };
   }
 
   it('lets exactly one of two concurrent requests succeed and never creates a second company', async () => {
@@ -198,15 +213,17 @@ describe('AuthService.verifyEmail — F4: concurrent verification', () => {
       return cb(tx);
     };
 
-    const { service } = buildService(txImpl);
+    const { service, authSessionRepository } = buildService(txImpl);
 
     await expect(service.verifyEmail({ email, code })).rejects.toBeInstanceOf(
       BadRequestException,
     );
     expect(companyCreate).not.toHaveBeenCalled();
+    // A lost claim must never produce a session.
+    expect(authSessionRepository.create).not.toHaveBeenCalled();
   });
 
-  it('creates the company and returns an onboarding token on a normal, uncontested request', async () => {
+  it('creates the company and issues a session on a normal, uncontested request', async () => {
     const roleAndPermissionMocks = mockRoleAndPermission();
 
     const txImpl = async (cb: (tx: unknown) => unknown) => {
@@ -223,13 +240,16 @@ describe('AuthService.verifyEmail — F4: concurrent verification', () => {
       return cb(tx);
     };
 
-    const { service } = buildService(txImpl);
+    const { service, authSessionRepository } = buildService(txImpl);
 
     const result = await service.verifyEmail({ email, code });
 
-    expect(result.success).toBe(true);
-    expect(typeof result.onboardingToken).toBe('string');
-    expect(result.onboardingToken.length).toBeGreaterThan(0);
+    // The verified user gets a session through the shared issueSession().
+    expect(result.accessToken).toBe('signed-jwt');
+    expect(result.refreshToken).toBe('signed-jwt');
+    expect(result.user.id).toBe(userId);
+    expect(result.user.isOwner).toBe(true);
+    expect(authSessionRepository.create).toHaveBeenCalledTimes(1);
 
     // Phase 2 RBAC: a newly-created company must get its 4 default
     // roles seeded inside this same transaction — not a separate,

@@ -8,7 +8,6 @@ export interface ICompany {
   website: string | null;
   taxNumber: string | null;
   description: string | null;
-  businessType: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

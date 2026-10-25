@@ -31,7 +31,7 @@ describe('AuthService.resetPassword audit actor', () => {
     args[3] = { hash: jest.fn().mockResolvedValue('NEW-HASH') };
     args[6] = authSessionRepository;
     args[7] = passwordResetRepository;
-    args[11] = { hash: jest.fn().mockReturnValue('token-hash') };
+    args[10] = { hash: jest.fn().mockReturnValue('token-hash'), compare: jest.fn() };
 
     const service = new (
       AuthService as unknown as new (...a: unknown[]) => AuthService
@@ -88,3 +88,6 @@ describe('AuthService.resetPassword audit actor', () => {
     expect(serialized).not.toContain('Str0ng!pass');
   });
 });
+
+
+

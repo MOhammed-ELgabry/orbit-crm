@@ -5,8 +5,6 @@ import { FiMenu } from "react-icons/fi";
 import DatePickerComponent from "./DatePicker";
 import NotificationBell from "../Notification/NotificationBell";
 import ChatButton from "../Chat/ChatButton";
-import { useAuth } from "../../context/AuthContext";
-import { getBusinessTypeCopy } from "../../config/businessType";
 
 export default function DashboardHeader({
   onOpenNavigation,
@@ -15,13 +13,9 @@ export default function DashboardHeader({
 }) {
   const location = useLocation();
   const { t } = useTranslation();
-  const { company } = useAuth();
-
-  const businessCopy = getBusinessTypeCopy(company?.businessType);
-
   const pageTitleKeys: Record<string, string> = {
     "/dashboard": "dashboardNavLabel",
-    "/dashboard/contacts": businessCopy.contactsLabel,
+    "/dashboard/contacts": "contacts",
     "/dashboard/users": "teamNavLabel",
     "/dashboard/leads": "leadsNavLabel",
     "/dashboard/deals": "dealsNavLabel",
@@ -37,15 +31,12 @@ export default function DashboardHeader({
   const matchedKey =
     pageTitleKeys[location.pathname] ??
     (location.pathname.startsWith("/dashboard/contacts")
-      ? businessCopy.contactsLabel
+      ? "contacts"
       : "dashboardNavLabel");
 
   const title = t(matchedKey);
 
-  const subtitle =
-    location.pathname === "/dashboard"
-      ? t(businessCopy.dashboardTagline)
-      : t("dashboardSubtitle");
+  const subtitle = t("dashboardSubtitle");
 
   return (
     <div className="flex min-h-16 w-full items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">

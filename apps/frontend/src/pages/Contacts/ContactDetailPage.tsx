@@ -11,7 +11,6 @@ import {
 
 import { useAuth } from "../../context/AuthContext";
 import { useKeyedResource } from "../../hooks/useKeyedResource";
-import { getBusinessTypeCopy } from "../../config/businessType";
 import {
   getContact,
   updateContact,
@@ -34,9 +33,8 @@ export default function ContactDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const { company, hasPermission } = useAuth();
-  const businessCopy = getBusinessTypeCopy(company?.businessType);
-  const contactLabel = t(businessCopy.contactSingular);
+  const { hasPermission } = useAuth();
+  const contactLabel = t("contact");
 
   // The contact and everything shown for it belongs to `id`. The keyed
   // resource derives its status/data from the current id, so navigating to
@@ -116,7 +114,7 @@ export default function ContactDetailPage() {
           onClick={() => navigate("/dashboard/contacts")}
           className="text-xs font-semibold text-blue-600 hover:underline"
         >
-          {t("backToList", { label: t(businessCopy.contactsLabel) })}
+          {t("backToList", { label: t("contacts") })}
         </button>
       </div>
     );
@@ -136,7 +134,7 @@ export default function ContactDetailPage() {
           onClick={() => navigate("/dashboard/contacts")}
           className="text-xs font-semibold text-blue-600 hover:underline"
         >
-          {t("backToList", { label: t(businessCopy.contactsLabel) })}
+          {t("backToList", { label: t("contacts") })}
         </button>
       </div>
     );
@@ -168,7 +166,7 @@ export default function ContactDetailPage() {
         className="flex w-fit items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600"
       >
         <FiArrowLeft size={14} />
-        {t("backToList", { label: t(businessCopy.contactsLabel) })}
+        {t("backToList", { label: t("contacts") })}
       </button>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

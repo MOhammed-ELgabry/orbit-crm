@@ -84,21 +84,6 @@ const ar = {
   almostThere: "أوشكت على الانتهاء!",
   completeAccountSetup: "قم بتأكيد بريدك الإلكتروني لإكمال إعداد حسابك.",
 
-  // Industry Selection — يجب أن يبقى متوافقًا مع BUSINESS_TYPES في الخادم
-  // (medical_clinics / real_estate / auto_spare_parts).
-  welcomeToOrbit: "مرحبًا بك في Orbit CRM",
-  chooseBusinessIndustry: "اختر مجال عملك",
-  chooseWorkspaceDescription: "اختر مساحة العمل التي تناسب نشاطك التجاري.",
-
-  medicalClinics: "العيادات الطبية",
-  medicalClinicsDescription: "إدارة المرضى والمواعيد والعلاجات.",
-
-  realEstate: "العقارات",
-  realEstateDescription: "إدارة العقارات والعملاء المحتملين والصفقات.",
-
-  autoSpareParts: "قطع غيار السيارات",
-  autoSparePartsDescription: "إدارة المخزون والموردين والطلبات والمبيعات.",
-
   continue: "متابعة",
 
   // Dashboard
@@ -142,11 +127,6 @@ const ar = {
   resendCodeFailedMessage:
     "تعذر إعادة إرسال رمز التحقق. يرجى المحاولة مرة أخرى.",
 
-  businessTypeSuccessTitle: "تم حفظ نوع النشاط",
-  businessTypeSuccessMessage: "تم حفظ نوع نشاطك التجاري بنجاح.",
-  businessTypeFailedTitle: "تعذر حفظ نوع النشاط",
-  businessTypeFailedMessage:
-    "تعذر حفظ نوع نشاطك التجاري. يرجى المحاولة مرة أخرى.",
 
   forgotPasswordSuccessTitle: "تحقق من بريدك الإلكتروني",
   forgotPasswordSuccessMessage:
@@ -183,23 +163,11 @@ const ar = {
   comingSoonDescription: "هذه الميزة قيد التطوير — تابعنا قريبًا.",
   retry: "إعادة المحاولة",
 
-  // شعارات لوحة التحكم حسب نوع النشاط
-  dashboardTaglineMedical: "إليك ما يحدث في عيادتك اليوم.",
-  dashboardTaglineRealEstate: "إليك ما يحدث مع عقاراتك اليوم.",
-  dashboardTaglineAutoParts: "إليك ما يحدث في محلك اليوم.",
-
-  // أسماء الكيانات حسب نوع النشاط
-  patients: "المرضى",
-  patient: "مريض",
-  clients: "العملاء",
+  // أسماء الكيانات
   client: "عميل",
-  customers: "العملاء",
   customer: "عميل",
   contacts: "الجهات",
   contact: "جهة اتصال",
-  appointments: "المواعيد",
-  propertyActivity: "نشاط العقارات",
-  serviceVisits: "زيارات الخدمة",
   activities: "الأنشطة",
   upcoming: "القادمة",
   team: "الفريق",
@@ -369,7 +337,6 @@ const ar = {
   // صفحة الإعدادات
   companySettingsTitle: "إعدادات الشركة",
   companyNameLabel: "اسم الشركة",
-  businessTypeLabel: "نوع النشاط",
   contactEmailLabel: "بريد التواصل",
   addressLabel: "العنوان",
   websiteLabel: "الموقع الإلكتروني",

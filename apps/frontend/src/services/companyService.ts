@@ -1,6 +1,5 @@
 import api from "./api";
 import type { ApiEnvelope } from "../types/api";
-import type { BusinessType } from "./authService";
 
 /** Mirrors backend/src/modules/company/entities/company.entity.ts exactly. */
 export interface Company {
@@ -13,15 +12,6 @@ export interface Company {
   website: string | null;
   taxNumber: string | null;
   description: string | null;
-  /**
-   * Nullable: a company that hasn't finished onboarding (see
-   * IndustrySelection) has no businessType yet. Typed as the shared
-   * BusinessType union OR null OR an arbitrary string, since the
-   * backend column itself is unconstrained TEXT (see
-   * BUSINESS_TYPES's doc comment) — treat anything outside the 3 known
-   * values as "unrecognized", not a crash.
-   */
-  businessType: BusinessType | null | string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -37,10 +27,9 @@ export interface UpdateCompanyInput {
   website?: string;
   taxNumber?: string;
   description?: string;
-  businessType?: BusinessType;
 }
 
-/** GET /companies/me — the authenticated user's own company, incl. businessType for dashboard routing. */
+/** GET /companies/me — the authenticated user's own company. */
 export const getMyCompany = async (): Promise<Company> => {
   const response = await api.get<ApiEnvelope<Company>>("/companies/me");
 

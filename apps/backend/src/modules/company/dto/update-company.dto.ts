@@ -2,16 +2,12 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   IsEmail,
-  IsIn,
   IsOptional,
   IsString,
   IsUrl,
   Length,
   MaxLength,
 } from 'class-validator';
-
-import { BUSINESS_TYPES } from '../constants/business-type.constants';
-import type { BusinessType } from '../constants/business-type.constants';
 
 /**
  * Deliberately NOT `PartialType(CreateCompanyDto)` — mirrors
@@ -21,8 +17,7 @@ import type { BusinessType } from '../constants/business-type.constants';
  * gate, but the moment a future Platform Admin feature does, an owner
  * being able to silently re-activate their own suspended company via
  * this endpoint would defeat it. Every other profile field an owner
- * legitimately manages (including businessType, which may change if the
- * company pivots) is still here.
+ * legitimately manages is still here.
  */
 export class UpdateCompanyDto {
   @ApiPropertyOptional({
@@ -102,15 +97,4 @@ export class UpdateCompanyDto {
   @IsString()
   @MaxLength(1000)
   description?: string;
-
-  @ApiPropertyOptional({
-    example: 'real_estate',
-    enum: BUSINESS_TYPES,
-    description:
-      'Business type. Normally set once via onboarding, but an owner ' +
-      'may change it later (e.g. the company pivots).',
-  })
-  @IsOptional()
-  @IsIn(BUSINESS_TYPES)
-  businessType?: BusinessType;
 }

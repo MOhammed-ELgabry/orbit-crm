@@ -16,7 +16,6 @@ import Sidebar from "./Sidebar";
 const renderSidebar = (isOwner: boolean) => {
   auth.value = {
     user: { firstName: "Omar", lastName: "Ali", isOwner },
-    company: { businessType: "medical_clinics" },
     logout: vi.fn(),
   };
 

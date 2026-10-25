@@ -5,8 +5,8 @@ export const PERMISSION_REPOSITORY = 'PERMISSION_REPOSITORY';
  * attached to a Role via RolePermission. Kept as an application-level
  * constant rather than left purely data-driven, so the set of possible
  * permissions is reviewable in code and can't silently drift per
- * environment — the same tradeoff already used for BUSINESS_TYPES and
- * ACTIVITY_TYPES elsewhere in this codebase.
+ * environment — the same tradeoff already used for ACTIVITY_TYPES
+ * elsewhere in this codebase.
  *
  * Seeded into the database by prisma/seed.ts (idempotent — safe to
  * re-run). Adding a new permission here requires re-running the seed;

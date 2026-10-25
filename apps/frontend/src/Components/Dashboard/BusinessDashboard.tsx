@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { FiUsers, FiActivity, FiCalendar, FiArrowRight } from "react-icons/fi";
+import { FaHome } from "react-icons/fa";
 
 import { useAuth } from "../../context/AuthContext";
-import { getBusinessTypeCopy } from "../../config/businessType";
 import {
   getDashboardStats,
   type DashboardStats,
@@ -26,9 +26,8 @@ import {
  * a fake donut chart, styled specifically for "dental clinic" — see
  * the old OverviewStats + Analytics components). Preserves that
  * version's visual system (StatCard mirrors PatientsStatsCard's exact
- * classes) while making it: (a) driven by real Contact/Activity/User
- * data instead of hardcoded numbers, and (b) tailored per business
- * type via config/businessType.ts instead of hardcoded to one vertical.
+ * classes) while making it driven by real Contact/Activity/User data
+ * instead of hardcoded numbers.
  *
  * No revenue/invoicing metric is shown — there is no such model in
  * the schema (Company/User/Contact/Activity/Role/Permission only), and
@@ -38,8 +37,6 @@ export default function BusinessDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, company } = useAuth();
-  const businessCopy = getBusinessTypeCopy(company?.businessType);
-  const Icon = businessCopy.icon;
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [statsStatus, setStatsStatus] = useState<"loading" | "ready" | "error">(
@@ -80,14 +77,14 @@ export default function BusinessDashboard() {
     };
   }, []);
 
-  const contactsLabel = t(businessCopy.contactsLabel);
+  const contactsLabel = t("contacts");
 
   return (
     <div className="flex flex-col gap-5">
       {/* Greeting */}
       <div className="flex items-center gap-3">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-          <Icon size={20} />
+          <FaHome size={20} />
         </div>
         <div className="min-w-0">
           <h1 className="truncate font-nunito text-lg font-bold text-slate-800">
@@ -103,21 +100,21 @@ export default function BusinessDashboard() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={FiUsers}
-          color={businessCopy.accent}
+          color="blue"
           label={contactsLabel}
           value={stats?.contactsCount ?? 0}
           isLoading={statsStatus === "loading"}
         />
         <StatCard
           icon={FiActivity}
-          color={businessCopy.accent}
-          label={t(businessCopy.activitiesLabel)}
+          color="blue"
+          label={t("activities")}
           value={stats?.activitiesCount ?? 0}
           isLoading={statsStatus === "loading"}
         />
         <StatCard
           icon={FiCalendar}
-          color={businessCopy.accent}
+          color="blue"
           label={t("upcoming")}
           value={stats?.upcomingActivitiesCount ?? 0}
           isLoading={statsStatus === "loading"}
@@ -163,7 +160,7 @@ export default function BusinessDashboard() {
             {contactsStatus === "ready" && recentContacts.length === 0 && (
               <p className="py-6 text-center text-xs text-slate-400">
                 {t("noContactsFoundDescription", {
-                  label: t(businessCopy.contactSingular),
+                  label: t("contact"),
                 })}
               </p>
             )}

@@ -30,23 +30,19 @@ import { RegisterDto } from './dto/register.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { SetBusinessTypeDto } from './dto/set-business-type.dto';
 import { ensureDefaultRolesForCompany } from '../role/utils/ensure-default-roles.util';
 import {
   AUTH_REPOSITORY,
   AUTH_SESSION_REPOSITORY,
   PASSWORD_RESET_REPOSITORY,
   SOCIAL_ACCOUNT_REPOSITORY,
-  ONBOARDING_TOKEN_REPOSITORY,
 } from './constants/auth.constants';
 import type { SocialProviderName } from './constants/auth.constants';
-import { PrismaExceptionMapper } from '../../common/exceptions/prisma-exception.mapper';
 
 import type { IAuthRepository } from './repository/auth.repository.interface';
 import type { IAuthSessionRepository } from './repository/auth-session.repository.interface';
 import type { IPasswordResetRepository } from './repository/password-reset.repository.interface';
 import type { ISocialAccountRepository } from './repository/social-account.repository.interface';
-import type { IOnboardingTokenRepository } from './repository/onboarding-token.repository.interface';
 import type { ISocialAuthProvider } from './interfaces/social-profile.interface';
 
 import { GoogleAuthProvider } from './providers/google-auth.provider';
@@ -106,19 +102,28 @@ interface IIssuedSession {
 }
 
 /**
+ * The fields issueSession() needs from a user record — satisfied by both
+ * the login lookup and the UserEntity returned by UserRepository.
+ */
+interface ISessionUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  avatar: string | null;
+  isOwner: boolean;
+  roleId: string | null;
+  language: string;
+  backgroundColor: string | null;
+}
+
+/**
  * handleSocialCallback()'s result. A social sign-in always gets a real
- * session (unlike the normal register→verify flow, verifyEmail() never
- * issues cookies) — but a brand-new social user still needs to go through
- * Business Type Selection before the dashboard, exactly like a normal
- * new user. `onboardingToken` is only present when `isNewUser` is true,
- * and is issued the same way — and consumed by the same setBusinessType()
- * endpoint — as the one verifyEmail() returns. Having a session already
- * doesn't change that: the ticket is a separate, narrowly-scoped
- * authorization for that one action, not a replacement for the session.
+ * session; `isNewUser` is true only when this sign-in created a brand-new
+ * account and company.
  */
 interface ISocialCallbackResult extends IIssuedSession {
   isNewUser: boolean;
-  onboardingToken?: string;
 }
 
 @Injectable()
@@ -155,9 +160,6 @@ export class AuthService implements OnModuleInit {
 
     @Inject(SOCIAL_ACCOUNT_REPOSITORY)
     private readonly socialAccountRepository: ISocialAccountRepository,
-
-    @Inject(ONBOARDING_TOKEN_REPOSITORY)
-    private readonly onboardingTokenRepository: IOnboardingTokenRepository,
 
     private readonly configService: ConfigService,
 
@@ -253,7 +255,7 @@ export class AuthService implements OnModuleInit {
     };
   }
 
-  async verifyEmail(dto: VerifyEmailDto) {
+  async verifyEmail(dto: VerifyEmailDto): Promise<IIssuedSession> {
     const email = dto.email.trim().toLowerCase();
 
     const verification =
@@ -291,7 +293,7 @@ export class AuthService implements OnModuleInit {
       throw new BadRequestException('Email is already verified.');
     }
 
-    const companyId = await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx) => {
       // 0. Atomically claim the verification. Postgres takes a row lock
       // on this User row for the rest of the transaction; a concurrent
       // request's identical updateMany against the same row blocks
@@ -354,23 +356,27 @@ export class AuthService implements OnModuleInit {
           verifiedAt: new Date(),
         },
       });
-
-      return company.id;
     });
 
-    // The user has no session yet — verifyEmail() deliberately does not
-    // authenticate them (that stays the explicit Login step's job). This
-    // one-time token is what lets the very next step, Business Type
-    // Selection, persist to the right company without one. See
-    // OnboardingToken's doc comment in schema.prisma and setBusinessType()
-    // below.
-    const onboardingToken = await this.issueOnboardingToken(companyId);
+    // The transaction above has committed (email claimed, company and
+    // default roles created, user attached as Owner). The code itself is
+    // never a session credential: the session below is issued through the
+    // same mechanism login() uses.
+    const verifiedUser = await this.userRepository.findById(user.id);
 
-    return {
-      success: true,
-      message: 'Email verified successfully. Your company has been created.',
-      onboardingToken,
-    };
+    if (!verifiedUser) {
+      throw new NotFoundException('User not found.');
+    }
+
+    if (!verifiedUser.isActive) {
+      throw new BadRequestException('User account is inactive.');
+    }
+
+    if (!verifiedUser.companyId) {
+      throw new BadRequestException('User is not associated with a company.');
+    }
+
+    return this.issueSession(verifiedUser, verifiedUser.companyId);
   }
 
   async resendVerification(dto: ResendVerificationDto) {
@@ -407,79 +413,6 @@ export class AuthService implements OnModuleInit {
     await this.mailService.sendVerificationEmail(email, verificationCode);
 
     return genericResponse;
-  }
-
-  /**
-   * Issues a fresh one-time onboarding ticket for `companyId`, deleting
-   * any previous unused one for the same company first (mirrors
-   * forgotPassword()'s deleteByUserId-then-create pattern, so re-verifying
-   * or re-running social sign-up never leaves more than one live ticket
-   * outstanding). Returns the raw token — store nothing but its hash.
-   */
-  private async issueOnboardingToken(companyId: string): Promise<string> {
-    const token = randomBytes(32).toString('hex');
-    const tokenHash = this.tokenHashService.hash(token);
-    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
-
-    await this.onboardingTokenRepository.deleteByCompanyId(companyId);
-
-    await this.onboardingTokenRepository.create({
-      companyId,
-      tokenHash,
-      expiresAt,
-    });
-
-    return token;
-  }
-
-  /**
-   * Consumes a one-time onboarding token to record the company's chosen
-   * business type. Deliberately does not require a session — see
-   * OnboardingToken's doc comment in schema.prisma for why. Possession of
-   * the (high-entropy, single-use, short-lived) raw token is the only
-   * credential this checks.
-   */
-  async setBusinessType(
-    dto: SetBusinessTypeDto,
-  ): Promise<{ success: true; message: string }> {
-    const tokenHash = this.tokenHashService.hash(dto.token);
-
-    const onboardingToken =
-      await this.onboardingTokenRepository.findByTokenHash(tokenHash);
-
-    if (!onboardingToken) {
-      throw new BadRequestException('Invalid or expired onboarding token.');
-    }
-
-    if (onboardingToken.usedAt) {
-      throw new BadRequestException(
-        'This onboarding step has already been completed.',
-      );
-    }
-
-    if (onboardingToken.expiresAt <= new Date()) {
-      throw new BadRequestException('Onboarding token has expired.');
-    }
-
-    try {
-      await this.prisma.company.update({
-        where: {
-          id: onboardingToken.companyId,
-        },
-        data: {
-          businessType: dto.businessType,
-        },
-      });
-    } catch (error) {
-      PrismaExceptionMapper.map(error);
-    }
-
-    await this.onboardingTokenRepository.markAsUsed(onboardingToken.id);
-
-    return {
-      success: true,
-      message: 'Business type saved successfully.',
-    };
   }
 
   private generateAccessToken(payload: IJwtPayload): string {
@@ -532,9 +465,23 @@ export class AuthService implements OnModuleInit {
     if (!user.companyId) {
       throw new BadRequestException('User is not associated with a company.');
     }
+
+    return this.issueSession(user, user.companyId);
+  }
+
+  /**
+   * Issues a new AuthSession and the access/refresh tokens for an already
+   * authenticated user. Called only after the caller has itself proven the
+   * user's identity (login(): password; verifyEmail(): the one-time email
+   * code, claimed atomically). Never reachable from a request on its own.
+   */
+  private async issueSession(
+    user: ISessionUser,
+    companyId: string,
+  ): Promise<IIssuedSession> {
     const accessTokenPayload: IJwtPayload = {
       sub: user.id,
-      companyId: user.companyId,
+      companyId,
       email: user.email,
       isOwner: user.isOwner,
     };
@@ -1001,10 +948,8 @@ export class AuthService implements OnModuleInit {
       );
 
     let userId: string;
-    // Only Scenario 1 (brand-new user + brand-new company) needs the
-    // Business Type Selection step — Scenarios 2/3 are an existing Orbit
-    // CRM user who (by definition) already has a company and, if they
-    // needed to, already went through onboarding.
+    // Only Scenario 1 is a brand-new user + brand-new company; Scenarios
+    // 2/3 are an existing Orbit CRM user who already has a company.
     let isNewUser = false;
 
     if (existingSocialAccount) {
@@ -1137,20 +1082,10 @@ export class AuthService implements OnModuleInit {
       expiresAt: refreshTokenExpiresAt,
     });
 
-    // A brand-new social user already has a session (cookies are set on
-    // this same response by AuthController) but still hasn't picked a
-    // business type. Issue the same one-time ticket verifyEmail() issues
-    // so the frontend can send them through the identical Business Type
-    // Selection step/endpoint before the dashboard.
-    const onboardingToken = isNewUser
-      ? await this.issueOnboardingToken(user.companyId)
-      : undefined;
-
     return {
       accessToken,
       refreshToken,
       isNewUser,
-      onboardingToken,
       user: {
         id: user.id,
         email: user.email,

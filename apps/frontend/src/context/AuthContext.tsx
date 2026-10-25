@@ -64,10 +64,6 @@ interface AuthContextValue {
   // The authenticated user's own company — null until loaded, and
   // also null if it fails to load (session cookies are the source of
   // truth for auth; a company fetch failing shouldn't force a logout).
-  // businessType lives on this, since dashboard routing (see
-  // DashboardPage) needs it and the backend is the only authority for
-  // it — never trust a client-side guess or cached value across a
-  // company switching business type.
   company: Company | null;
   isAuthenticated: boolean;
   // True while the initial session check (GET /auth/me) is in flight, so
@@ -112,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // Leave the previous value in place rather than clearing it — a
       // transient network error here shouldn't make an already-loaded
-      // dashboard suddenly render as if businessType were unknown.
+      // dashboard suddenly lose its company.
     }
   }, []);
 
@@ -141,9 +137,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } catch {
           // Session is still valid even if this particular call fails
-          // (e.g. a transient network blip) — businessType-dependent UI
-          // falls back to a generic view rather than the whole app
-          // treating this as logged-out.
+          // (e.g. a transient network blip) — the app does not treat
+          // this as logged-out.
         }
       })
       .catch(() => {
@@ -275,7 +270,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 // introduced here. Splitting useAuth into its own file to satisfy
 // react-refresh/only-export-components would touch every file that
 // imports it (Sidebar, ContactsPage, ContactDetailPage, UsersPage,
-// SettingsPage, BusinessDashboard, DashboardHeader, ...) for a
+// SettingsPage, BusinessDashboard, ...) for a
 // dev-only Fast Refresh nicety, not a functional bug.
 // eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(): AuthContextValue {

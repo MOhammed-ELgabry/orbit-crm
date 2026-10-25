@@ -20,12 +20,6 @@ model Company {
   taxNumber    String?
   description  String?
 
-  // Onboarding
-  // Set via the post-verification "Business Type Selection" step (see
-  // OnboardingToken below). Nullable because a company exists before this
-  // step runs — it's populated once this step runs.
-  businessType String?
-
   // Status
   isActive Boolean @default(true)
 
@@ -252,9 +246,9 @@ model PasswordResetToken {
   @@index([expiresAt])
 }
 
-// Single-purpose, single-use ticket that lets the Business Type Selection
-// step persist to the correct Company in the window between Email
-// Verification and Login.
+// Single-use onboarding ticket table. The Business Type Selection step it
+// served has been removed, so the application no longer issues or consumes
+// these tickets; the table is intentionally retained as-is.
 model OnboardingToken {
   id        String    @id @default(cuid())
   companyId String

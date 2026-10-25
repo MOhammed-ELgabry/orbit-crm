@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { FiArrowLeft } from "react-icons/fi";
 
 import { useAuth } from "../../context/AuthContext";
-import { getBusinessTypeCopy } from "../../config/businessType";
 import { useContactImport } from "../../hooks/useContactImport";
 import type { ImportPhase } from "../../hooks/useContactImport";
 import ImportUploadStep from "../../Components/Contact/Import/ImportUploadStep";
@@ -37,9 +36,8 @@ const STEPS: Array<{ phase: ImportPhase; labelKey: string }> = [
 export default function ContactsImportPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { company, hasPermission } = useAuth();
-  const businessCopy = getBusinessTypeCopy(company?.businessType);
-  const contactsLabel = t(businessCopy.contactsLabel);
+  const { hasPermission } = useAuth();
+  const contactsLabel = t("contacts");
   const canImport = hasPermission("contact:create");
 
   const importer = useContactImport();

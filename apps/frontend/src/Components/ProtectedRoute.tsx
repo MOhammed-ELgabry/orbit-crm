@@ -10,12 +10,6 @@ import { useAuth } from "../context/AuthContext";
  * /auth/me — isLoading distinguishes "still checking" from "checked, and
  * there's no session" so we don't redirect a genuinely logged-in user
  * away during that first check.
- *
- * Deliberately NOT used for /industry-selection: that step runs before
- * the required explicit Login step even exists, so a normal-flow user
- * has no session to check at that point by design. That page guards
- * itself instead, by checking for the onboarding token it was navigated
- * in with.
  */
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();

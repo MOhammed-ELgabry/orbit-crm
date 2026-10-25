@@ -137,7 +137,7 @@ export const AUDIT_ENTITY_CONFIG: Record<AuditEntityType, AuditEntityConfig> = {
   },
 
   company: {
-    valueFields: ['name', 'businessType'],
+    valueFields: ['name'],
     maskedFields: [
       'contactEmail',
       'phone',

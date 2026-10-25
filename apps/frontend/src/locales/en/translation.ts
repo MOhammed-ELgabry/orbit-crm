@@ -84,22 +84,6 @@ const en = {
   almostThere: "Almost There!",
   completeAccountSetup: "Verify your email to complete your account setup.",
 
-  // Industry Selection — must stay in sync with the backend's
-  // BUSINESS_TYPES (medical_clinics / real_estate / auto_spare_parts).
-  welcomeToOrbit: "Welcome to Orbit CRM",
-  chooseBusinessIndustry: "Choose your business industry",
-  chooseWorkspaceDescription:
-    "Choose the workspace that best fits your business.",
-
-  medicalClinics: "Medical Clinics",
-  medicalClinicsDescription: "Manage patients, appointments and treatments.",
-
-  realEstate: "Real Estate",
-  realEstateDescription: "Manage properties, leads, clients and deals.",
-
-  autoSpareParts: "Auto Spare Parts",
-  autoSparePartsDescription: "Manage inventory, suppliers, orders and sales.",
-
   continue: "Continue",
 
   // Dashboard
@@ -144,11 +128,6 @@ const en = {
   resendCodeFailedMessage:
     "We couldn't resend the verification code. Please try again.",
 
-  businessTypeSuccessTitle: "Business Type Saved",
-  businessTypeSuccessMessage: "Your business type has been saved successfully.",
-  businessTypeFailedTitle: "Couldn't Save Business Type",
-  businessTypeFailedMessage:
-    "We couldn't save your business type. Please try again.",
 
   forgotPasswordSuccessTitle: "Check Your Email",
   forgotPasswordSuccessMessage:
@@ -186,24 +165,11 @@ const en = {
   comingSoonDescription: "This feature is on the way — check back soon.",
   retry: "Retry",
 
-  // Dashboard taglines, per business type (see config/businessType.ts)
-  dashboardTaglineMedical: "Here's what's happening at your clinic today.",
-  dashboardTaglineRealEstate:
-    "Here's what's happening with your properties today.",
-  dashboardTaglineAutoParts: "Here's what's happening with your shop today.",
-
-  // Entity labels, per business type
-  patients: "Patients",
-  patient: "Patient",
-  clients: "Clients",
+  // Entity labels
   client: "Client",
-  customers: "Customers",
   customer: "Customer",
   contacts: "Contacts",
   contact: "Contact",
-  appointments: "Appointments",
-  propertyActivity: "Property Activity",
-  serviceVisits: "Service Visits",
   activities: "Activities",
   upcoming: "Upcoming",
   team: "Team",
@@ -373,7 +339,6 @@ const en = {
   // Settings page
   companySettingsTitle: "Company Settings",
   companyNameLabel: "Company Name",
-  businessTypeLabel: "Business Type",
   contactEmailLabel: "Contact Email",
   addressLabel: "Address",
   websiteLabel: "Website",

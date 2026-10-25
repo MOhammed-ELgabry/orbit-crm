@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { FiPlus, FiSearch, FiTrash2, FiEdit2, FiUpload } from "react-icons/fi";
 
 import { useAuth } from "../../context/AuthContext";
-import { getBusinessTypeCopy } from "../../config/businessType";
 import {
   listContacts,
   createContact,
@@ -28,10 +27,9 @@ const PAGE_SIZE = 10;
 export default function ContactsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { company, hasPermission } = useAuth();
-  const businessCopy = getBusinessTypeCopy(company?.businessType);
-  const contactLabel = t(businessCopy.contactSingular);
-  const contactsLabel = t(businessCopy.contactsLabel);
+  const { hasPermission } = useAuth();
+  const contactLabel = t("contact");
+  const contactsLabel = t("contacts");
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">(

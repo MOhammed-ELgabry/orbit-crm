@@ -64,13 +64,6 @@ export class CompanyEntity implements ICompany {
   })
   description: string | null;
 
-  @ApiPropertyOptional({
-    example: 'real_estate',
-    description: 'Business type selected during onboarding',
-    nullable: true,
-  })
-  businessType: string | null;
-
   @ApiProperty({
     example: true,
     description: 'Company active status',
@@ -108,7 +101,6 @@ export class CompanyEntity implements ICompany {
     this.website = data.website;
     this.taxNumber = data.taxNumber;
     this.description = data.description;
-    this.businessType = data.businessType;
     this.isActive = data.isActive;
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;

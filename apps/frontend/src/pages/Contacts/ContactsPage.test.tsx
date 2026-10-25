@@ -26,7 +26,6 @@ vi.mock("../../lib/swal", () => ({
 vi.mock("../../lib/posthog", () => ({ trackEvent: vi.fn() }));
 vi.mock("../../context/AuthContext", () => ({
   useAuth: () => ({
-    company: { businessType: "medical_clinics" },
     hasPermission: (permission: string) => auth.permissions.has(permission),
   }),
 }));

@@ -25,7 +25,6 @@ vi.mock("../../lib/contactImport/downloadFile", () => download);
 vi.mock("../../lib/posthog", () => analytics);
 vi.mock("../../context/AuthContext", () => ({
   useAuth: () => ({
-    company: { businessType: "medical_clinics" },
     hasPermission: (permission: string) => auth.permissions.has(permission),
   }),
 }));

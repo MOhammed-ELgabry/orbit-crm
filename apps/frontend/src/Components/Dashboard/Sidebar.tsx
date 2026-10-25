@@ -19,7 +19,6 @@ import {
 
 import Logo from "./Logo";
 import { useAuth } from "../../context/AuthContext";
-import { getBusinessTypeCopy } from "../../config/businessType";
 import { confirmAlert } from "../../lib/swal";
 
 interface SidebarProps {
@@ -30,14 +29,12 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, company, logout } = useAuth();
-
-  const businessCopy = getBusinessTypeCopy(company?.businessType);
+  const { user, logout } = useAuth();
 
   const menuItems = [
     { name: t("dashboardNavLabel"), path: "/dashboard", icon: FiHome },
     {
-      name: t(businessCopy.contactsLabel),
+      name: t("contacts"),
       path: "/dashboard/contacts",
       icon: FaAddressBook,
     },

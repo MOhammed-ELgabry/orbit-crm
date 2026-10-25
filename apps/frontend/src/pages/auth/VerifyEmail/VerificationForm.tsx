@@ -8,11 +8,13 @@ import OtpInput from "react-otp-input";
 import { successAlert, errorAlert } from "../../../lib/swal";
 import { getErrorMessage } from "../../../lib/errors";
 import { trackEvent } from "../../../lib/posthog";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function VerificationForm() {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
@@ -44,6 +46,7 @@ export default function VerificationForm() {
         code,
       });
 
+      login(response.user);
       trackEvent("email_verified");
 
       console.log("Email verified:", response);
@@ -54,9 +57,7 @@ export default function VerificationForm() {
         confirmButtonText: t("ok"),
       });
 
-      navigate("/industry-selection", {
-        state: { email, onboardingToken: response.onboardingToken },
-      });
+      navigate("/dashboard", { replace: true });
     } catch (error) {
       console.error("Verification failed:", error);
 

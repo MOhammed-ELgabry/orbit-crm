@@ -8,10 +8,8 @@ import {
   updateCompany,
   type UpdateCompanyInput,
 } from "../../services/companyService";
-import { BUSINESS_TYPE_COPY } from "../../config/businessType";
 import { successAlert, errorAlert } from "../../lib/swal";
 import { getErrorMessage } from "../../lib/errors";
-import type { BusinessType } from "../../services/authService";
 import LanguageSettings from "./LanguageSettings";
 import AppearanceSettings from "./AppearanceSettings";
 import NotificationSettings from "./NotificationSettings";
@@ -19,12 +17,6 @@ import NotificationSettings from "./NotificationSettings";
 const inputClass =
   "h-[38px] w-full rounded-[10px] bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none disabled:opacity-60";
 const labelClass = "text-xs font-semibold text-gray-700";
-
-const BUSINESS_TYPE_LABEL: Record<BusinessType, string> = {
-  medical_clinics: "medicalClinics",
-  real_estate: "realEstate",
-  auto_spare_parts: "autoSpareParts",
-};
 
 function CompanySettingsSection() {
   const { t } = useTranslation();
@@ -37,8 +29,6 @@ function CompanySettingsSection() {
     phone: company?.phone ?? "",
     address: company?.address ?? "",
     website: company?.website ?? "",
-    businessType:
-      (company?.businessType as BusinessType | undefined) ?? undefined,
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -62,8 +52,6 @@ function CompanySettingsSection() {
         const value = form[key];
         if (typeof value === "string" && value.trim().length > 0) {
           (cleaned as unknown as Record<string, unknown>)[key] = value.trim();
-        } else if (key === "businessType" && value) {
-          cleaned.businessType = value as BusinessType;
         }
       });
 
@@ -141,25 +129,6 @@ function CompanySettingsSection() {
               value={form.website}
               onChange={(e) => set("website", e.target.value)}
             />
-          </div>
-
-          <div className="flex flex-col gap-0.5">
-            <label className={labelClass}>{t("businessTypeLabel")}</label>
-            <select
-              className={inputClass}
-              value={form.businessType ?? ""}
-              onChange={(e) =>
-                set("businessType", e.target.value as BusinessType)
-              }
-            >
-              {(Object.keys(BUSINESS_TYPE_COPY) as BusinessType[]).map(
-                (type) => (
-                  <option key={type} value={type}>
-                    {t(BUSINESS_TYPE_LABEL[type])}
-                  </option>
-                ),
-              )}
-            </select>
           </div>
         </fieldset>
 

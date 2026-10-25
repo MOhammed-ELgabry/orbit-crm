@@ -9,7 +9,6 @@ import LoginPage from "./pages/auth/LoginPage/LoginPage";
 import VerifyEmail from "./pages/auth/VerifyEmail/VerifyEmail";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage/ResetPasswordPage";
-import IndustrySelection from "./pages/industry-selection/IndustrySelection";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import { ProtectedRoute } from "./Components/ProtectedRoute";
 import DashboardLayout from "./Components/Dashboard/DashboardLayout";
@@ -53,10 +52,6 @@ function App() {
                 />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/verify-email" element={<VerifyEmail />} />
-                <Route
-                  path="/industry-selection"
-                  element={<IndustrySelection />}
-                />
                 <Route
                   path="/dashboard"
                   element={

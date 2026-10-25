@@ -51,25 +51,14 @@ export default function SocialLogin() {
     setLoadingProvider(provider);
 
     try {
-      const { user, isNewUser, onboardingToken } =
-        await openSocialAuthPopup(provider);
+      const { user, isNewUser } = await openSocialAuthPopup(provider);
 
       login(user);
       trackEvent(isNewUser ? "user_registered" : "login", {
         method: provider,
       });
 
-      // A brand-new social sign-up (backend Scenario 1) still needs to
-      // pick a business type, exactly like a normal new user — they just
-      // already have a session by this point, which the business-type
-      // step doesn't care about (see OnboardingToken's doc comment on
-      // the backend). An existing account (Scenarios 2/3) already
-      // completed onboarding, so it goes straight in.
-      if (isNewUser && onboardingToken) {
-        navigate("/industry-selection", { state: { onboardingToken } });
-      } else {
-        navigate("/dashboard");
-      }
+      navigate("/dashboard");
     } catch (err) {
       errorAlert({
         title: t("socialLoginFailedTitle"),

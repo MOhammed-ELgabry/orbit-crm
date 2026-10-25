@@ -31,8 +31,8 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
         // already return a fully-formed envelope of their own —
         // { success, message, ...fields } — built with an
         // endpoint-specific message ("Login successful.") and fields the
-        // frontend reads directly off the response (e.g. `user`,
-        // `onboardingToken`). Re-wrapping that whole object under another
+        // frontend reads directly off the response (e.g. `user`).
+        // Re-wrapping that whole object under another
         // `data` key would silently move every one of those fields one
         // level deeper than any caller expects, without any error to
         // signal it. Detect that shape and pass it through instead of

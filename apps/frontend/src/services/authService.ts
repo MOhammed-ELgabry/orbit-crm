@@ -20,18 +20,14 @@ export interface ResendVerificationData {
 }
 
 /**
- * onboardingToken authorizes exactly one further action — POST
- * /auth/business-type — and only that. It is not a session credential:
- * verify-email deliberately does not log the user in (see
- * OnboardingToken's doc comment in the backend schema). Hold it only in
- * memory (React Router navigation state) for the current step, the same
- * way `email` is already carried from Register to this page — never in
- * localStorage/sessionStorage.
+ * A successful verification also signs the user in: the backend sets the
+ * HttpOnly session cookies on this same response (the body never carries a
+ * token), so only the safe user profile comes back.
  */
 export interface VerifyEmailResponse {
   success: boolean;
   message: string;
-  onboardingToken: string;
+  user: AuthUser;
 }
 
 export interface LoginData {
@@ -87,18 +83,6 @@ export interface LoginResponse {
 
 export type SocialProvider = "google" | "facebook" | "microsoft";
 
-/**
- * Must stay in sync with the backend's BUSINESS_TYPES constant
- * (backend/src/modules/company/constants/business-type.constants.ts).
- */
-export type BusinessType =
-  "medical_clinics" | "real_estate" | "auto_spare_parts";
-
-export interface SetBusinessTypeData {
-  token: string;
-  businessType: BusinessType;
-}
-
 const SUCCESS_MESSAGE_TYPE = "orbit-social-auth-success";
 const ERROR_MESSAGE_TYPE = "orbit-social-auth-error";
 
@@ -122,14 +106,6 @@ export const resendVerification = async (
   data: ResendVerificationData,
 ): Promise<{ success: boolean; message: string }> => {
   const response = await api.post("/auth/resend-verification", data);
-
-  return response.data;
-};
-
-export const setBusinessType = async (
-  data: SetBusinessTypeData,
-): Promise<{ success: boolean; message: string }> => {
-  const response = await api.post("/auth/business-type", data);
 
   return response.data;
 };
@@ -194,14 +170,11 @@ export const resetPassword = async (
 export interface SocialAuthResult {
   user: AuthUser;
   /**
-   * True only for a brand-new social sign-up (backend Scenario 1). An
-   * existing user signing in via Google/Facebook/Microsoft (Scenarios
-   * 2/3) already completed onboarding previously, so this is false and
-   * onboardingToken is absent.
+   * True only for a brand-new social sign-up (backend Scenario 1); false
+   * for an existing user signing in via Google/Facebook/Microsoft
+   * (Scenarios 2/3).
    */
   isNewUser: boolean;
-  /** Present only when isNewUser is true. See VerifyEmailResponse. */
-  onboardingToken?: string;
 }
 
 export function openSocialAuthPopup(
@@ -322,7 +295,6 @@ export function openSocialAuthPopup(
             ? (data.payload as {
                 user?: unknown;
                 isNewUser?: unknown;
-                onboardingToken?: unknown;
               })
             : undefined;
 
@@ -335,10 +307,6 @@ export function openSocialAuthPopup(
         finishSuccess({
           user: payload.user as AuthUser,
           isNewUser: payload.isNewUser === true,
-          onboardingToken:
-            typeof payload.onboardingToken === "string"
-              ? payload.onboardingToken
-              : undefined,
         });
 
         return;

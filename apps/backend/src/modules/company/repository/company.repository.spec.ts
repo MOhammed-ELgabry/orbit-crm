@@ -11,7 +11,6 @@ const id = 'company-A';
 const company = (overrides: Record<string, unknown> = {}) => ({
   id,
   name: 'Acme Clinic',
-  businessType: 'medical_clinics',
   contactEmail: 'old@acme.test',
   phone: '+201000000000',
   address: 'Secret street 1',

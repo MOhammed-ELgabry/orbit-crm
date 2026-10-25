@@ -48,7 +48,6 @@ vi.mock("../../lib/swal", () => swal);
 vi.mock("../../lib/posthog", () => ({ trackEvent: vi.fn() }));
 vi.mock("../../context/AuthContext", () => ({
   useAuth: () => ({
-    company: { businessType: "medical_clinics" },
     hasPermission: (permission: string) => auth.permissions.has(permission),
   }),
 }));
@@ -904,7 +903,7 @@ describe("ContactDetailPage — contact states", () => {
 
     renderPage();
 
-    expect(await screen.findByText("No Patient yet")).toBeInTheDocument();
+    expect(await screen.findByText("No Contact yet")).toBeInTheDocument();
     expect(svc.listDeals).not.toHaveBeenCalled();
     expect(svc.listActivities).not.toHaveBeenCalled();
   });
