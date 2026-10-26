@@ -1,10 +1,10 @@
-import { FiAlertCircle, FiClock } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 
 import type { PendingMessage } from "../../context/chatState";
 import type { ChatMessage } from "../../types/chat";
 import { formatMessageTime } from "./chatFormat";
 import ReceiptTicks from "./ReceiptTicks";
+import { LuCircleAlert, LuClock } from "react-icons/lu";
 
 interface MessageBubbleProps {
   mine: boolean;
@@ -41,7 +41,7 @@ export default function MessageBubble(props: MessageBubbleProps) {
       <div
         className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm shadow-sm sm:max-w-[70%] ${
           mine
-            ? "rounded-ee-md bg-indigo-600 text-white"
+            ? "rounded-ee-md bg-brand-600 text-white"
             : "rounded-es-md bg-slate-100 text-slate-900"
         } ${props.pending?.status === "failed" ? "opacity-80 ring-2 ring-rose-300" : ""}`}
       >
@@ -52,7 +52,7 @@ export default function MessageBubble(props: MessageBubbleProps) {
 
         <div
           className={`mt-1 flex items-center justify-end gap-1.5 text-[10px] ${
-            mine ? "text-indigo-200" : "text-slate-500"
+            mine ? "text-brand-200" : "text-slate-500"
           }`}
         >
           <time dateTime={createdAt}>
@@ -68,7 +68,7 @@ export default function MessageBubble(props: MessageBubbleProps) {
               title={t("chatMessageSending")}
               data-testid="message-sending"
             >
-              <FiClock size={12} aria-hidden="true" />
+              <LuClock size={12} aria-hidden="true" />
             </span>
           )}
         </div>
@@ -79,7 +79,7 @@ export default function MessageBubble(props: MessageBubbleProps) {
           role="alert"
           className="mt-1 flex items-center gap-2 px-1 text-[11px] text-rose-600"
         >
-          <FiAlertCircle size={12} aria-hidden="true" />
+          <LuCircleAlert size={12} aria-hidden="true" />
           <span>
             {props.pending.retryable
               ? t("chatMessageFailed")

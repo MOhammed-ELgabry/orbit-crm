@@ -1,4 +1,5 @@
 import { useState } from "react";
+import HintIcon from "../../Components/ui/HintIcon";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../context/AuthContext";
@@ -12,7 +13,7 @@ const labelClass = "text-xs font-semibold text-gray-700";
 
 /** Matches DashboardLayout's existing hardcoded canvas color — the value
  * this page falls back to when the user has no saved preference yet. */
-const DEFAULT_BACKGROUND = "#F6F8FC";
+const DEFAULT_BACKGROUND = "#F6F8F6";
 
 /**
  * The user only ever picks a background color. The foreground/text color
@@ -61,9 +62,12 @@ export default function AppearanceSettings() {
 
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-5 sm:p-6">
-      <h2 className="font-nunito text-base font-semibold text-slate-800">
-        {t("appearanceSettingsTitle")}
-      </h2>
+      <div className="flex items-center gap-1">
+        <h2 className="font-nunito text-base font-semibold text-slate-800">
+          {t("appearanceSettingsTitle")}
+        </h2>
+        <HintIcon id="settingsAppearance" />
+      </div>
       <p className="mt-1 text-xs text-gray-500">
         {t("appearanceSettingsDescription")}
       </p>
@@ -94,7 +98,7 @@ export default function AppearanceSettings() {
             onChange={(e) => setDraftColor(e.target.value)}
             placeholder={DEFAULT_BACKGROUND}
             aria-invalid={!isValidHex}
-            className="h-[42px] w-full rounded-[10px] bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none"
+            className="h-[42px] w-full rounded-[10px] bg-surface-muted px-3 text-sm text-gray-700 outline-none"
           />
           {!isValidHex && (
             <p className="mt-0.5 text-xs text-red-600">
@@ -122,7 +126,7 @@ export default function AppearanceSettings() {
           type="button"
           onClick={handleSave}
           disabled={isSaving || isUnchanged || !isValidHex}
-          className="rounded-lg bg-[#605BFF] px-5 py-2 text-sm font-semibold text-white hover:bg-[#514cf0] disabled:opacity-50"
+          className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
         >
           {isSaving ? t("saving") : t("saveAppearance")}
         </button>

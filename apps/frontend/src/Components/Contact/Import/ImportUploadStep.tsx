@@ -1,12 +1,12 @@
 import { useRef, useState } from "react";
 import type { ChangeEvent, DragEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { FiAlertCircle, FiDownload, FiUploadCloud } from "react-icons/fi";
 
 import type { ImportEncoding } from "../../../types/contactImport";
 import type { ImportFileErrorState } from "../../../hooks/useContactImport";
 import { downloadTextFile } from "../../../lib/contactImport/downloadFile";
 import { IMPORT_LIMITS } from "../../../lib/contactImport/parseFile";
+import { LuCircleAlert, LuCloudUpload, LuDownload } from "react-icons/lu";
 
 interface ImportUploadStepProps {
   loading: boolean;
@@ -68,11 +68,11 @@ export default function ImportUploadStep({
         onDrop={handleDrop}
         className={`flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed px-4 py-12 text-center transition-colors ${
           dragging
-            ? "border-[#605BFF] bg-[#605BFF]/5"
+            ? "border-brand-600 bg-brand-600/5"
             : "border-slate-200 bg-white"
         }`}
       >
-        <FiUploadCloud size={32} className="text-[#605BFF]" aria-hidden />
+        <LuCloudUpload size={32} className="text-brand-600" aria-hidden />
         <p className="text-sm font-semibold text-slate-700">
           {t("contactsImportDropTitle")}
         </p>
@@ -99,7 +99,7 @@ export default function ImportUploadStep({
           type="button"
           disabled={loading}
           onClick={() => inputRef.current?.click()}
-          className="h-10 rounded-xl bg-[#605BFF] px-5 text-sm font-semibold text-white hover:bg-[#514cf0] disabled:opacity-50"
+          className="h-10 rounded-xl bg-brand-600 px-5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
         >
           {loading ? t("contactsImportReading") : t("contactsImportChooseFile")}
         </button>
@@ -109,9 +109,9 @@ export default function ImportUploadStep({
           onClick={() =>
             downloadTextFile("orbit-contacts-sample.csv", SAMPLE_CSV)
           }
-          className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:underline"
+          className="flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:underline"
         >
-          <FiDownload size={13} aria-hidden />
+          <LuDownload size={13} aria-hidden />
           {t("contactsImportDownloadSample")}
         </button>
       </div>
@@ -121,7 +121,7 @@ export default function ImportUploadStep({
           role="alert"
           className="flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600"
         >
-          <FiAlertCircle size={16} className="mt-0.5 shrink-0" aria-hidden />
+          <LuCircleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />
           <div className="flex flex-col gap-3">
             <p>
               {t(`contactsImportFileError_${error.code}`, {
@@ -159,7 +159,7 @@ export default function ImportUploadStep({
                   <button
                     type="button"
                     onClick={() => onEncoding(encoding)}
-                    className="h-9 rounded-lg bg-[#605BFF] px-3 text-xs font-semibold text-white hover:bg-[#514cf0]"
+                    className="h-9 rounded-lg bg-brand-600 px-3 text-xs font-semibold text-white hover:bg-brand-700"
                   >
                     {t("contactsImportEncodingApply")}
                   </button>

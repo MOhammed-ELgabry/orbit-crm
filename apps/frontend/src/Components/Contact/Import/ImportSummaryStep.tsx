@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
-import { FiCheckCircle, FiDownload } from "react-icons/fi";
 
 import type { ImportCounts } from "../../../types/contactImport";
+import { LuCircleCheck, LuDownload } from "react-icons/lu";
 
 interface ImportSummaryStepProps {
   counts: ImportCounts;
@@ -86,7 +86,7 @@ export default function ImportSummaryStep({
       <div className="rounded-2xl border border-slate-100 bg-white p-4 sm:p-6">
         <div className="flex items-center gap-2">
           {!importing && counts.failed === 0 && counts.pending === 0 && (
-            <FiCheckCircle size={20} className="text-emerald-500" aria-hidden />
+            <LuCircleCheck size={20} className="text-emerald-500" aria-hidden />
           )}
           <h2 className="font-nunito text-base font-semibold text-slate-800">
             {title}
@@ -103,7 +103,7 @@ export default function ImportSummaryStep({
               className="h-2 overflow-hidden rounded-full bg-slate-100"
             >
               <div
-                className="h-full rounded-full bg-[#605BFF] transition-all"
+                className="h-full rounded-full bg-brand-600 transition-all"
                 style={{ width: `${percent}%` }}
               />
             </div>
@@ -162,7 +162,7 @@ export default function ImportSummaryStep({
             <button
               type="button"
               onClick={onContinue}
-              className="h-10 rounded-xl bg-[#605BFF] px-5 text-sm font-semibold text-white hover:bg-[#514cf0]"
+              className="h-10 rounded-xl bg-brand-600 px-5 text-sm font-semibold text-white hover:bg-brand-700"
             >
               {counts.failed > 0
                 ? t("contactsImportRetryFailed")
@@ -176,7 +176,7 @@ export default function ImportSummaryStep({
               onClick={onDownloadReport}
               className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50"
             >
-              <FiDownload size={15} aria-hidden />
+              <LuDownload size={15} aria-hidden />
               {t("contactsImportDownloadReport")}
             </button>
           )}

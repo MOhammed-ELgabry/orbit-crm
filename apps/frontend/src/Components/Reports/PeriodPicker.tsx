@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { cardClass } from "../ui/styles";
+import HintIcon from "../ui/HintIcon";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -66,11 +68,12 @@ export default function PeriodPicker({
   };
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4">
+    <div className={`flex flex-col gap-3 p-4 ${cardClass}`}>
       <div className="flex flex-wrap items-center gap-2">
         <span className="me-1 text-xs font-medium text-slate-500">
           {t("reportsPeriodLabel")}
         </span>
+        <HintIcon id="reportsPeriod" />
 
         {REPORT_PRESETS.map((preset) => {
           const active =
@@ -87,7 +90,7 @@ export default function PeriodPicker({
               }}
               className={`h-9 rounded-xl px-3 text-sm font-medium ${
                 active
-                  ? "bg-[#605BFF] text-white"
+                  ? "bg-brand-600 text-white"
                   : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
               }`}
             >
@@ -104,7 +107,7 @@ export default function PeriodPicker({
             type="date"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
-            className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300"
+            className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-brand-300"
           />
         </label>
 
@@ -114,7 +117,7 @@ export default function PeriodPicker({
             type="date"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300"
+            className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-brand-300"
           />
         </label>
 
@@ -123,7 +126,7 @@ export default function PeriodPicker({
           onClick={apply}
           className={`h-9 rounded-xl px-4 text-sm font-semibold ${
             selection.kind === "custom"
-              ? "bg-[#605BFF] text-white hover:bg-[#514cf0]"
+              ? "bg-brand-600 text-white hover:bg-brand-700"
               : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
           }`}
         >

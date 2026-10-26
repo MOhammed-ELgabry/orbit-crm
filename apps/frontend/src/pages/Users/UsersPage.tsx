@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FiPlus, FiUserCheck, FiUserX } from "react-icons/fi";
 
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -17,9 +16,10 @@ import type { CreateTeamMemberInput, TeamMember } from "../../types/user";
 import { confirmAlert, errorAlert } from "../../lib/swal";
 import { getErrorMessage } from "../../lib/errors";
 import { trackEvent } from "../../lib/posthog";
+import { LuPlus, LuUserCheck, LuUserX } from "react-icons/lu";
 
 const inputClass =
-  "h-[38px] w-full rounded-[10px] bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none";
+  "h-[38px] w-full rounded-[10px] bg-surface-muted px-3 text-sm text-gray-700 outline-none";
 const labelClass = "text-xs font-semibold text-gray-700";
 
 /**
@@ -169,7 +169,7 @@ function AddMemberModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-lg bg-[#605BFF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#514cf0] disabled:opacity-50"
+              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
             >
               {t("save")}
             </button>
@@ -303,9 +303,9 @@ export default function UsersPage() {
           <button
             type="button"
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1.5 rounded-xl bg-[#605BFF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#514cf0]"
+            className="flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
           >
-            <FiPlus size={16} />
+            <LuPlus size={16} />
             <span className="hidden sm:inline">{t("addTeamMember")}</span>
           </button>
         )}
@@ -329,7 +329,7 @@ export default function UsersPage() {
             <button
               type="button"
               onClick={load}
-              className="text-xs font-semibold text-blue-600 hover:underline"
+              className="text-xs font-semibold text-brand-600 hover:underline"
             >
               {t("retry")}
             </button>
@@ -350,7 +350,7 @@ export default function UsersPage() {
                 className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-500 text-xs font-semibold text-white">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-xs font-semibold text-white">
                     {member.firstName[0]}
                     {member.lastName[0]}
                   </div>
@@ -427,9 +427,9 @@ export default function UsersPage() {
                       }`}
                     >
                       {member.isActive ? (
-                        <FiUserX size={15} />
+                        <LuUserX size={15} />
                       ) : (
-                        <FiUserCheck size={15} />
+                        <LuUserCheck size={15} />
                       )}
                     </button>
                   )}

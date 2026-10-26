@@ -19,11 +19,11 @@
 //           className="text-[10px] text-gray-500 leading-3.5"
 //         >
 //           {t("termsText")}
-//           <span className="text-[#643ed7] font-medium">
+//           <span className="text-brand-600 font-medium">
 //             {t("termsOfUse")}
 //           </span>
 //           {t("andOur")}
-//           <span className="text-[#643ed7] font-medium">
+//           <span className="text-brand-600 font-medium">
 //             {t("privacyPolicy")}
 //           </span>
 //           .
@@ -35,7 +35,7 @@
 //         {t("alreadyHaveAccount")}
 //         <Link
 //           to="/login"
-//           className="text-[#643ED7] font-semibold"
+//           className="text-brand-600 font-semibold"
 //         >
 //           {t("signIn")}
 //         </Link>
@@ -57,7 +57,7 @@ export default function RegisterOptions() {
         <input
           type="checkbox"
           id="terms"
-          className="mt-0.5 h-3.5 w-3.5 cursor-pointer accent-[#605BFF]"
+          className="mt-0.5 h-3.5 w-3.5 cursor-pointer accent-brand-600"
         />
 
         <label
@@ -70,7 +70,7 @@ export default function RegisterOptions() {
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="font-medium text-[#643ed7] transition-colors duration-200 hover:text-[#514cf0] hover:underline"
+            className="font-medium text-brand-600 transition-colors duration-200 hover:text-brand-700 hover:underline"
           >
             {t("termsOfUse")}
           </Link>{" "}
@@ -80,7 +80,7 @@ export default function RegisterOptions() {
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="font-medium text-[#643ed7] transition-colors duration-200 hover:text-[#514cf0] hover:underline"
+            className="font-medium text-brand-600 transition-colors duration-200 hover:text-brand-700 hover:underline"
           >
             {t("privacyPolicy")}
           </Link>
@@ -93,7 +93,7 @@ export default function RegisterOptions() {
         {t("alreadyHaveAccount")}{" "}
         <Link
           to="/login"
-          className="font-semibold text-[#643ED7] transition-colors duration-200 hover:text-[#514cf0] hover:underline"
+          className="font-semibold text-brand-600 transition-colors duration-200 hover:text-brand-700 hover:underline"
         >
           {t("signIn")}
         </Link>

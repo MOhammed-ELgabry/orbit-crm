@@ -1,4 +1,5 @@
 import { useState } from "react";
+import HintIcon from "../../Components/ui/HintIcon";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../context/AuthContext";
@@ -55,9 +56,12 @@ export default function LanguageSettings() {
 
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-5 sm:p-6">
-      <h2 className="font-nunito text-base font-semibold text-slate-800">
-        {t("languageSettingsTitle")}
-      </h2>
+      <div className="flex items-center gap-1">
+        <h2 className="font-nunito text-base font-semibold text-slate-800">
+          {t("languageSettingsTitle")}
+        </h2>
+        <HintIcon id="settingsLanguage" />
+      </div>
       <p className="mt-1 text-xs text-gray-500">
         {t("languageSettingsDescription")}
       </p>
@@ -82,8 +86,8 @@ export default function LanguageSettings() {
                 onClick={() => setSelected(option.value)}
                 className={`flex h-[42px] w-full items-center justify-center rounded-[10px] border px-3 text-sm font-medium transition-colors ${
                   isSelected
-                    ? "border-[#605BFF] bg-[#605BFF]/10 text-[#605BFF]"
-                    : "border-transparent bg-[#F7F7F8] text-gray-700 hover:bg-[#eeeef1]"
+                    ? "border-brand-600 bg-brand-600/10 text-brand-600"
+                    : "border-transparent bg-surface-muted text-gray-700 hover:bg-[#eeeef1]"
                 }`}
               >
                 {option.nativeLabel}
@@ -98,7 +102,7 @@ export default function LanguageSettings() {
           type="button"
           onClick={handleSave}
           disabled={isSaving || isUnchanged}
-          className="rounded-lg bg-[#605BFF] px-5 py-2 text-sm font-semibold text-white hover:bg-[#514cf0] disabled:opacity-50"
+          className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
         >
           {isSaving ? t("saving") : t("saveLanguage")}
         </button>

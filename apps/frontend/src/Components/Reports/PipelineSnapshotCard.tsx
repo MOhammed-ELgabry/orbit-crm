@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import CountUp from "../ui/CountUp";
 
 import { DEAL_STAGE_LABEL_KEY } from "../Deal/dealStage";
 import { useReportQuery } from "../../hooks/useReportQuery";
@@ -50,11 +51,11 @@ export default function PipelineSnapshotCard({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <StatTile
               label={t("reportsOpenDeals")}
-              value={report.snapshot.openDealCount}
+              value={<CountUp value={report.snapshot.openDealCount} />}
             />
             <StatTile
               label={t("reportsOpenValue")}
-              value={formatDecimalString(report.snapshot.openDealValue)}
+              value={<CountUp value={report.snapshot.openDealValue} />}
               hint={t("reportsNoCurrencyNote")}
             />
           </div>
@@ -130,11 +131,11 @@ export default function PipelineSnapshotCard({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <StatTile
                 label={t("reportsCreatedCount")}
-                value={report.createdInRange.dealCount}
+                value={<CountUp value={report.createdInRange.dealCount} />}
               />
               <StatTile
                 label={t("reportsCreatedValue")}
-                value={formatDecimalString(report.createdInRange.totalValue)}
+                value={<CountUp value={report.createdInRange.totalValue} />}
               />
             </div>
           </div>

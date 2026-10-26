@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import HintIcon from "../../Components/ui/HintIcon";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -48,7 +49,7 @@ function Switch({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-        checked ? "bg-[#605BFF]" : "bg-slate-300"
+        checked ? "bg-brand-600" : "bg-slate-300"
       }`}
     >
       <span
@@ -195,9 +196,12 @@ export default function NotificationSettings() {
 
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-5 sm:p-6">
-      <h2 className="font-nunito text-base font-semibold text-slate-800">
-        {t("notificationSettingsTitle")}
-      </h2>
+      <div className="flex items-center gap-1">
+        <h2 className="font-nunito text-base font-semibold text-slate-800">
+          {t("notificationSettingsTitle")}
+        </h2>
+        <HintIcon id="settingsNotifications" />
+      </div>
       <p className="mt-1 text-xs text-gray-500">
         {t("notificationSettingsDescription")}
       </p>

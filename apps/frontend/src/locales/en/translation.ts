@@ -128,7 +128,6 @@ const en = {
   resendCodeFailedMessage:
     "We couldn't resend the verification code. Please try again.",
 
-
   forgotPasswordSuccessTitle: "Check Your Email",
   forgotPasswordSuccessMessage:
     "If an account with this email exists, a password reset link has been sent.",
@@ -359,7 +358,7 @@ const en = {
     "Choose a background color for the main content area. A readable text color is applied automatically.",
   backgroundColorLabel: "Background color",
   backgroundColorHexLabel: "Hex value",
-  backgroundColorInvalid: "Enter a valid 6-digit hex color, e.g. #F6F8FC.",
+  backgroundColorInvalid: "Enter a valid 6-digit hex color, e.g. #F6F8F6.",
   previewLabel: "Preview",
   previewSampleText: "This is how your content area will look.",
   saveAppearance: "Save Appearance",

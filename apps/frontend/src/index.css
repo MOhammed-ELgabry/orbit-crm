@@ -1,16 +1,84 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&family=Manrope:wght@500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap");
 
 @import "tailwindcss";
 
+/*
+ * Orbit design tokens.
+ *
+ * One place for the product's visual identity. Components consume these
+ * through Tailwind utilities (bg-brand-600, text-ink, border-line,
+ * shadow-card ...) so a palette tweak never means touching a component.
+ *
+ * Brand greens were sampled from the reference dashboard. The solid
+ * button/link green (brand-600) is deliberately a notch darker than the
+ * reference's #2D965E (kept as brand-500 for icons, charts and accents):
+ * white text on #2D965E is only ~3.7:1, on brand-600 it is ~4.9:1 (WCAG AA).
+ */
 @theme {
-  --font-nunito: "Manrope", "DM Sans", sans-serif;
-  --font-sans: "DM Sans", sans-serif;
+  /* Typography: Arabic glyphs fall through to IBM Plex Sans Arabic, which
+     matches DM Sans / Manrope in weight and x-height. */
+  --font-nunito: "Manrope", "IBM Plex Sans Arabic", "DM Sans", sans-serif;
+  --font-sans: "DM Sans", "IBM Plex Sans Arabic", sans-serif;
+
+  /* Brand */
+  --color-brand-50: #f1f8f4;
+  --color-brand-100: #ddebe2;
+  --color-brand-200: #c8dcd0;
+  --color-brand-300: #91b6a4;
+  --color-brand-400: #5aa97f;
+  --color-brand-500: #2d965e;
+  --color-brand-600: #25804f;
+  --color-brand-700: #1e6b43;
+  --color-brand-800: #1b4f37;
+  --color-brand-900: #143d2c;
+
+  /* Neutrals (very slightly green-tinted so they sit with the brand).
+     The existing UI is written with Tailwind's slate-/gray- utilities, so
+     re-pointing those two scales re-tints every surface, border and muted
+     text at once instead of editing hundreds of class lists. */
+  --color-slate-50: #f6f8f6;
+  --color-slate-100: #eef1ef;
+  --color-slate-200: #e2e7e4;
+  --color-slate-300: #cbd3ce;
+  --color-slate-400: #8e9b94;
+  --color-slate-500: #66736c;
+  --color-slate-600: #4d5953;
+  --color-slate-700: #3b4640;
+  --color-slate-800: #26302b;
+  --color-slate-900: #172019;
+  --color-slate-950: #0c130f;
+  --color-gray-50: #f6f8f6;
+  --color-gray-100: #eef1ef;
+  --color-gray-200: #e2e7e4;
+  --color-gray-300: #cbd3ce;
+  --color-gray-400: #8e9b94;
+  --color-gray-500: #66736c;
+  --color-gray-600: #4d5953;
+  --color-gray-700: #3b4640;
+  --color-gray-800: #26302b;
+  --color-gray-900: #172019;
+  --color-gray-950: #0c130f;
+
+  --color-ink: #0f1a14;
+  --color-surface-muted: #f4f6f4;
+  --color-surface-sunken: #eaeeeb;
+  --color-line: #e5e9e6;
+
+  /* Elevation */
+  --shadow-card:
+    0 1px 2px rgb(15 26 20 / 0.04), 0 4px 16px rgb(15 26 20 / 0.04);
+  --shadow-card-hover:
+    0 2px 4px rgb(15 26 20 / 0.05), 0 10px 28px rgb(15 26 20 / 0.08);
+  --shadow-pop: 0 12px 32px rgb(15 26 20 / 0.14);
+
+  /* Motion */
+  --ease-orbit: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 :root {
-  color: #172033;
-  background: #f6f8fc;
-  font-family: "DM Sans", sans-serif;
+  color: #14201a;
+  background: #f6f8f6;
+  font-family: "DM Sans", "IBM Plex Sans Arabic", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -21,7 +89,7 @@ html,
 body {
   min-width: 320px;
   margin: 0;
-  background: #f6f8fc;
+  background: #f6f8f6;
 }
 button,
 input,
@@ -34,11 +102,11 @@ button:not(:disabled),
   cursor: pointer;
 }
 :focus-visible {
-  outline: 3px solid rgb(79 70 229 / 0.3);
+  outline: 3px solid rgb(45 150 94 / 0.35);
   outline-offset: 2px;
 }
 ::selection {
-  background: rgb(79 70 229 / 0.18);
+  background: rgb(45 150 94 / 0.2);
 }
 ::-webkit-scrollbar {
   width: 10px;
@@ -50,11 +118,11 @@ button:not(:disabled),
 ::-webkit-scrollbar-thumb {
   border: 3px solid transparent;
   border-radius: 999px;
-  background: #cbd5e1;
+  background: #c8d3cc;
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #9fb0a5;
   background-clip: content-box;
 }
 
@@ -68,31 +136,48 @@ textarea {
     box-shadow 160ms ease,
     background-color 160ms ease;
 }
+input:not([type="checkbox"]):not([type="radio"]):hover:not(:disabled):not(
+    :focus
+  ),
+select:hover:not(:disabled):not(:focus),
+textarea:hover:not(:disabled):not(:focus) {
+  border-color: var(--color-brand-200);
+}
 input:not([type="checkbox"]):not([type="radio"]):focus,
 select:focus,
 textarea:focus {
-  border-color: #a5b4fc !important;
+  border-color: var(--color-brand-400) !important;
   background-color: #fff !important;
-  box-shadow: 0 0 0 3px rgb(79 70 229 / 0.1) !important;
+  box-shadow: 0 0 0 3px rgb(45 150 94 / 0.14) !important;
 }
 
-/* SweetAlert2 themed to match Orbit CRM's existing visual language. */
+/* Reduced motion: keep every state change, drop the movement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* SweetAlert2 themed to match Orbit CRM's visual language. */
 .orbit-swal-popup {
   border-radius: 18px !important;
   padding: 1.75rem !important;
-  font-family: "Nunito", sans-serif !important;
-  box-shadow: 0 20px 60px rgba(3, 2, 41, 0.15) !important;
+  font-family: var(--font-sans) !important;
+  box-shadow: var(--shadow-pop) !important;
 }
 
 .orbit-swal-title {
-  color: #030229 !important;
+  color: var(--color-ink) !important;
   font-size: 20px !important;
   font-weight: 700 !important;
   margin-top: 0.5rem !important;
 }
 
 .orbit-swal-text {
-  color: #6b7280 !important;
+  color: #5d6b63 !important;
   font-size: 14px !important;
   line-height: 1.5rem !important;
 }
@@ -103,7 +188,7 @@ textarea:focus {
 }
 
 .orbit-swal-confirm {
-  background-color: #605bff !important;
+  background-color: var(--color-brand-600) !important;
   color: #ffffff !important;
   font-size: 14px !important;
   font-weight: 600 !important;
@@ -117,7 +202,7 @@ textarea:focus {
 }
 
 .orbit-swal-confirm:hover {
-  background-color: #514cf0 !important;
+  background-color: var(--color-brand-700) !important;
   transform: translateY(-1px);
 }
 
@@ -126,8 +211,8 @@ textarea:focus {
 }
 
 .orbit-swal-cancel {
-  background-color: #f7f7f8 !important;
-  color: #030229 !important;
+  background-color: var(--color-surface-muted) !important;
+  color: var(--color-ink) !important;
   font-size: 14px !important;
   font-weight: 600 !important;
   padding: 0.65rem 1.5rem !important;
@@ -138,5 +223,18 @@ textarea:focus {
 }
 
 .orbit-swal-cancel:hover {
-  background-color: #efeff3 !important;
+  background-color: var(--color-surface-sunken) !important;
+}
+
+/* CountUp: reserve the final figure's width so counting never shifts layout. */
+.orbit-countup {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+}
+.orbit-countup::after {
+  content: attr(data-final);
+  display: block;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
 }

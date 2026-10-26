@@ -146,7 +146,7 @@ export default function ContactRelatedTabs({
             onClick={() => setSelectedTab(tab)}
             className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
               activeTab === tab
-                ? "bg-blue-50 text-blue-600"
+                ? "bg-brand-50 text-brand-600"
                 : "text-slate-500 hover:bg-slate-50"
             }`}
           >

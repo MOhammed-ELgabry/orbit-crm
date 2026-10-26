@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
+import { useReveal } from "../../lib/gsapMotion";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FiUsers, FiActivity, FiCalendar, FiArrowRight } from "react-icons/fi";
-import { FaHome } from "react-icons/fa";
 
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -20,6 +19,13 @@ import {
   CONTACT_STATUS_LABEL_KEY,
   contactStatusBadgeClass,
 } from "../Contact/contactStatus";
+import {
+  LuActivity,
+  LuArrowRight,
+  LuCalendar,
+  LuHouse,
+  LuUsers,
+} from "react-icons/lu";
 
 /**
  * Replaces the previous fully-hardcoded dashboard (5 fake stat cards +
@@ -37,6 +43,11 @@ export default function BusinessDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, company } = useAuth();
+  const rootRef = useReveal<HTMLDivElement>({
+    selector: ":scope > *",
+    y: 10,
+    stagger: 0.08,
+  });
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [statsStatus, setStatsStatus] = useState<"loading" | "ready" | "error">(
@@ -80,11 +91,11 @@ export default function BusinessDashboard() {
   const contactsLabel = t("contacts");
 
   return (
-    <div className="flex flex-col gap-5">
+    <div ref={rootRef} className="flex flex-col gap-5">
       {/* Greeting */}
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-          <FaHome size={20} />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+          <LuHouse size={20} />
         </div>
         <div className="min-w-0">
           <h1 className="truncate font-nunito text-lg font-bold text-slate-800">
@@ -99,29 +110,29 @@ export default function BusinessDashboard() {
           breakpoints at all, which broke below ~1280px). */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          icon={FiUsers}
+          icon={LuUsers}
           color="blue"
           label={contactsLabel}
           value={stats?.contactsCount ?? 0}
           isLoading={statsStatus === "loading"}
         />
         <StatCard
-          icon={FiActivity}
+          icon={LuActivity}
           color="blue"
           label={t("activities")}
           value={stats?.activitiesCount ?? 0}
           isLoading={statsStatus === "loading"}
         />
         <StatCard
-          icon={FiCalendar}
+          icon={LuCalendar}
           color="blue"
           label={t("upcoming")}
           value={stats?.upcomingActivitiesCount ?? 0}
           isLoading={statsStatus === "loading"}
         />
         <StatCard
-          icon={FiUsers}
-          color="purple"
+          icon={LuUsers}
+          color="brand"
           label={t("teamNavLabel")}
           value={stats?.teamMembersCount ?? 0}
           isLoading={statsStatus === "loading"}
@@ -138,10 +149,10 @@ export default function BusinessDashboard() {
             <button
               type="button"
               onClick={() => navigate("/dashboard/contacts")}
-              className="flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline"
+              className="flex items-center gap-1 text-xs font-semibold text-brand-600 hover:underline"
             >
               {t("actions")}
-              <FiArrowRight size={12} />
+              <LuArrowRight size={12} />
             </button>
           </div>
 

@@ -14,11 +14,11 @@ import { trackEvent } from "../../lib/posthog";
 import { getErrorMessage } from "../../lib/errors";
 
 const socialButtonClass =
-  "flex items-center gap-2 rounded-[10px] bg-[#F7F7F8] px-4 py-2 sm:px-5 cursor-pointer transition-all duration-200 hover:bg-[#EFEFF3] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[#F7F7F8]";
+  "flex items-center gap-2 rounded-[10px] bg-surface-muted px-4 py-2 sm:px-5 cursor-pointer transition-all duration-200 hover:bg-surface-sunken active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-surface-muted";
 
 const Spinner = () => (
   <svg
-    className="h-5 w-5 animate-spin text-[#605BFF]"
+    className="h-5 w-5 animate-spin text-brand-600"
     viewBox="0 0 24 24"
     fill="none"
   >
@@ -80,7 +80,7 @@ export default function SocialLogin() {
           className={socialButtonClass}
         >
           {loadingProvider === "google" ? <Spinner /> : <FcGoogle size={20} />}
-          <span className="text-sm text-[#030229]">{t("google")}</span>
+          <span className="text-sm text-ink">{t("google")}</span>
         </button>
 
         <button
@@ -94,7 +94,7 @@ export default function SocialLogin() {
           ) : (
             <FaFacebook size={20} className="text-[#385C8E]" />
           )}
-          <span className="text-sm text-[#030229]">{t("facebook")}</span>
+          <span className="text-sm text-ink">{t("facebook")}</span>
         </button>
 
         <button
@@ -108,7 +108,7 @@ export default function SocialLogin() {
           ) : (
             <FaMicrosoft size={20} className="text-[#5E5E5E]" />
           )}
-          <span className="text-sm text-[#030229]">{t("microsoft")}</span>
+          <span className="text-sm text-ink">{t("microsoft")}</span>
         </button>
       </div>
     </div>

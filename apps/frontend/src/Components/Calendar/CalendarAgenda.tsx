@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { ar, enUS } from "date-fns/locale";
 import { format } from "date-fns";
-import { FiCheck, FiClock, FiEdit2, FiTrash2, FiXCircle } from "react-icons/fi";
 
 import type { CalendarEvent } from "../../types/calendar";
 import { eventDateKeys } from "./calendarDates";
@@ -11,6 +10,13 @@ import {
   calendarStatusBadgeClass,
   isCalendarEventPastDue,
 } from "./calendarMeta";
+import {
+  LuCheck,
+  LuCircleX,
+  LuClock,
+  LuPencil,
+  LuTrash2,
+} from "react-icons/lu";
 
 interface CalendarAgendaProps {
   events: CalendarEvent[];
@@ -88,7 +94,7 @@ export default function CalendarAgenda({
   if (groups.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 py-16 text-center">
-        <FiClock className="text-slate-300" size={28} />
+        <LuClock className="text-slate-300" size={28} />
         <p className="text-sm font-medium text-slate-500">
           {t("calendarEmptyState")}
         </p>
@@ -171,7 +177,7 @@ export default function CalendarAgenda({
                         title={t("calendarMarkComplete")}
                         className="rounded-lg p-1.5 text-slate-400 hover:bg-green-50 hover:text-green-600"
                       >
-                        <FiCheck size={16} />
+                        <LuCheck size={16} />
                       </button>
                     )}
                     {canUpdate && event.status !== "cancelled" && (
@@ -182,7 +188,7 @@ export default function CalendarAgenda({
                         title={t("calendarCancelEvent")}
                         className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
                       >
-                        <FiXCircle size={16} />
+                        <LuCircleX size={16} />
                       </button>
                     )}
                     {canUpdate && (
@@ -193,7 +199,7 @@ export default function CalendarAgenda({
                         title={t("edit")}
                         className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                       >
-                        <FiEdit2 size={16} />
+                        <LuPencil size={16} />
                       </button>
                     )}
                     {canDelete && (
@@ -204,7 +210,7 @@ export default function CalendarAgenda({
                         title={t("delete")}
                         className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
                       >
-                        <FiTrash2 size={16} />
+                        <LuTrash2 size={16} />
                       </button>
                     )}
                   </div>

@@ -1,8 +1,8 @@
 import { useRef, useState, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { FiSend } from "react-icons/fi";
 
 import { CHAT_MESSAGE_MAX_LENGTH } from "../../types/chat";
+import { LuSend } from "react-icons/lu";
 
 const COUNTER_THRESHOLD = 500;
 const MAX_HEIGHT_PX = 128;
@@ -86,7 +86,7 @@ export default function MessageComposer({
             resize();
           }}
           onKeyDown={onKeyDown}
-          className="max-h-32 min-h-10 flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:outline-none"
+          className="max-h-32 min-h-10 flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-400 focus:bg-white focus:outline-none"
         />
 
         <button
@@ -94,9 +94,9 @@ export default function MessageComposer({
           disabled={!canSubmit}
           aria-label={t("chatSend")}
           title={t("chatSend")}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
         >
-          <FiSend size={17} aria-hidden="true" className="rtl:-scale-x-100" />
+          <LuSend size={17} aria-hidden="true" className="rtl:-scale-x-100" />
         </button>
       </div>
 

@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import CountUp from "../ui/CountUp";
 
 import { LEAD_STATUS_LABEL_KEY } from "../Lead/leadStatus";
 import { useReportQuery } from "../../hooks/useReportQuery";
@@ -58,11 +59,11 @@ export default function LeadsOverviewCard({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <StatTile
               label={t("reportsLeadsTotal")}
-              value={report.totalLeads}
+              value={<CountUp value={report.totalLeads} />}
             />
             <StatTile
               label={t("reportsLeadsWithDeal")}
-              value={report.leadsWithLinkedDeal.count}
+              value={<CountUp value={report.leadsWithLinkedDeal.count} />}
               hint={
                 report.leadsWithLinkedDeal.percentOfLeads === null
                   ? t("reportsLeadsWithDealHint")

@@ -32,7 +32,7 @@ export default function ChatAvatar({
     <span className="relative inline-flex shrink-0" aria-hidden="true">
       <span
         className={`flex items-center justify-center rounded-full font-bold ${SIZES[size]} ${
-          group ? "bg-indigo-600 text-white" : avatarToneOf(id)
+          group ? "bg-brand-600 text-white" : avatarToneOf(id)
         }`}
       >
         {group ? "#" : initialsOf(name)}

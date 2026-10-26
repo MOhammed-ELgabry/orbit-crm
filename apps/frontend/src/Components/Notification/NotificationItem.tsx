@@ -1,24 +1,24 @@
 import { formatDistanceToNow } from "date-fns";
 import { ar, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
-import {
-  FiAlertCircle,
-  FiBriefcase,
-  FiCalendar,
-  FiCheckSquare,
-  FiMessageSquare,
-  FiUser,
-} from "react-icons/fi";
 
 import type { AppNotification } from "../../types/notification";
+import {
+  LuBriefcase,
+  LuCalendar,
+  LuCircleAlert,
+  LuMessageSquare,
+  LuSquareCheck,
+  LuUser,
+} from "react-icons/lu";
 
 function TypeIcon({ type }: { type: string }) {
-  if (type.startsWith("task.")) return <FiCheckSquare size={15} />;
-  if (type.startsWith("deal.")) return <FiBriefcase size={15} />;
-  if (type.startsWith("lead.")) return <FiUser size={15} />;
-  if (type.startsWith("calendar.")) return <FiCalendar size={15} />;
-  if (type.startsWith("chat.")) return <FiMessageSquare size={15} />;
-  return <FiAlertCircle size={15} />;
+  if (type.startsWith("task.")) return <LuSquareCheck size={15} />;
+  if (type.startsWith("deal.")) return <LuBriefcase size={15} />;
+  if (type.startsWith("lead.")) return <LuUser size={15} />;
+  if (type.startsWith("calendar.")) return <LuCalendar size={15} />;
+  if (type.startsWith("chat.")) return <LuMessageSquare size={15} />;
+  return <LuCircleAlert size={15} />;
 }
 
 interface NotificationItemProps {
@@ -49,13 +49,13 @@ export default function NotificationItem({
         type="button"
         onClick={() => onOpen(notification)}
         className={`flex w-full items-start gap-3 px-4 py-3 text-start transition-colors hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none ${
-          isUnread ? "bg-indigo-50/50" : ""
+          isUnread ? "bg-brand-50/50" : ""
         }`}
       >
         <span
           className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
             isUnread
-              ? "bg-indigo-100 text-indigo-600"
+              ? "bg-brand-100 text-brand-600"
               : "bg-slate-100 text-slate-500"
           }`}
           aria-hidden="true"
@@ -77,7 +77,7 @@ export default function NotificationItem({
 
             {isUnread && (
               <span
-                className="h-2 w-2 shrink-0 rounded-full bg-indigo-500"
+                className="h-2 w-2 shrink-0 rounded-full bg-brand-500"
                 role="img"
                 aria-label={t("notificationUnread")}
               />

@@ -36,7 +36,7 @@ const RANGE_ERROR_KEY: Record<AuditRangeError, string> = {
 };
 
 const FIELD =
-  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-[#605BFF] focus:outline-none focus:ring-2 focus:ring-[#605BFF]/20";
+  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20";
 const LABEL = "mb-1 block text-xs font-semibold text-slate-600";
 
 export default function AuditFilters({
@@ -172,7 +172,7 @@ export default function AuditFilters({
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <button
           type="submit"
-          className="rounded-lg bg-[#605BFF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#514cf0]"
+          className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
         >
           {t("auditApply")}
         </button>

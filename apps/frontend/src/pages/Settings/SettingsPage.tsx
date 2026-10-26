@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FaChevronRight } from "react-icons/fa";
 
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -13,9 +12,10 @@ import { getErrorMessage } from "../../lib/errors";
 import LanguageSettings from "./LanguageSettings";
 import AppearanceSettings from "./AppearanceSettings";
 import NotificationSettings from "./NotificationSettings";
+import { LuChevronRight } from "react-icons/lu";
 
 const inputClass =
-  "h-[38px] w-full rounded-[10px] bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none disabled:opacity-60";
+  "h-[38px] w-full rounded-[10px] bg-surface-muted px-3 text-sm text-gray-700 outline-none disabled:opacity-60";
 const labelClass = "text-xs font-semibold text-gray-700";
 
 function CompanySettingsSection() {
@@ -137,7 +137,7 @@ function CompanySettingsSection() {
             <button
               type="submit"
               disabled={isSaving}
-              className="rounded-lg bg-[#605BFF] px-5 py-2 text-sm font-semibold text-white hover:bg-[#514cf0] disabled:opacity-50"
+              className="rounded-lg bg-brand-600 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
             >
               {t("saveChanges")}
             </button>
@@ -167,10 +167,10 @@ function LegalSection() {
           <Link
             key={link.to}
             to={link.to}
-            className="flex items-center justify-between py-3 text-sm font-medium text-slate-700 hover:text-[#605BFF]"
+            className="flex items-center justify-between py-3 text-sm font-medium text-slate-700 hover:text-brand-600"
           >
             {link.label}
-            <FaChevronRight
+            <LuChevronRight
               className="rtl:rotate-180 text-xs text-slate-400"
               aria-hidden="true"
             />

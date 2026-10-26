@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FiEdit2 } from "react-icons/fi";
 
 import { errorAlert } from "../../lib/swal";
 import { getErrorMessage } from "../../lib/errors";
+import { LuPencil } from "react-icons/lu";
 
 interface ContactNotesCardProps {
   /** The contact's existing `notes` field - no separate Notes model exists. */
@@ -58,9 +58,9 @@ export default function ContactNotesCard({
             type="button"
             onClick={startEditing}
             aria-label={t("contact360NotesEdit")}
-            className="rounded-md p-1 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
+            className="rounded-md p-1 text-slate-400 hover:bg-brand-50 hover:text-brand-600"
           >
-            <FiEdit2 size={13} />
+            <LuPencil size={13} />
           </button>
         )}
       </div>
@@ -90,7 +90,7 @@ export default function ContactNotesCard({
               type="button"
               onClick={handleSave}
               disabled={isSaving}
-              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+              className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
             >
               {t("save")}
             </button>

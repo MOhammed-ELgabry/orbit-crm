@@ -62,7 +62,7 @@ export default function ContactSectionState({
         <button
           type="button"
           onClick={onRetry}
-          className="text-xs font-semibold text-blue-600 hover:underline"
+          className="text-xs font-semibold text-brand-600 hover:underline"
         >
           {t("retry")}
         </button>

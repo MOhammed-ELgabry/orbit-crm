@@ -127,7 +127,6 @@ const ar = {
   resendCodeFailedMessage:
     "تعذر إعادة إرسال رمز التحقق. يرجى المحاولة مرة أخرى.",
 
-
   forgotPasswordSuccessTitle: "تحقق من بريدك الإلكتروني",
   forgotPasswordSuccessMessage:
     "إذا كان هناك حساب مرتبط بهذا البريد الإلكتروني، فسيتم إرسال رابط إعادة تعيين كلمة المرور إليه.",
@@ -356,7 +355,7 @@ const ar = {
     "اختر لون خلفية منطقة المحتوى الرئيسية. سيتم تطبيق لون نص مناسب للقراءة تلقائيًا.",
   backgroundColorLabel: "لون الخلفية",
   backgroundColorHexLabel: "القيمة السداسية عشرية",
-  backgroundColorInvalid: "أدخل لونًا صالحًا مكوّنًا من 6 خانات، مثل ‎#F6F8FC.",
+  backgroundColorInvalid: "أدخل لونًا صالحًا مكوّنًا من 6 خانات، مثل ‎#F6F8F6.",
   previewLabel: "معاينة",
   previewSampleText: "هكذا ستبدو منطقة المحتوى الخاصة بك.",
   saveAppearance: "حفظ المظهر",

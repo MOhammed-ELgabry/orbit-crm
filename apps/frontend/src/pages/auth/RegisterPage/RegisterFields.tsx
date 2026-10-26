@@ -1,6 +1,8 @@
 // import { Field, ErrorMessage } from "formik";
 // import { useTranslation } from "react-i18next";
 
+import { inputClass } from "../../../Components/ui/styles";
+
 // export default function RegisterFields() {
 //   const { t } = useTranslation();
 
@@ -20,7 +22,7 @@
 //           type="text"
 //           name="firstName"
 //           placeholder={t("enterFirstName")}
-//           className="h-[38px] w-full rounded-[10px] bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none"
+//           className="h-[38px] w-full rounded-[10px] bg-surface-muted px-3 text-sm text-gray-700 outline-none"
 //         />
 
 //         <ErrorMessage
@@ -44,7 +46,7 @@
 //           type="text"
 //           name="lastName"
 //           placeholder={t("enterLastName")}
-//           className="h-[38px] w-full rounded-[10px] bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none"
+//           className="h-[38px] w-full rounded-[10px] bg-surface-muted px-3 text-sm text-gray-700 outline-none"
 //         />
 
 //         <ErrorMessage
@@ -68,7 +70,7 @@
 //           type="email"
 //           name="email"
 //           placeholder={t("enterEmail")}
-//           className="h-[38px] w-full rounded-[10px] bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none"
+//           className="h-[38px] w-full rounded-[10px] bg-surface-muted px-3 text-sm text-gray-700 outline-none"
 //         />
 
 //         <ErrorMessage
@@ -92,7 +94,7 @@
 //           type="password"
 //           name="password"
 //           placeholder={t("enterPassword")}
-//           className="h-[38px] w-full rounded-[10px] bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none"
+//           className="h-[38px] w-full rounded-[10px] bg-surface-muted px-3 text-sm text-gray-700 outline-none"
 //         />
 
 //         <ErrorMessage
@@ -116,7 +118,7 @@
 //           type="text"
 //           name="companyName"
 //           placeholder={t("enterCompanyName")}
-//           className="h-[38px] w-full rounded-[10px] bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none"
+//           className="h-[38px] w-full rounded-[10px] bg-surface-muted px-3 text-sm text-gray-700 outline-none"
 //         />
 
 //         <ErrorMessage
@@ -143,7 +145,7 @@
 //           name="avatar"
 //           type="file"
 //           accept="image/*"
-//           className="h-[38px] w-full rounded-[10px] bg-[#F7F7F8] px-3 py-2 text-xs text-gray-500 outline-none"
+//           className="h-[38px] w-full rounded-[10px] bg-surface-muted px-3 py-2 text-xs text-gray-500 outline-none"
 //         />
 
 //         <ErrorMessage
@@ -170,7 +172,7 @@
 //           type="tel"
 //           name="phone"
 //           placeholder={t("enterPhone")}
-//           className="h-[38px] w-full rounded-[10px] bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none"
+//           className="h-[38px] w-full rounded-[10px] bg-surface-muted px-3 text-sm text-gray-700 outline-none"
 //         />
 
 //         <ErrorMessage
@@ -186,11 +188,8 @@
 import { Field, ErrorMessage } from "formik";
 import { useTranslation } from "react-i18next";
 
-const inputClass =
-  "h-[42px] w-full rounded-[10px] border border-transparent bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#605BFF] focus:bg-white focus:shadow-[0_0_0_3px_rgba(96,91,255,0.08)]";
-
 const fileInputClass =
-  "h-[42px] w-full cursor-pointer rounded-[10px] border border-transparent bg-[#F7F7F8] px-3 text-xs text-gray-500 outline-none transition-all duration-200 file:mr-3 file:cursor-pointer file:rounded-[8px] file:border-0 file:bg-[#605BFF]/10 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[#605BFF] hover:file:bg-[#605BFF]/20 focus:border-[#605BFF] focus:bg-white focus:shadow-[0_0_0_3px_rgba(96,91,255,0.08)]";
+  "h-[42px] w-full cursor-pointer rounded-[10px] border border-transparent bg-surface-muted px-3 text-xs text-gray-500 outline-none transition-all duration-200 file:mr-3 file:cursor-pointer file:rounded-[8px] file:border-0 file:bg-brand-600/10 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brand-600 hover:file:bg-brand-600/20 focus:border-brand-600 focus:bg-white focus:shadow-[0_0_0_3px_rgba(45,150,94,0.08)]";
 
 export default function RegisterFields() {
   const { t } = useTranslation();

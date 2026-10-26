@@ -4,9 +4,9 @@
 // normal UI surface.
 export default function ErrorFallback() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F7F7F8] px-4">
+    <div className="flex min-h-screen items-center justify-center bg-surface-muted px-4">
       <div className="max-w-sm rounded-2xl bg-white p-6 text-center shadow-sm">
-        <h1 className="font-nunito text-lg font-semibold text-[#030229]">
+        <h1 className="font-nunito text-lg font-semibold text-ink">
           Something went wrong
         </h1>
         <p className="mt-2 text-sm text-gray-500">
@@ -15,7 +15,7 @@ export default function ErrorFallback() {
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="mt-4 h-[38px] w-full rounded-[10px] bg-[#605BFF] text-sm font-semibold text-white hover:bg-[#514cf0]"
+          className="mt-4 h-[38px] w-full rounded-[10px] bg-brand-600 text-sm font-semibold text-white hover:bg-brand-700"
         >
           Reload
         </button>

@@ -1,8 +1,8 @@
-import { FiCheck } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 
 import { receiptStateOf } from "../../context/chatState";
 import type { ChatMessage } from "../../types/chat";
+import { LuCheck } from "react-icons/lu";
 
 /**
  * One check: the server persisted the message. Two checks: at least one
@@ -31,12 +31,12 @@ export default function ReceiptTicks({ message }: { message: ChatMessage }) {
       data-testid="receipt"
       data-state={state}
       className={`inline-flex items-center ${
-        state === "read" ? "text-sky-200" : "text-indigo-200"
+        state === "read" ? "text-sky-200" : "text-brand-200"
       }`}
     >
-      <FiCheck size={13} aria-hidden="true" />
+      <LuCheck size={13} aria-hidden="true" />
       {state !== "sent" && (
-        <FiCheck size={13} aria-hidden="true" className="-ms-2" />
+        <LuCheck size={13} aria-hidden="true" className="-ms-2" />
       )}
     </span>
   );

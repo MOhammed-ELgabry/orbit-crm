@@ -1,13 +1,6 @@
 import { useCallback, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import {
-  FiArrowLeft,
-  FiEdit2,
-  FiTrash2,
-  FiMail,
-  FiPhone,
-} from "react-icons/fi";
 
 import { useAuth } from "../../context/AuthContext";
 import { useKeyedResource } from "../../hooks/useKeyedResource";
@@ -28,6 +21,13 @@ import ContactRelatedTabs from "../../Components/Contact/ContactRelatedTabs";
 import { confirmAlert, errorAlert } from "../../lib/swal";
 import { getErrorMessage } from "../../lib/errors";
 import { trackEvent } from "../../lib/posthog";
+import {
+  LuArrowLeft,
+  LuMail,
+  LuPencil,
+  LuPhone,
+  LuTrash2,
+} from "react-icons/lu";
 
 export default function ContactDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -112,7 +112,7 @@ export default function ContactDetailPage() {
         <button
           type="button"
           onClick={() => navigate("/dashboard/contacts")}
-          className="text-xs font-semibold text-blue-600 hover:underline"
+          className="text-xs font-semibold text-brand-600 hover:underline"
         >
           {t("backToList", { label: t("contacts") })}
         </button>
@@ -132,7 +132,7 @@ export default function ContactDetailPage() {
         <button
           type="button"
           onClick={() => navigate("/dashboard/contacts")}
-          className="text-xs font-semibold text-blue-600 hover:underline"
+          className="text-xs font-semibold text-brand-600 hover:underline"
         >
           {t("backToList", { label: t("contacts") })}
         </button>
@@ -147,7 +147,7 @@ export default function ContactDetailPage() {
         <button
           type="button"
           onClick={retry}
-          className="text-xs font-semibold text-blue-600 hover:underline"
+          className="text-xs font-semibold text-brand-600 hover:underline"
         >
           {t("retry")}
         </button>
@@ -163,9 +163,9 @@ export default function ContactDetailPage() {
       <button
         type="button"
         onClick={() => navigate("/dashboard/contacts")}
-        className="flex w-fit items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600"
+        className="flex w-fit items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-brand-600"
       >
-        <FiArrowLeft size={14} />
+        <LuArrowLeft size={14} />
         {t("backToList", { label: t("contacts") })}
       </button>
 
@@ -173,7 +173,7 @@ export default function ContactDetailPage() {
         {/* Profile card */}
         <div className="rounded-2xl border border-slate-100 bg-white p-5 lg:col-span-1">
           <div className="flex items-start justify-between gap-2">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-500 text-base font-semibold text-white">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-500 text-base font-semibold text-white">
               {contact.firstName[0]}
               {contact.lastName[0]}
             </div>
@@ -184,9 +184,9 @@ export default function ContactDetailPage() {
                   type="button"
                   onClick={() => setIsEditing(true)}
                   aria-label={t("edit")}
-                  className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
+                  className="rounded-lg p-2 text-slate-400 hover:bg-brand-50 hover:text-brand-600"
                 >
-                  <FiEdit2 size={15} />
+                  <LuPencil size={15} />
                 </button>
               )}
 
@@ -197,7 +197,7 @@ export default function ContactDetailPage() {
                   aria-label={t("delete")}
                   className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500"
                 >
-                  <FiTrash2 size={15} />
+                  <LuTrash2 size={15} />
                 </button>
               )}
             </div>
@@ -225,9 +225,9 @@ export default function ContactDetailPage() {
             {contact.email && (
               <a
                 href={`mailto:${contact.email}`}
-                className="flex items-center gap-2 text-slate-600 hover:text-blue-600"
+                className="flex items-center gap-2 text-slate-600 hover:text-brand-600"
               >
-                <FiMail size={14} className="shrink-0 text-slate-400" />
+                <LuMail size={14} className="shrink-0 text-slate-400" />
                 <span className="truncate">{contact.email}</span>
               </a>
             )}
@@ -235,9 +235,9 @@ export default function ContactDetailPage() {
             {contact.phone && (
               <a
                 href={`tel:${contact.phone}`}
-                className="flex items-center gap-2 text-slate-600 hover:text-blue-600"
+                className="flex items-center gap-2 text-slate-600 hover:text-brand-600"
               >
-                <FiPhone size={14} className="shrink-0 text-slate-400" />
+                <LuPhone size={14} className="shrink-0 text-slate-400" />
                 <span className="truncate">{contact.phone}</span>
               </a>
             )}

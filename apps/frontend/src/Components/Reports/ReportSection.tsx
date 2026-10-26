@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import Button from "../ui/Button";
+import { cardClass } from "../ui/styles";
 import { useTranslation } from "react-i18next";
 
 interface ReportSectionProps {
@@ -33,10 +35,7 @@ export default function ReportSection({
   const { t } = useTranslation();
 
   return (
-    <section
-      className="rounded-2xl border border-slate-100 bg-white p-5"
-      aria-busy={state === "loading"}
-    >
+    <section className={`p-5 ${cardClass}`} aria-busy={state === "loading"}>
       <header className="mb-4 text-start">
         <h2 className="font-nunito text-base font-semibold text-slate-800">
           {title}
@@ -58,13 +57,9 @@ export default function ReportSection({
         <div className="flex flex-col items-center gap-2 py-10 text-center">
           <p className="text-sm text-slate-500">{t("somethingWentWrong")}</p>
           {onRetry && (
-            <button
-              type="button"
-              onClick={onRetry}
-              className="text-xs font-semibold text-blue-600 hover:underline"
-            >
+            <Button variant="secondary" size="sm" onClick={onRetry}>
               {t("retry")}
-            </button>
+            </Button>
           )}
         </div>
       )}

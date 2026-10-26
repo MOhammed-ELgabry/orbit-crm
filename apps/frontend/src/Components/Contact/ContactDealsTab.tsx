@@ -44,7 +44,7 @@ export default function ContactDealsTab({
               <div className="min-w-0">
                 <Link
                   to={`/dashboard/deals/${deal.id}`}
-                  className="block truncate text-sm font-semibold text-slate-800 hover:text-blue-600"
+                  className="block truncate text-sm font-semibold text-slate-800 hover:text-brand-600"
                 >
                   {deal.title}
                 </Link>
@@ -75,7 +75,7 @@ export default function ContactDealsTab({
           {t("contact360PartialCount", { count: CONTACT_SECTION_LIMIT })}{" "}
           <Link
             to="/dashboard/deals"
-            className="font-semibold text-blue-600 hover:underline"
+            className="font-semibold text-brand-600 hover:underline"
           >
             {t("contact360OpenPage", { section: t("dealsNavLabel") })}
           </Link>

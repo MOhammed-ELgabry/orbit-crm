@@ -4,6 +4,10 @@ import { AuthProvider } from "./context/AuthContext";
 import { NotificationsProvider } from "./context/NotificationsProvider";
 import { ChatProvider } from "./context/ChatProvider";
 import ChatNotificationsBridge from "./Components/Notification/ChatNotificationsBridge";
+import {
+  AuthLocaleLayout,
+  LegalLocaleScope,
+} from "./pages/auth/AuthLocaleScope";
 import RegisterPage from "./pages/auth/RegisterPage/RegisterPage";
 import LoginPage from "./pages/auth/LoginPage/LoginPage";
 import VerifyEmail from "./pages/auth/VerifyEmail/VerifyEmail";
@@ -43,15 +47,25 @@ function App() {
             <ChatNotificationsBridge />
             <div className="relative min-h-screen">
               <Routes>
-                <Route path="/" element={<RegisterPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route
-                  path="/forgot-password"
-                  element={<ForgotPasswordPage />}
-                />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
-                <Route path="/verify-email" element={<VerifyEmail />} />
+                {/*
+                  Sign-in screens share one layout that provides the isolated,
+                  temporary language (see lib/authLocale.ts). It is a pathless
+                  layout route, so every URL below is unchanged.
+                */}
+                <Route element={<AuthLocaleLayout />}>
+                  <Route path="/" element={<RegisterPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route
+                    path="/forgot-password"
+                    element={<ForgotPasswordPage />}
+                  />
+                  <Route
+                    path="/reset-password"
+                    element={<ResetPasswordPage />}
+                  />
+                  <Route path="/verify-email" element={<VerifyEmail />} />
+                </Route>
                 <Route
                   path="/dashboard"
                   element={
@@ -93,7 +107,7 @@ function App() {
                             className="flex min-h-[40vh] items-center justify-center"
                             role="status"
                           >
-                            <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#EEEEF5] border-t-[#605BFF]" />
+                            <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-100 border-t-brand-600" />
                           </div>
                         }
                       >
@@ -126,8 +140,22 @@ function App() {
               <Routes> tree below), so LegalDocumentView can read
               isAuthenticated for its back-link without requiring it.
             */}
-                <Route path="/terms" element={<TermsOfServicePage />} />
-                <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                <Route
+                  path="/terms"
+                  element={
+                    <LegalLocaleScope>
+                      <TermsOfServicePage />
+                    </LegalLocaleScope>
+                  }
+                />
+                <Route
+                  path="/privacy"
+                  element={
+                    <LegalLocaleScope>
+                      <PrivacyPolicyPage />
+                    </LegalLocaleScope>
+                  }
+                />
               </Routes>
             </div>
           </ChatProvider>

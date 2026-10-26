@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FiBell } from "react-icons/fi";
 
+import Hint from "../ui/Hint";
 import NotificationItem from "./NotificationItem";
 import { useNotifications } from "../../hooks/useNotifications";
 import { useOpenNotification } from "../../hooks/useOpenNotification";
+import { LuBell } from "react-icons/lu";
 
 const PREVIEW_COUNT = 8;
 
@@ -56,30 +57,32 @@ export default function NotificationBell() {
 
   return (
     <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        onClick={toggle}
-        aria-haspopup="dialog"
-        aria-expanded={isOpen}
-        aria-controls={isOpen ? panelId : undefined}
-        aria-label={
-          unreadCount > 0
-            ? t("notificationsBellLabelUnread", { count: unreadCount })
-            : t("notificationsBellLabel")
-        }
-        className="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-indigo-500"
-      >
-        <FiBell size={20} aria-hidden="true" />
+      <Hint id="notifications" placement="bottom">
+        <button
+          type="button"
+          onClick={toggle}
+          aria-haspopup="dialog"
+          aria-expanded={isOpen}
+          aria-controls={isOpen ? panelId : undefined}
+          aria-label={
+            unreadCount > 0
+              ? t("notificationsBellLabelUnread", { count: unreadCount })
+              : t("notificationsBellLabel")
+          }
+          className="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-brand-500"
+        >
+          <LuBell size={20} aria-hidden="true" />
 
-        {unreadCount > 0 && (
-          <span
-            data-testid="notification-badge"
-            className="absolute end-1 top-1 flex min-w-[18px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-[18px] text-white"
-          >
-            {badge}
-          </span>
-        )}
-      </button>
+          {unreadCount > 0 && (
+            <span
+              data-testid="notification-badge"
+              className="absolute end-1 top-1 flex min-w-[18px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-[18px] text-white"
+            >
+              {badge}
+            </span>
+          )}
+        </button>
+      </Hint>
 
       {isOpen && (
         <div
@@ -97,7 +100,7 @@ export default function NotificationBell() {
               type="button"
               onClick={() => void markAllRead()}
               disabled={unreadCount === 0}
-              className="text-xs font-semibold text-indigo-600 hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
+              className="text-xs font-semibold text-brand-600 hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
             >
               {t("notificationsMarkAllRead")}
             </button>
@@ -120,7 +123,7 @@ export default function NotificationBell() {
                 <button
                   type="button"
                   onClick={() => void loadList()}
-                  className="mt-2 text-xs font-semibold text-indigo-600 hover:underline"
+                  className="mt-2 text-xs font-semibold text-brand-600 hover:underline"
                 >
                   {t("notificationsRetry")}
                 </button>
@@ -145,7 +148,7 @@ export default function NotificationBell() {
           <Link
             to="/dashboard/notifications"
             onClick={close}
-            className="block border-t border-slate-100 px-4 py-2.5 text-center text-xs font-semibold text-indigo-600 hover:bg-slate-50"
+            className="block border-t border-slate-100 px-4 py-2.5 text-center text-xs font-semibold text-brand-600 hover:bg-slate-50"
           >
             {t("notificationsViewAll")}
           </Link>

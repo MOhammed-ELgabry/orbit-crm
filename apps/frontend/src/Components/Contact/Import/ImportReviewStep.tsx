@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FiAlertCircle, FiAlertTriangle } from "react-icons/fi";
 
 import type {
   DerivedImportRow,
   ImportRowKind,
 } from "../../../types/contactImport";
 import { rowKindLabelKey, rowReason } from "./importMessages";
+import { LuCircleAlert, LuTriangleAlert } from "react-icons/lu";
 
 interface ImportReviewStepProps {
   rows: DerivedImportRow[];
@@ -35,7 +35,7 @@ const KIND_BADGE: Record<ImportRowKind, string> = {
 };
 
 const nameInputClass =
-  "h-8 w-full min-w-[7rem] rounded-lg border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-blue-300";
+  "h-8 w-full min-w-[7rem] rounded-lg border border-slate-200 bg-white px-2 text-sm text-slate-700 outline-none focus:border-brand-300";
 
 interface NameCellProps {
   row: DerivedImportRow;
@@ -189,7 +189,7 @@ export default function ImportReviewStep({
               aria-pressed={filter === chip.id}
               onClick={() => chooseFilter(chip.id)}
               className={`rounded-full px-3 py-1.5 text-xs font-semibold ${chip.badge} ${
-                filter === chip.id ? "ring-2 ring-[#605BFF]/40" : ""
+                filter === chip.id ? "ring-2 ring-brand-600/40" : ""
               }`}
             >
               {chip.label}
@@ -208,7 +208,7 @@ export default function ImportReviewStep({
             role="alert"
             className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600"
           >
-            <FiAlertCircle size={16} aria-hidden />
+            <LuCircleAlert size={16} aria-hidden />
             <span>{t("contactsImportCheckFailed")}</span>
             <button
               type="button"
@@ -225,7 +225,7 @@ export default function ImportReviewStep({
             role="status"
             className="mt-3 flex items-center gap-2 text-sm text-amber-600"
           >
-            <FiAlertTriangle size={15} aria-hidden />
+            <LuTriangleAlert size={15} aria-hidden />
             {t("contactsImportNothingToImport")}
           </p>
         )}
@@ -387,7 +387,7 @@ export default function ImportReviewStep({
           type="button"
           disabled={!canImport}
           onClick={onImport}
-          className="h-10 rounded-xl bg-[#605BFF] px-5 text-sm font-semibold text-white hover:bg-[#514cf0] disabled:opacity-50"
+          className="h-10 rounded-xl bg-brand-600 px-5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
         >
           {t("contactsImportStartButton", { count: validCount })}
         </button>

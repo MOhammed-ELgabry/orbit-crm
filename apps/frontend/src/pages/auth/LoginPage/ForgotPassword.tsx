@@ -7,7 +7,7 @@
 //   return (
 //     <Link
 //       to="/forgot-password"
-//       className="text-xs font-medium text-[#643ED7]"
+//       className="text-xs font-medium text-brand-600"
 //     >
 //       {t("forgotPassword")}
 //     </Link>
@@ -23,7 +23,7 @@ export default function ForgotPassword() {
   return (
     <Link
       to="/forgot-password"
-      className="text-xs font-medium text-[#643ED7] transition-colors duration-200 hover:text-[#514cf0] hover:underline"
+      className="text-xs font-medium text-brand-600 transition-colors duration-200 hover:text-brand-700 hover:underline"
     >
       {t("forgotPassword")}
     </Link>

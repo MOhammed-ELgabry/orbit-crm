@@ -135,7 +135,7 @@ export default function AuditLogPage() {
             <button
               type="button"
               onClick={list.retry}
-              className="mt-3 rounded-lg bg-[#605BFF] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#514cf0]"
+              className="mt-3 rounded-lg bg-brand-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-brand-700"
             >
               {t("auditRetry")}
             </button>

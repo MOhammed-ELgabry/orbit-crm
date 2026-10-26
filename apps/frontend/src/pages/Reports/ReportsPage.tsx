@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useReveal } from "../../lib/gsapMotion";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../context/AuthContext";
@@ -27,6 +28,8 @@ import {
 export default function ReportsPage() {
   const { t } = useTranslation();
   const { hasPermission } = useAuth();
+  // Cards fade in once, in order; nothing moves after that.
+  const gridRef = useReveal<HTMLDivElement>({ selector: ":scope > section" });
 
   const [selection, setSelection] = useState<PeriodSelection>({
     kind: "preset",
@@ -73,7 +76,7 @@ export default function ReportsPage() {
         onChange={setSelection}
       />
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <div ref={gridRef} className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         {canPipeline && <PipelineSnapshotCard period={period} />}
         {canLeads && <LeadsOverviewCard period={period} />}
         {canTasks && <TasksOverviewCard period={period} />}

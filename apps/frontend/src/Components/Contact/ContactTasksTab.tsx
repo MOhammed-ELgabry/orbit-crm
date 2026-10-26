@@ -85,7 +85,7 @@ export default function ContactTasksTab({
         )}
         <Link
           to="/dashboard/tasks"
-          className="font-semibold text-blue-600 hover:underline"
+          className="font-semibold text-brand-600 hover:underline"
         >
           {t("contact360OpenPage", { section: t("tasksNavLabel") })}
         </Link>

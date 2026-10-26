@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FaArrowLeft } from "react-icons/fa";
 
 import { useAuth } from "../../context/AuthContext";
 import type { LegalDocument } from "../../locales/en/legal";
+import { LuArrowLeft } from "react-icons/lu";
 
 /**
  * Shared renderer for the public /terms and /privacy pages (also linked
@@ -24,13 +24,13 @@ export default function LegalDocumentView({
   const backLabel = isAuthenticated ? t("backToSettings") : t("backToHome");
 
   return (
-    <div className="min-h-screen bg-[#f6f8fc] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <div className="min-h-screen bg-[#f6f8f6] px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
       <div className="mx-auto w-full max-w-3xl">
         <Link
           to={backTo}
-          className="inline-flex items-center gap-2 text-sm font-medium text-[#605BFF] hover:text-[#514cf0]"
+          className="inline-flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700"
         >
-          <FaArrowLeft className="rtl:rotate-180" aria-hidden="true" />
+          <LuArrowLeft className="rtl:rotate-180" aria-hidden="true" />
           {backLabel}
         </Link>
 

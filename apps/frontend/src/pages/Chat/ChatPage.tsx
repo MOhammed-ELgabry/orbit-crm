@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FiMessageSquare } from "react-icons/fi";
 
 import ConversationList from "../../Components/Chat/ConversationList";
 import MessageThread from "../../Components/Chat/MessageThread";
 import { useChat } from "../../hooks/useChat";
+import { LuMessageSquare } from "react-icons/lu";
 
 /**
  * /dashboard/chat — conversation list on one side, the open thread on the
@@ -77,7 +77,7 @@ export default function ChatPage() {
         <button
           type="button"
           onClick={() => store.retryBootstrap()}
-          className="mt-2 text-xs font-semibold text-indigo-600 hover:underline"
+          className="mt-2 text-xs font-semibold text-brand-600 hover:underline"
         >
           {t("chatRetry")}
         </button>
@@ -117,7 +117,7 @@ export default function ChatPage() {
           />
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center text-slate-500">
-            <FiMessageSquare
+            <LuMessageSquare
               size={40}
               aria-hidden="true"
               className="text-slate-300"

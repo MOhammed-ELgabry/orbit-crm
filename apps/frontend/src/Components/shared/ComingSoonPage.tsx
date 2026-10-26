@@ -24,7 +24,7 @@ export default function ComingSoonPage({
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-500">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-500">
         <Icon size={26} />
       </div>
 

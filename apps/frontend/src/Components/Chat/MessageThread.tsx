@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, type UIEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { FiChevronLeft } from "react-icons/fi";
 
 import { EMPTY_THREAD, selectPresence } from "../../context/chatState";
 import { useChat } from "../../hooks/useChat";
@@ -8,6 +7,7 @@ import ChatAvatar from "./ChatAvatar";
 import MessageBubble from "./MessageBubble";
 import MessageComposer from "./MessageComposer";
 import PresenceLabel from "./PresenceLabel";
+import { LuChevronLeft } from "react-icons/lu";
 
 /** Distance from the bottom that still counts as "looking at the latest". */
 const AT_BOTTOM_PX = 80;
@@ -123,7 +123,7 @@ export default function MessageThread({
           aria-label={t("chatBack")}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 md:hidden"
         >
-          <FiChevronLeft
+          <LuChevronLeft
             size={20}
             aria-hidden="true"
             className="rtl:rotate-180"
@@ -173,7 +173,7 @@ export default function MessageThread({
               type="button"
               onClick={loadOlder}
               disabled={thread.loadingOlder}
-              className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-indigo-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
+              className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-brand-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
             >
               {thread.loadingOlder ? t("chatLoadingOlder") : t("chatLoadOlder")}
             </button>
@@ -197,7 +197,7 @@ export default function MessageThread({
               onClick={() =>
                 void store.loadThread(conversationId, { force: true })
               }
-              className="mt-2 text-xs font-semibold text-indigo-600 hover:underline"
+              className="mt-2 text-xs font-semibold text-brand-600 hover:underline"
             >
               {t("chatRetry")}
             </button>

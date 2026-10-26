@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import CountUp from "../ui/CountUp";
 
 import { TASK_STATUS_LABEL_KEY } from "../Task/taskMeta";
 import { useReportQuery } from "../../hooks/useReportQuery";
@@ -56,11 +57,18 @@ export default function TasksOverviewCard({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <StatTile
               label={t("reportsTasksDue")}
-              value={report.totalDueInRange}
+              value={<CountUp value={report.totalDueInRange} />}
             />
             <StatTile
               label={t("reportsCompletionRate")}
-              value={formatPercentString(report.completionRatePercent)}
+              value={
+                // null = "not computable": a dash, never an animated 0%.
+                report.completionRatePercent === null ? (
+                  formatPercentString(null)
+                ) : (
+                  <CountUp value={report.completionRatePercent} suffix="%" />
+                )
+              }
               hint={
                 report.completionRatePercent === null
                   ? t("reportsCompletionRateNotAvailable")

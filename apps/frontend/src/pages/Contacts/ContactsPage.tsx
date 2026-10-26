@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
+import Hint from "../../Components/ui/Hint";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FiPlus, FiSearch, FiTrash2, FiEdit2, FiUpload } from "react-icons/fi";
 
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -21,6 +21,7 @@ import ContactFormModal from "../../Components/Contact/ContactFormModal";
 import { confirmAlert, errorAlert } from "../../lib/swal";
 import { getErrorMessage } from "../../lib/errors";
 import { trackEvent } from "../../lib/posthog";
+import { LuPencil, LuPlus, LuSearch, LuTrash2, LuUpload } from "react-icons/lu";
 
 const PAGE_SIZE = 10;
 
@@ -118,7 +119,7 @@ export default function ContactsPage() {
       {/* Toolbar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-xs">
-          <FiSearch
+          <LuSearch
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
             size={16}
           />
@@ -127,7 +128,7 @@ export default function ContactsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("searchContactsPlaceholder")}
-            className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-blue-300"
+            className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-brand-300"
           />
         </div>
 
@@ -146,25 +147,27 @@ export default function ContactsPage() {
           </select>
 
           {hasPermission("contact:create") && (
-            <button
-              type="button"
-              onClick={() => navigate("/dashboard/contacts/import")}
-              aria-label={t("contactsImportButton")}
-              className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-            >
-              <FiUpload size={16} />
-              <span className="hidden sm:inline">
-                {t("contactsImportButton")}
-              </span>
-            </button>
+            <Hint id="importContacts" placement="bottom">
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard/contacts/import")}
+                aria-label={t("contactsImportButton")}
+                className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                <LuUpload size={16} />
+                <span className="hidden sm:inline">
+                  {t("contactsImportButton")}
+                </span>
+              </button>
+            </Hint>
           )}
 
           <button
             type="button"
             onClick={() => setModalMode("create")}
-            className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-[#605BFF] px-4 text-sm font-semibold text-white hover:bg-[#514cf0]"
+            className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700"
           >
-            <FiPlus size={16} />
+            <LuPlus size={16} />
             <span className="hidden sm:inline">
               {t("addContact", { label: contactLabel })}
             </span>
@@ -191,7 +194,7 @@ export default function ContactsPage() {
             <button
               type="button"
               onClick={() => load(page)}
-              className="text-xs font-semibold text-blue-600 hover:underline"
+              className="text-xs font-semibold text-brand-600 hover:underline"
             >
               {t("retry")}
             </button>
@@ -231,7 +234,7 @@ export default function ContactsPage() {
                     onClick={() =>
                       navigate(`/dashboard/contacts/${contact.id}`)
                     }
-                    className="cursor-pointer border-b border-slate-50 text-sm last:border-0 hover:bg-slate-50"
+                    className="cursor-pointer border-b border-slate-50 text-sm last:border-0 hover:bg-brand-50/60"
                   >
                     <td className="px-5 py-3 font-medium text-slate-700">
                       {contactDisplayName(contact)}
@@ -261,9 +264,9 @@ export default function ContactsPage() {
                             setModalMode(contact);
                           }}
                           aria-label={t("edit")}
-                          className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
+                          className="rounded-lg p-2 text-slate-400 hover:bg-brand-50 hover:text-brand-600"
                         >
-                          <FiEdit2 size={15} />
+                          <LuPencil size={15} />
                         </button>
                         <button
                           type="button"
@@ -274,7 +277,7 @@ export default function ContactsPage() {
                           aria-label={t("delete")}
                           className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500"
                         >
-                          <FiTrash2 size={15} />
+                          <LuTrash2 size={15} />
                         </button>
                       </div>
                     </td>

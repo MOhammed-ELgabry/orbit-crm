@@ -3,17 +3,6 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { formatDistanceToNow } from "date-fns";
-import {
-  FiPlus,
-  FiTrash2,
-  FiPhoneCall,
-  FiMail,
-  FiUsers,
-  FiCheckSquare,
-  FiRefreshCw,
-  FiFileText,
-  FiActivity,
-} from "react-icons/fi";
 
 import {
   listActivities,
@@ -25,16 +14,27 @@ import { ACTIVITY_TYPES } from "../../types/activity";
 import { errorAlert, confirmAlert } from "../../lib/swal";
 import { getErrorMessage } from "../../lib/errors";
 import { NO_DATE, parseDate } from "../../lib/contact360";
+import {
+  LuActivity,
+  LuFileText,
+  LuMail,
+  LuPhoneCall,
+  LuPlus,
+  LuRefreshCw,
+  LuSquareCheck,
+  LuTrash2,
+  LuUsers,
+} from "react-icons/lu";
 
 const TYPE_ICON: Record<string, React.ComponentType<{ size?: number }>> = {
-  NOTE: FiFileText,
-  CALL: FiPhoneCall,
-  EMAIL: FiMail,
-  MEETING: FiUsers,
-  TASK: FiCheckSquare,
-  STATUS_CHANGE: FiRefreshCw,
-  SYSTEM: FiActivity,
-  OTHER: FiActivity,
+  NOTE: LuFileText,
+  CALL: LuPhoneCall,
+  EMAIL: LuMail,
+  MEETING: LuUsers,
+  TASK: LuSquareCheck,
+  STATUS_CHANGE: LuRefreshCw,
+  SYSTEM: LuActivity,
+  OTHER: LuActivity,
 };
 
 const TYPE_LABEL_KEY: Record<string, string> = {
@@ -231,9 +231,9 @@ export default function ActivityTimeline({
           <button
             type="button"
             onClick={() => setIsFormOpen((prev) => !prev)}
-            className="flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-100"
+            className="flex items-center gap-1.5 rounded-lg bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-600 transition-colors hover:bg-brand-100"
           >
-            <FiPlus size={14} />
+            <LuPlus size={14} />
             {t("logActivity")}
           </button>
         )}
@@ -315,7 +315,7 @@ export default function ActivityTimeline({
             <button
               type="submit"
               disabled={isSubmitting || !title.trim()}
-              className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+              className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
             >
               {t("save")}
             </button>
@@ -344,7 +344,7 @@ export default function ActivityTimeline({
             <button
               type="button"
               onClick={() => load(1, false)}
-              className="text-xs font-semibold text-blue-600 hover:underline"
+              className="text-xs font-semibold text-brand-600 hover:underline"
             >
               {t("retry")}
             </button>
@@ -367,7 +367,7 @@ export default function ActivityTimeline({
 
         {status === "ready" && activities.length === 0 && (
           <div className="flex flex-col items-center gap-1 py-8 text-center">
-            <FiActivity className="text-slate-300" size={28} />
+            <LuActivity className="text-slate-300" size={28} />
             <p className="mt-1 text-sm font-medium text-slate-600">
               {t("noActivitiesYetTitle")}
             </p>
@@ -380,12 +380,12 @@ export default function ActivityTimeline({
         {status === "ready" && activities.length > 0 && (
           <ul className="space-y-4">
             {activities.map((activity) => {
-              const Icon = TYPE_ICON[activity.type] ?? FiActivity;
+              const Icon = TYPE_ICON[activity.type] ?? LuActivity;
               const link = linkFor?.(activity) ?? null;
 
               return (
                 <li key={activity.id} className="group flex gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-500">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-500">
                     <Icon size={15} />
                   </div>
 
@@ -409,7 +409,7 @@ export default function ActivityTimeline({
                           aria-label={t("delete")}
                           className="shrink-0 rounded-md p-1 text-slate-300 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
                         >
-                          <FiTrash2 size={14} />
+                          <LuTrash2 size={14} />
                         </button>
                       )}
                     </div>
@@ -417,7 +417,7 @@ export default function ActivityTimeline({
                     {link && (
                       <Link
                         to={link.to}
-                        className="mt-1 inline-block text-[11px] font-semibold text-blue-600 hover:underline"
+                        className="mt-1 inline-block text-[11px] font-semibold text-brand-600 hover:underline"
                       >
                         {link.label}
                       </Link>
@@ -446,7 +446,7 @@ export default function ActivityTimeline({
           <button
             type="button"
             onClick={() => load(page + 1, true)}
-            className="mt-4 w-full rounded-lg py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50"
+            className="mt-4 w-full rounded-lg py-2 text-xs font-semibold text-brand-600 hover:bg-brand-50"
           >
             {t("loadMore")}
           </button>

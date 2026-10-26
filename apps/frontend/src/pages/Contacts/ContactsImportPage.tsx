@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FiArrowLeft } from "react-icons/fi";
 
 import { useAuth } from "../../context/AuthContext";
 import { useContactImport } from "../../hooks/useContactImport";
@@ -20,6 +19,7 @@ import {
   buildErrorReportCsv,
 } from "../../lib/contactImport/importRows";
 import { trackEvent } from "../../lib/posthog";
+import { LuArrowLeft } from "react-icons/lu";
 
 const STEPS: Array<{ phase: ImportPhase; labelKey: string }> = [
   { phase: "upload", labelKey: "contactsImportStepUpload" },
@@ -106,9 +106,9 @@ export default function ContactsImportPage() {
       <button
         type="button"
         onClick={goToContacts}
-        className="flex w-fit items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600"
+        className="flex w-fit items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-brand-600"
       >
-        <FiArrowLeft size={14} className="rtl:rotate-180" aria-hidden />
+        <LuArrowLeft size={14} className="rtl:rotate-180" aria-hidden />
         {t("backToList", { label: contactsLabel })}
       </button>
 
@@ -145,7 +145,7 @@ export default function ContactsImportPage() {
                 aria-current={index === stepIndex ? "step" : undefined}
                 className={`flex items-center gap-2 rounded-full px-3 py-1.5 font-semibold ${
                   index === stepIndex
-                    ? "bg-[#605BFF] text-white"
+                    ? "bg-brand-600 text-white"
                     : index < stepIndex
                       ? "bg-emerald-50 text-emerald-600"
                       : "bg-slate-100 text-slate-400"

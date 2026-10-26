@@ -17,9 +17,9 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F7F7F8]">
+      <div className="flex min-h-screen items-center justify-center bg-surface-muted">
         <div
-          className="h-10 w-10 animate-spin rounded-full border-4 border-[#EEEEF5] border-t-[#605BFF]"
+          className="h-10 w-10 animate-spin rounded-full border-4 border-brand-100 border-t-brand-600"
           aria-label="Loading"
           role="status"
         />

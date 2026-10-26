@@ -9,7 +9,7 @@
 //       <Field
 //         type="checkbox"
 //         name="rememberMe"
-//         className="h-3.5 w-3.5 shrink-0 accent-[#605BFF]"
+//         className="h-3.5 w-3.5 shrink-0 accent-brand-600"
 //       />
 
 //       <span className="whitespace-nowrap text-xs text-gray-500">
@@ -30,7 +30,7 @@ export default function RememberMe() {
       <Field
         type="checkbox"
         name="rememberMe"
-        className="h-3.5 w-3.5 shrink-0 cursor-pointer accent-[#605BFF]"
+        className="h-3.5 w-3.5 shrink-0 cursor-pointer accent-brand-600"
       />
 
       <span className="whitespace-nowrap text-xs text-gray-500 transition-colors duration-200">

@@ -1,6 +1,8 @@
 // import { Field, ErrorMessage } from "formik";
 // import { useTranslation } from "react-i18next";
 
+import { inputClass } from "../../../Components/ui/styles";
+
 // export default function LoginFields() {
 //   const { t } = useTranslation();
 
@@ -20,7 +22,7 @@
 //           type="email"
 //           name="email"
 //           placeholder={t("enterEmail")}
-//           className="w-full h-[42px] rounded-[10px] bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none"
+//           className="w-full h-[42px] rounded-[10px] bg-surface-muted px-3 text-sm text-gray-700 outline-none"
 //         />
 
 //         <ErrorMessage
@@ -44,7 +46,7 @@
 //           type="password"
 //           name="password"
 //           placeholder={t("enterPassword")}
-//           className="w-full h-[42px] rounded-[10px] bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none"
+//           className="w-full h-[42px] rounded-[10px] bg-surface-muted px-3 text-sm text-gray-700 outline-none"
 //         />
 
 //         <ErrorMessage
@@ -59,9 +61,6 @@
 
 import { Field, ErrorMessage } from "formik";
 import { useTranslation } from "react-i18next";
-
-const inputClass =
-  "w-full h-[42px] rounded-[10px] border border-transparent bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-[#605BFF] focus:bg-white focus:shadow-[0_0_0_3px_rgba(96,91,255,0.08)]";
 
 export default function LoginFields() {
   const { t } = useTranslation();

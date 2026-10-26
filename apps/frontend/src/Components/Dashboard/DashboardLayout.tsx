@@ -8,7 +8,7 @@ export default function DashboardLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen overflow-hidden bg-[#f6f8fc]">
+    <div className="flex min-h-screen overflow-hidden bg-[#f6f8f6]">
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {isSidebarOpen && (
@@ -37,8 +37,8 @@ export default function DashboardLayout() {
         <main
           className="min-h-0 flex-1 overflow-y-auto"
           style={{
-            backgroundColor: "var(--orbit-content-bg, #f6f8fc)",
-            color: "var(--orbit-content-fg, #172033)",
+            backgroundColor: "var(--orbit-content-bg, #f6f8f6)",
+            color: "var(--orbit-content-fg, #14201a)",
           }}
         >
           <div className="mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-8 lg:py-7">

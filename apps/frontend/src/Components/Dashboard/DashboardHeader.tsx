@@ -1,10 +1,10 @@
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FiMenu } from "react-icons/fi";
 
 import DatePickerComponent from "./DatePicker";
 import NotificationBell from "../Notification/NotificationBell";
 import ChatButton from "../Chat/ChatButton";
+import { LuMenu } from "react-icons/lu";
 
 export default function DashboardHeader({
   onOpenNavigation,
@@ -47,10 +47,10 @@ export default function DashboardHeader({
           aria-label="Open navigation"
           className="-ml-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 md:hidden"
         >
-          <FiMenu size={20} />
+          <LuMenu size={20} />
         </button>
 
-        <div className="hidden h-7 w-1 shrink-0 rounded-full bg-indigo-500 sm:block" />
+        <div className="hidden h-7 w-1 shrink-0 rounded-full bg-brand-500 sm:block" />
 
         <div className="min-w-0">
           <h1 className="truncate font-nunito text-[18px] font-bold tracking-tight text-slate-900 sm:text-[20px]">

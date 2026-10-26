@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { FiAlertTriangle } from "react-icons/fi";
 
 import type {
   ColumnMapping,
@@ -14,6 +13,7 @@ import {
   missingRequiredFields,
 } from "../../../lib/contactImport/columnMapping";
 import { importFieldLabelKey } from "./importMessages";
+import { LuTriangleAlert } from "react-icons/lu";
 
 interface ImportMappingStepProps {
   parsed: ParsedImportFile;
@@ -27,7 +27,7 @@ interface ImportMappingStepProps {
 }
 
 const selectClass =
-  "h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-blue-300";
+  "h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none focus:border-brand-300";
 
 const NUMERIC_SENSITIVE: ImportField[] = ["phone", "mobile", "postalCode"];
 
@@ -186,7 +186,7 @@ export default function ImportMappingStep({
           role="alert"
           className="flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700"
         >
-          <FiAlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden />
+          <LuTriangleAlert size={16} className="mt-0.5 shrink-0" aria-hidden />
           <span>
             {t("contactsImportRequiredNote")}{" "}
             {t("contactsImportMissingRequired", {
@@ -204,7 +204,7 @@ export default function ImportMappingStep({
           role="status"
           className="flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs text-amber-700"
         >
-          <FiAlertTriangle size={14} className="mt-0.5 shrink-0" aria-hidden />
+          <LuTriangleAlert size={14} className="mt-0.5 shrink-0" aria-hidden />
           <span dir="auto">
             {t("contactsImportNumericWarning", {
               column: columnTitle(parsed.headers[column], column),
@@ -225,7 +225,7 @@ export default function ImportMappingStep({
           type="button"
           disabled={missing.length > 0}
           onClick={onContinue}
-          className="h-10 rounded-xl bg-[#605BFF] px-5 text-sm font-semibold text-white hover:bg-[#514cf0] disabled:opacity-50"
+          className="h-10 rounded-xl bg-brand-600 px-5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
         >
           {t("contactsImportContinue")}
         </button>

@@ -95,7 +95,7 @@ export default function CalendarMonthGrid({
               <span
                 className={`self-start rounded-full px-1.5 text-xs font-semibold ${
                   isToday(day)
-                    ? "bg-[#605BFF] text-white"
+                    ? "bg-brand-600 text-white"
                     : inMonth
                       ? "text-slate-600"
                       : "text-slate-300"

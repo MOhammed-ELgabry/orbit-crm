@@ -1,7 +1,8 @@
 import type { IconType } from "react-icons";
 
 const COLOR_CLASSES: Record<string, string> = {
-  blue: "bg-blue-50 text-blue-600",
+  blue: "bg-brand-50 text-brand-600",
+  brand: "bg-brand-50 text-brand-600",
   emerald: "bg-emerald-50 text-emerald-600",
   amber: "bg-amber-50 text-amber-600",
   purple: "bg-purple-50 text-purple-600",
@@ -23,10 +24,10 @@ export default function StatCard({
   isLoading = false,
 }: StatCardProps) {
   return (
-    <div className="group rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="rounded-2xl border border-line bg-white p-4 shadow-card">
       <div className="flex items-start justify-between">
         <div
-          className={`flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105 ${COLOR_CLASSES[color]}`}
+          className={`flex h-10 w-10 items-center justify-center rounded-xl ${COLOR_CLASSES[color]}`}
         >
           <Icon size={18} />
         </div>

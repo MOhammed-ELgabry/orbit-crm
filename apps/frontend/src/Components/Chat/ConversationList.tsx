@@ -1,12 +1,12 @@
 import { useId, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FiSearch } from "react-icons/fi";
 
 import { selectPresence, type ChatState } from "../../context/chatState";
 import type { ChatConversation, ChatMe } from "../../types/chat";
 import ChatAvatar from "./ChatAvatar";
 import { formatMessageTime } from "./chatFormat";
 import PresenceLabel from "./PresenceLabel";
+import { LuSearch } from "react-icons/lu";
 
 type Tab = "chats" | "people";
 
@@ -66,7 +66,7 @@ export default function ConversationList({
   const tabClass = (value: Tab) =>
     `flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
       tab === value
-        ? "bg-white text-indigo-700 shadow-sm"
+        ? "bg-white text-brand-700 shadow-sm"
         : "text-slate-600 hover:text-slate-900"
     }`;
 
@@ -102,7 +102,7 @@ export default function ConversationList({
           <label htmlFor={searchId} className="sr-only">
             {t("chatSearchLabel")}
           </label>
-          <FiSearch
+          <LuSearch
             size={15}
             aria-hidden="true"
             className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -114,7 +114,7 @@ export default function ConversationList({
             maxLength={80}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("chatSearchPlaceholder")}
-            className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 ps-9 pe-3 text-sm placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:outline-none"
+            className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 ps-9 pe-3 text-sm placeholder:text-slate-400 focus:border-brand-400 focus:bg-white focus:outline-none"
           />
         </div>
 
@@ -158,7 +158,7 @@ export default function ConversationList({
                       onClick={() => onSelectConversation(conversation.id)}
                       aria-current={active ? "true" : undefined}
                       className={`flex w-full items-center gap-3 px-4 py-3 text-start transition-colors hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none ${
-                        active ? "bg-indigo-50/60" : ""
+                        active ? "bg-brand-50/60" : ""
                       }`}
                     >
                       <ChatAvatar
@@ -205,7 +205,7 @@ export default function ConversationList({
                               aria-label={t("chatUnreadBadge", {
                                 count: conversation.unreadCount,
                               })}
-                              className="flex min-w-[18px] shrink-0 items-center justify-center rounded-full bg-indigo-600 px-1.5 text-[10px] font-bold leading-[18px] text-white"
+                              className="flex min-w-[18px] shrink-0 items-center justify-center rounded-full bg-brand-600 px-1.5 text-[10px] font-bold leading-[18px] text-white"
                             >
                               {conversation.unreadCount > 99
                                 ? "99+"

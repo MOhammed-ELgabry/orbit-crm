@@ -12,7 +12,7 @@ export default function LoginHeader() {
         className="h-[50px] w-[50px] object-contain sm:h-[55px] sm:w-[55px]"
       />
 
-      <h1 className="font-nunito text-[22px] font-semibold text-[#030229] sm:text-[25px]">
+      <h1 className="font-nunito text-[22px] font-semibold text-ink sm:text-[25px]">
         {t("login")}
       </h1>
     </div>

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FiX } from "react-icons/fi";
 
 import type { CreateDealInput, Deal } from "../../types/deal";
 import { DEAL_STAGES } from "../../types/deal";
@@ -13,6 +12,7 @@ import type { Contact } from "../../types/contact";
 import type { Lead } from "../../types/lead";
 import { getErrorMessage } from "../../lib/errors";
 import { errorAlert } from "../../lib/swal";
+import { LuX } from "react-icons/lu";
 
 interface DealFormModalProps {
   /** Present for edit, absent for create. */
@@ -44,7 +44,7 @@ const emptyForm: DealFormState = {
 };
 
 const inputClass =
-  "h-[38px] w-full rounded-[10px] bg-[#F7F7F8] px-3 text-sm text-gray-700 outline-none ring-1 ring-transparent focus:ring-blue-200";
+  "h-[38px] w-full rounded-[10px] bg-surface-muted px-3 text-sm text-gray-700 outline-none ring-1 ring-transparent focus:ring-brand-200";
 const labelClass = "text-xs font-semibold text-gray-700";
 
 export default function DealFormModal({
@@ -176,7 +176,7 @@ export default function DealFormModal({
             aria-label={t("close")}
             className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100"
           >
-            <FiX size={18} />
+            <LuX size={18} />
           </button>
         </div>
 
@@ -291,7 +291,7 @@ export default function DealFormModal({
               rows={3}
               value={form.notes}
               onChange={(e) => set("notes", e.target.value)}
-              className="w-full resize-none rounded-[10px] bg-[#F7F7F8] px-3 py-2 text-sm text-gray-700 outline-none"
+              className="w-full resize-none rounded-[10px] bg-surface-muted px-3 py-2 text-sm text-gray-700 outline-none"
             />
           </div>
 
@@ -306,7 +306,7 @@ export default function DealFormModal({
             <button
               type="submit"
               disabled={isSubmitting || !form.title.trim()}
-              className="rounded-lg bg-[#605BFF] px-4 py-2 text-sm font-semibold text-white hover:bg-[#514cf0] disabled:opacity-50"
+              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
             >
               {t("save")}
             </button>

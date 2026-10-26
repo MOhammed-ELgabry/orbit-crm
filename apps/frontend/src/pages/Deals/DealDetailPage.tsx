@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FaHandshake } from "react-icons/fa";
-import { FiArrowLeft, FiEdit2, FiTrash2 } from "react-icons/fi";
 
 import { useAuth } from "../../context/AuthContext";
 import { getDeal, updateDeal, deleteDeal } from "../../services/dealService";
@@ -19,6 +17,7 @@ import DealFormModal from "../../Components/Deal/DealFormModal";
 import { confirmAlert, errorAlert } from "../../lib/swal";
 import { getErrorMessage } from "../../lib/errors";
 import { trackEvent } from "../../lib/posthog";
+import { LuArrowLeft, LuHandshake, LuPencil, LuTrash2 } from "react-icons/lu";
 
 export default function DealDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -177,7 +176,7 @@ export default function DealDetailPage() {
         <button
           type="button"
           onClick={() => navigate("/dashboard/deals")}
-          className="text-xs font-semibold text-blue-600 hover:underline"
+          className="text-xs font-semibold text-brand-600 hover:underline"
         >
           {t("backToList", { label: t("dealsNavLabel") })}
         </button>
@@ -192,7 +191,7 @@ export default function DealDetailPage() {
         <button
           type="button"
           onClick={() => load()}
-          className="text-xs font-semibold text-blue-600 hover:underline"
+          className="text-xs font-semibold text-brand-600 hover:underline"
         >
           {t("retry")}
         </button>
@@ -205,16 +204,16 @@ export default function DealDetailPage() {
       <button
         type="button"
         onClick={() => navigate("/dashboard/deals")}
-        className="flex w-fit items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600"
+        className="flex w-fit items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-brand-600"
       >
-        <FiArrowLeft size={14} />
+        <LuArrowLeft size={14} />
         {t("backToList", { label: t("dealsNavLabel") })}
       </button>
 
       <div className="mx-auto w-full max-w-lg rounded-2xl border border-slate-100 bg-white p-5">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-500 text-white">
-            <FaHandshake size={20} />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white">
+            <LuHandshake size={20} />
           </div>
           <div className="flex gap-1">
             {canUpdate && (
@@ -222,9 +221,9 @@ export default function DealDetailPage() {
                 type="button"
                 onClick={() => setIsEditing(true)}
                 aria-label={t("edit")}
-                className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
+                className="rounded-lg p-2 text-slate-400 hover:bg-brand-50 hover:text-brand-600"
               >
-                <FiEdit2 size={15} />
+                <LuPencil size={15} />
               </button>
             )}
             {canDelete && (
@@ -234,7 +233,7 @@ export default function DealDetailPage() {
                 aria-label={t("delete")}
                 className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500"
               >
-                <FiTrash2 size={15} />
+                <LuTrash2 size={15} />
               </button>
             )}
           </div>

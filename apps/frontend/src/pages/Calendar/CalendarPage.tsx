@@ -12,13 +12,6 @@ import {
   startOfWeek,
   subMonths,
 } from "date-fns";
-import {
-  FiCalendar,
-  FiChevronLeft,
-  FiChevronRight,
-  FiList,
-  FiPlus,
-} from "react-icons/fi";
 
 import { useAuth } from "../../context/AuthContext";
 import type {
@@ -43,6 +36,13 @@ import CalendarAgenda from "../../Components/Calendar/CalendarAgenda";
 import { confirmAlert, errorAlert } from "../../lib/swal";
 import { getErrorMessage } from "../../lib/errors";
 import { trackEvent } from "../../lib/posthog";
+import {
+  LuCalendar,
+  LuChevronLeft,
+  LuChevronRight,
+  LuList,
+  LuPlus,
+} from "react-icons/lu";
 
 type LoadStatus = "loading" | "ready" | "error" | "forbidden";
 type LoadOutcome = Exclude<LoadStatus, "loading">;
@@ -330,7 +330,7 @@ export default function CalendarPage() {
             aria-label={t("calendarPreviousMonth")}
             className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
           >
-            {isRtl ? <FiChevronRight size={18} /> : <FiChevronLeft size={18} />}
+            {isRtl ? <LuChevronRight size={18} /> : <LuChevronLeft size={18} />}
           </button>
           <h1 className="min-w-[10ch] font-nunito text-base font-semibold text-slate-800">
             {format(visibleMonth, "MMMM yyyy", { locale })}
@@ -341,7 +341,7 @@ export default function CalendarPage() {
             aria-label={t("calendarNextMonth")}
             className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
           >
-            {isRtl ? <FiChevronLeft size={18} /> : <FiChevronRight size={18} />}
+            {isRtl ? <LuChevronLeft size={18} /> : <LuChevronRight size={18} />}
           </button>
         </div>
 
@@ -359,7 +359,7 @@ export default function CalendarPage() {
                   : "text-slate-500"
               }`}
             >
-              <FiCalendar size={14} />
+              <LuCalendar size={14} />
               {t("calendarMonthView")}
             </button>
             <button
@@ -371,7 +371,7 @@ export default function CalendarPage() {
                   : "text-slate-500"
               }`}
             >
-              <FiList size={14} />
+              <LuList size={14} />
               {t("calendarAgendaView")}
             </button>
           </div>
@@ -380,9 +380,9 @@ export default function CalendarPage() {
             <button
               type="button"
               onClick={() => openCreateModal()}
-              className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-[#605BFF] px-4 text-sm font-semibold text-white hover:bg-[#514cf0]"
+              className="flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700"
             >
-              <FiPlus size={16} />
+              <LuPlus size={16} />
               <span className="hidden sm:inline">{t("addCalendarEvent")}</span>
             </button>
           )}
@@ -418,7 +418,7 @@ export default function CalendarPage() {
             <button
               type="button"
               onClick={() => setLoadAttempt((attempt) => attempt + 1)}
-              className="text-xs font-semibold text-blue-600 hover:underline"
+              className="text-xs font-semibold text-brand-600 hover:underline"
             >
               {t("retry")}
             </button>

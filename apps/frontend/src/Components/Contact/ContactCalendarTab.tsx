@@ -81,7 +81,7 @@ export default function ContactCalendarTab({
         )}
         <Link
           to="/dashboard/calendar"
-          className="font-semibold text-blue-600 hover:underline"
+          className="font-semibold text-brand-600 hover:underline"
         >
           {t("contact360OpenPage", { section: t("calendarNavLabel") })}
         </Link>
