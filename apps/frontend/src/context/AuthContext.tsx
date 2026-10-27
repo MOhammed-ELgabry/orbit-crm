@@ -23,6 +23,7 @@ import { identifyAnalyticsUser, resetAnalyticsIdentity } from "../lib/posthog";
 import { detachPushOnLogout } from "../lib/push";
 import i18n from "i18next";
 import { getForegroundColor } from "../lib/contrast";
+import { clearAvatarCache } from "../lib/avatar";
 
 /**
  * Applies a user's saved language and appearance to the document —
@@ -90,7 +91,9 @@ interface AuthContextValue {
   // has no `permissions` field, unlike this context's AuthUser; merging
   // only the field that changed can never drop it.
   updateUserSettings: (
-    settings: Partial<Pick<AuthUser, "language" | "backgroundColor">>,
+    settings: Partial<
+      Pick<AuthUser, "language" | "backgroundColor" | "avatar">
+    >,
   ) => void;
 }
 
@@ -206,6 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setCompany(null);
       resetAnalyticsIdentity();
+      clearAvatarCache();
     });
   }, []);
 
@@ -222,6 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setCompany(null);
       resetAnalyticsIdentity();
+      clearAvatarCache();
     }
   }, []);
 
@@ -232,7 +237,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const updateUserSettings = useCallback(
-    (settings: Partial<Pick<AuthUser, "language" | "backgroundColor">>) => {
+    (
+      settings: Partial<
+        Pick<AuthUser, "language" | "backgroundColor" | "avatar">
+      >,
+    ) => {
       setUser((prev) => (prev ? { ...prev, ...settings } : prev));
     },
     [],

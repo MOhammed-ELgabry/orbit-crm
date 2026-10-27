@@ -7,6 +7,7 @@ import { RoleModule } from '../role/role.module';
 
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import { UserAvatarService } from './avatar/avatar.service';
 import { UserRepository } from './repository/user.repository';
 import { PasswordService } from './services/password.service';
 import { USER_REPOSITORY } from './constants/user.constants';
@@ -45,6 +46,7 @@ import { AUTH_SESSION_REPOSITORY } from '../auth/constants/auth.constants';
 
   providers: [
     UserService,
+    UserAvatarService,
     PasswordService,
 
     {

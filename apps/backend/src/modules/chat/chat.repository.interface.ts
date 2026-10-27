@@ -112,6 +112,16 @@ export interface IChatRepository {
   ): Promise<ChatUserRow[]>;
   findPeers(companyId: string, userIds: string[]): Promise<ChatPeerRow[]>;
   getRoleNames(userIds: string[]): Promise<Map<string, string | null>>;
+  /**
+   * The CURRENT uploaded picture reference of each user (null when none),
+   * limited to users of `companyId`. Messages store a snapshot of the
+   * sender's avatar at send time; reads use this instead so a changed picture
+   * shows on old messages too.
+   */
+  getAvatars(
+    companyId: string,
+    userIds: string[],
+  ): Promise<Map<string, string | null>>;
 
   // --- conversations --------------------------------------------------
   ensureTeamConversation(companyId: string): Promise<ChatConversationRow>;

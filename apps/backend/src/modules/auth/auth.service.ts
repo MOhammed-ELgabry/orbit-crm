@@ -47,6 +47,11 @@ import type { ISocialAuthProvider } from './interfaces/social-profile.interface'
 
 import { GoogleAuthProvider } from './providers/google-auth.provider';
 import { FacebookAuthProvider } from './providers/facebook-auth.provider';
+import { buildAvatarRef } from '../user/avatar/avatar.constants';
+import {
+  validateAvatarUpload,
+  type UploadedAvatarFile,
+} from '../user/avatar/avatar.service';
 import { MicrosoftAuthProvider } from './providers/microsoft-auth.provider';
 
 import { LoginDto } from './dto/login.dto';
@@ -183,8 +188,14 @@ export class AuthService implements OnModuleInit {
     );
   }
 
-  async register(dto: RegisterDto) {
+  async register(dto: RegisterDto, avatarFile?: UploadedAvatarFile) {
     const email = dto.email.trim().toLowerCase();
+
+    // The optional profile picture is validated BEFORE anything is written, so
+    // an unusable image rejects the registration instead of leaving a half
+    // created account. The legacy `dto.avatar` URL is ignored: a picture only
+    // ever comes from an uploaded, validated file stored by this API.
+    const avatar = avatarFile ? validateAvatarUpload(avatarFile) : null;
 
     const existingUser = await this.userRepository.findByEmail(email);
 
@@ -215,18 +226,37 @@ export class AuthService implements OnModuleInit {
           throw new BadRequestException('Email already exists.');
         }
 
-        await tx.user.create({
+        const createdUser = await tx.user.create({
           data: {
             firstName: dto.firstName,
             lastName: dto.lastName,
             email,
             passwordHash,
             phone: dto.phone,
-            avatar: dto.avatar,
             companyId: null,
             pendingCompanyName: dto.companyName,
           },
+          select: { id: true },
         });
+
+        if (avatar) {
+          // Same transaction as the account: the picture exists if and only
+          // if the user does.
+          await tx.userAvatar.create({
+            data: {
+              userId: createdUser.id,
+              contentType: avatar.contentType,
+              size: avatar.buffer.length,
+              checksum: avatar.checksum,
+              data: avatar.buffer,
+            },
+          });
+
+          await tx.user.update({
+            where: { id: createdUser.id },
+            data: { avatar: buildAvatarRef(createdUser.id, avatar.checksum) },
+          });
+        }
 
         await tx.emailVerification.create({
           data: {
@@ -252,6 +282,7 @@ export class AuthService implements OnModuleInit {
     return {
       success: true,
       message: 'Registration successful. Please verify your email.',
+      avatarSaved: avatar !== null,
     };
   }
 
@@ -1009,7 +1040,9 @@ export class AuthService implements OnModuleInit {
               lastName: profile.lastName,
               email,
               passwordHash: null,
-              avatar: profile.avatar,
+              // Never import a provider-hosted picture: the user starts with
+              // initials and uploads a local picture themselves if they want.
+              avatar: null,
               isEmailVerified: true,
               companyId: company.id,
               isOwner: true,

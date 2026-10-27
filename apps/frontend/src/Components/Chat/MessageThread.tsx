@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, type UIEvent } from "react";
 import { useTranslation } from "react-i18next";
 
+import { useAuth } from "../../context/AuthContext";
 import { EMPTY_THREAD, selectPresence } from "../../context/chatState";
 import { useChat } from "../../hooks/useChat";
 import ChatAvatar from "./ChatAvatar";
@@ -33,6 +34,10 @@ export default function MessageThread({
   const conversation = state.conversations[conversationId];
   const thread = state.threads[conversationId] ?? EMPTY_THREAD;
   const me = state.me;
+  // The signed-in user's own picture comes from the shared auth state, so a
+  // change made in the sidebar shows on their messages straight away.
+  const { user } = useAuth();
+  const myAvatar = user ? user.avatar : (me?.avatar ?? null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const atBottomRef = useRef(true);
@@ -134,6 +139,7 @@ export default function MessageThread({
           id={isTeam ? conversation.id : (peer?.id ?? conversation.id)}
           name={title}
           group={isTeam}
+          avatar={peer?.avatar}
           online={
             peer ? selectPresence(state, peer.id, peer).online : undefined
           }
@@ -229,6 +235,9 @@ export default function MessageThread({
                 mine={mine}
                 message={message}
                 senderLabel={showSender ? message.senderName : undefined}
+                avatarId={message.senderId}
+                avatarName={message.senderName}
+                avatar={mine ? myAvatar : message.senderAvatar}
               />
             );
           })}
@@ -237,6 +246,9 @@ export default function MessageThread({
             <MessageBubble
               key={pending.clientMessageId}
               mine
+              avatar={myAvatar}
+              avatarId={me?.id}
+              avatarName={me?.name}
               pending={pending}
               onRetry={() =>
                 store.retryMessage(conversationId, pending.clientMessageId)

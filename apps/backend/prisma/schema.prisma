@@ -128,6 +128,10 @@ model User {
   // Social Authentication
   socialAccounts SocialAccount[]
 
+  // Uploaded profile picture (the bytes live in UserAvatar; the "avatar"
+  // column above only holds the API path used to fetch them).
+  avatarImage UserAvatar?
+
   // Contacts
   contactsCreated  Contact[] @relation("ContactCreatedBy")
   contactsAssigned Contact[] @relation("ContactAssignedTo")
@@ -175,6 +179,23 @@ model User {
   @@index([isEmailVerified])
   @@index([provider])
   @@index([providerId])
+}
+
+// A user's uploaded profile picture, stored inside PostgreSQL so it is
+// durable across redeploys and covered by the normal database backups.
+// Kept in its own table (one row per user) so ordinary User queries never
+// load image bytes. Content is validated and size-limited in the API before
+// it is written (see modules/user/avatar). Deleting the user deletes the row.
+model UserAvatar {
+  userId      String   @id
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentType String
+  size        Int
+  // SHA-256 of the bytes (hex); drives the versioned URL and the ETag.
+  checksum    String
+  data        Bytes
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // Links an OAuth/OIDC provider identity (Google, Facebook, Microsoft) to an

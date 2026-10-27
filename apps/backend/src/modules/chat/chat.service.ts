@@ -13,6 +13,7 @@ import {
   SEND_MAX_ATTEMPTS,
   TEAMMATES_MAX,
 } from './chat.constants';
+import { localAvatarOrNull } from '../user/avatar/avatar.constants';
 import type {
   ChatConversationRow,
   ChatMessageRow,
@@ -302,7 +303,7 @@ export class ChatService {
           type: conversation.type,
           senderId: actor.userId,
           senderName: fullName(actor.firstName, actor.lastName),
-          senderAvatar: actor.avatar,
+          senderAvatar: localAvatarOrNull(actor.avatar),
           clientMessageId: dto.clientMessageId,
           body: dto.body,
         });
@@ -349,10 +350,13 @@ export class ChatService {
       this.logger.warn(
         `Receipt lookup failed after a send (${errorName(error)})`,
       );
-      message = this.toMessageDto(actor, row, new Map(), {
-        readCount: 0,
-        recipientCount: 0,
-      });
+      message = this.toMessageDto(
+        actor,
+        row,
+        new Map(),
+        new Map([[actor.userId, localAvatarOrNull(actor.avatar)]]),
+        { readCount: 0, recipientCount: 0 },
+      );
     }
 
     // Only AFTER the transaction committed: nothing is ever published for a
@@ -765,15 +769,18 @@ export class ChatService {
       peers.filter((p) => p.eligible).map((p) => p.id),
     );
 
-    const roleNames = await this.repository.getRoleNames(
-      [
-        ...lastMessages.values(),
-        ...(lastTeamMessage ? [lastTeamMessage] : []),
-      ].map((m) => m.senderKey),
+    const lastSenderIds = [
+      ...lastMessages.values(),
+      ...(lastTeamMessage ? [lastTeamMessage] : []),
+    ].map((m) => m.senderKey);
+    const roleNames = await this.repository.getRoleNames(lastSenderIds);
+    const avatars = await this.repository.getAvatars(
+      actor.companyId,
+      lastSenderIds,
     );
 
     const toLast = (row: ChatMessageRow | null | undefined) =>
-      row ? this.toMessageDto(actor, row, roleNames, null) : null;
+      row ? this.toMessageDto(actor, row, roleNames, avatars, null) : null;
 
     const result: ChatConversationDto[] = [
       {
@@ -808,7 +815,7 @@ export class ChatService {
         peer: {
           id: direct.peerKey,
           name: peer ? fullName(peer.firstName, peer.lastName) : snapshotName,
-          avatar: peer ? peer.avatar : null,
+          avatar: peer ? localAvatarOrNull(peer.avatar) : null,
           roleName: peer ? peer.roleName : null,
           eligible: peer?.eligible ?? false,
           online: presence.get(direct.peerKey)?.online ?? false,
@@ -842,7 +849,7 @@ export class ChatService {
     return others.map((user) => ({
       id: user.id,
       name: fullName(user.firstName, user.lastName),
-      avatar: user.avatar,
+      avatar: localAvatarOrNull(user.avatar),
       roleName: user.roleName,
       online: presence.get(user.id)?.online ?? false,
       lastSeenAt: presence.get(user.id)?.lastSeenAt ?? null,
@@ -890,9 +897,12 @@ export class ChatService {
   ): Promise<ChatMessageDto[]> {
     if (rows.length === 0) return [];
 
-    const roleNames = await this.repository.getRoleNames([
-      ...new Set(rows.map((row) => row.senderKey)),
-    ]);
+    const senderIds = [...new Set(rows.map((row) => row.senderKey))];
+    const roleNames = await this.repository.getRoleNames(senderIds);
+    const avatars = await this.repository.getAvatars(
+      actor.companyId,
+      senderIds,
+    );
 
     const ownRows = rows.filter((row) => row.senderKey === actor.userId);
     const context = await this.receiptContext(actor, conversation, ownRows);
@@ -919,7 +929,7 @@ export class ChatService {
         );
       }
 
-      return this.toMessageDto(actor, row, roleNames, receipt);
+      return this.toMessageDto(actor, row, roleNames, avatars, receipt);
     });
   }
 
@@ -927,6 +937,7 @@ export class ChatService {
     actor: ChatActor,
     row: ChatMessageRow,
     roleNames: Map<string, string | null>,
+    avatars: Map<string, string | null>,
     receipt: ChatReceipt | null,
   ): ChatMessageDto {
     return {
@@ -935,7 +946,10 @@ export class ChatService {
       sequence: row.sequence,
       senderId: row.senderKey,
       senderName: row.senderName,
-      senderAvatar: row.senderAvatar,
+      // The sender's CURRENT uploaded picture, not the snapshot stored with
+      // the message; a sender who is gone (or in no known company) shows
+      // initials. External URLs are never passed on.
+      senderAvatar: avatars.get(row.senderKey) ?? null,
       senderRole:
         row.senderKey === actor.userId
           ? actor.roleName
@@ -1049,7 +1063,7 @@ export class ChatService {
       id: actor.userId,
       companyId: actor.companyId,
       name: fullName(actor.firstName, actor.lastName),
-      avatar: actor.avatar,
+      avatar: localAvatarOrNull(actor.avatar),
       roleName: actor.roleName,
     };
   }

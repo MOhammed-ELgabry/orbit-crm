@@ -7,7 +7,7 @@ import {
   updateCompany,
   type UpdateCompanyInput,
 } from "../../services/companyService";
-import { successAlert, errorAlert } from "../../lib/swal";
+import { notifyError, notifySuccess } from "../../lib/notify";
 import { getErrorMessage } from "../../lib/errors";
 import LanguageSettings from "./LanguageSettings";
 import AppearanceSettings from "./AppearanceSettings";
@@ -58,11 +58,11 @@ function CompanySettingsSection() {
       await updateCompany(company.id, cleaned);
       await refetchCompany();
 
-      successAlert({
+      notifySuccess({
         title: t("settingsSaved"),
       });
     } catch (error) {
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });

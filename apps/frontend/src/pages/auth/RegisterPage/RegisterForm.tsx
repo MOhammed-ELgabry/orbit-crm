@@ -23,7 +23,7 @@ interface RegisterValues {
   password: string;
   companyName: string;
   phone: string;
-  avatar: File | null;
+  avatar: Blob | null;
 }
 
 export default function RegisterForm() {
@@ -55,7 +55,7 @@ export default function RegisterForm() {
 
     phone: Yup.string(),
 
-    avatar: Yup.mixed<File>().nullable(),
+    avatar: Yup.mixed<Blob>().nullable(),
   });
 
   const handleRegister = async (
@@ -70,10 +70,9 @@ export default function RegisterForm() {
         password: values.password,
         phone: values.phone,
         companyName: values.companyName,
-        avatar: null,
       };
 
-      const response = await registerUser(data);
+      const response = await registerUser(data, values.avatar);
 
       trackEvent("user_registered", { method: "email" });
 
@@ -109,7 +108,7 @@ export default function RegisterForm() {
         {/* Header */}
         <RegisterHeader />
 
-        {/* Google & Facebook */}
+        {/* Google & Microsoft */}
         <SocialLogin />
 
         {/* Divider */}

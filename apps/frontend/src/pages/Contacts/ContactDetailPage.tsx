@@ -18,7 +18,8 @@ import {
 import ContactFormModal from "../../Components/Contact/ContactFormModal";
 import ContactNotesCard from "../../Components/Contact/ContactNotesCard";
 import ContactRelatedTabs from "../../Components/Contact/ContactRelatedTabs";
-import { confirmAlert, errorAlert } from "../../lib/swal";
+import { confirmAlert } from "../../lib/swal";
+import { notifyError } from "../../lib/notify";
 import { getErrorMessage } from "../../lib/errors";
 import { trackEvent } from "../../lib/posthog";
 import {
@@ -85,7 +86,7 @@ export default function ContactDetailPage() {
       trackEvent("contact_deleted");
       navigate("/dashboard/contacts", { replace: true });
     } catch (error) {
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });

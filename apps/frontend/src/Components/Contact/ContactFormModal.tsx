@@ -5,7 +5,7 @@ import type { Contact, CreateContactInput } from "../../types/contact";
 import { CONTACT_STATUSES } from "../../types/contact";
 import { CONTACT_STATUS_LABEL_KEY } from "./contactStatus";
 import { getErrorMessage } from "../../lib/errors";
-import { errorAlert } from "../../lib/swal";
+import { notifyError } from "../../lib/notify";
 import { LuX } from "react-icons/lu";
 
 interface ContactFormModalProps {
@@ -99,7 +99,7 @@ export default function ContactFormModal({
       await onSubmit(cleaned);
       onClose();
     } catch (error) {
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });

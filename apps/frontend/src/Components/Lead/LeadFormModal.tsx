@@ -7,7 +7,7 @@ import { LEAD_STATUS_LABEL_KEY } from "./leadStatus";
 import { listTeamMembers } from "../../services/userService";
 import type { TeamMember } from "../../types/user";
 import { getErrorMessage } from "../../lib/errors";
-import { errorAlert } from "../../lib/swal";
+import { notifyError } from "../../lib/notify";
 import { LuX } from "react-icons/lu";
 
 interface LeadFormModalProps {
@@ -121,7 +121,7 @@ export default function LeadFormModal({
       await onSubmit(cleaned);
       onClose();
     } catch (error) {
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });

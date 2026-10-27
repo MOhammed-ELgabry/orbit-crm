@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
 import { updateAppearance } from "../../services/settingsService";
 import { getForegroundColor } from "../../lib/contrast";
-import { successAlert, errorAlert } from "../../lib/swal";
+import { notifyError, notifySuccess } from "../../lib/notify";
 import { getErrorMessage } from "../../lib/errors";
 import { trackEvent } from "../../lib/posthog";
 
@@ -49,9 +49,9 @@ export default function AppearanceSettings() {
       updateUserSettings({ backgroundColor: draftColor });
       trackEvent("settings_theme_changed", { backgroundColor: draftColor });
 
-      successAlert({ title: t("settingsSaved") });
+      notifySuccess({ title: t("settingsSaved") });
     } catch (error) {
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });

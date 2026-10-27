@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../context/AuthContext";
 import { updateLanguage } from "../../services/settingsService";
-import { successAlert, errorAlert } from "../../lib/swal";
+import { notifyError, notifySuccess } from "../../lib/notify";
 import { getErrorMessage } from "../../lib/errors";
 import { trackEvent } from "../../lib/posthog";
 
@@ -43,9 +43,9 @@ export default function LanguageSettings() {
       updateUserSettings({ language: selected });
       trackEvent("settings_language_changed", { language: selected });
 
-      successAlert({ title: t("settingsSaved") });
+      notifySuccess({ title: t("settingsSaved") });
     } catch (error) {
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });

@@ -80,6 +80,7 @@ function makeRepository(): Repo {
     'findEligibleUsers',
     'findPeers',
     'getRoleNames',
+    'getAvatars',
     'ensureTeamConversation',
     'findConversationById',
     'findDirectConversation',
@@ -112,6 +113,7 @@ function makeRepository(): Repo {
     roleName: 'Agent',
   }));
   r.getRoleNames.mockResolvedValue(new Map());
+  r.getAvatars.mockResolvedValue(new Map());
   r.getParticipantReadSequences.mockResolvedValue(new Map());
   r.getTeamCursors.mockResolvedValue(new Map());
   r.getCurrentMembers.mockResolvedValue([]);
@@ -697,6 +699,57 @@ describe('ChatService', () => {
       const page = await service.getMessages('u1', 'dm-1', { limit: 30 });
 
       expect(page.hasMore).toBe(false);
+    });
+
+    describe('sender pictures', () => {
+      const LIVE = '/users/u2/avatar?v=aaaaaaaaaaaaaaaa';
+
+      it("shows the sender's CURRENT picture, not the one stored with the message", async () => {
+        repo.listMessages.mockResolvedValue([
+          message({
+            sequence: 1,
+            senderKey: 'u2',
+            senderAvatar: '/users/u2/avatar?v=00000000old00000',
+          }),
+        ]);
+        repo.getAvatars.mockResolvedValue(new Map([['u2', LIVE]]));
+
+        const page = await service.getMessages('u1', 'dm-1', { limit: 30 });
+
+        expect(page.messages[0].senderAvatar).toBe(LIVE);
+      });
+
+      it("asks for pictures inside the caller's company only", async () => {
+        repo.listMessages.mockResolvedValue([
+          message({ sequence: 1, senderKey: 'u2' }),
+          message({ id: 'm2', sequence: 2, senderKey: 'u2' }),
+        ]);
+
+        await service.getMessages('u1', 'dm-1', { limit: 30 });
+
+        expect(repo.getAvatars).toHaveBeenCalledWith(COMPANY, ['u2']);
+      });
+
+      it('never passes on a snapshot or an external URL: a sender with no current picture shows initials', async () => {
+        repo.listMessages.mockResolvedValue([
+          message({
+            sequence: 1,
+            senderKey: 'u2',
+            senderAvatar: 'https://lh3.googleusercontent.com/a/tracker',
+          }),
+          message({
+            id: 'm-gone',
+            sequence: 2,
+            senderKey: 'deleted-user',
+            senderAvatar: '/users/deleted-user/avatar?v=aaaaaaaaaaaaaaaa',
+          }),
+        ]);
+        repo.getAvatars.mockResolvedValue(new Map([['u2', null]]));
+
+        const page = await service.getMessages('u1', 'dm-1', { limit: 30 });
+
+        expect(page.messages.map((m) => m.senderAvatar)).toEqual([null, null]);
+      });
     });
   });
 

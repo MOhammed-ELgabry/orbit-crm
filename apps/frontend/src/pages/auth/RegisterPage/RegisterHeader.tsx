@@ -1,4 +1,4 @@
-import logo from "../../../assets/Subtract.png";
+import OrbitBrand from "../../../Components/ui/OrbitBrand";
 import { useTranslation } from "react-i18next";
 
 export default function RegisterHeader() {
@@ -6,11 +6,7 @@ export default function RegisterHeader() {
 
   return (
     <div className="mb-2 flex flex-col items-center gap-0">
-      <img
-        src={logo}
-        alt="avatar"
-        className="h-[42px] w-[42px] rounded-full object-cover sm:h-[45px] sm:w-[45px]"
-      />
+      <OrbitBrand variant="auth" />
 
       <h1 className="font-nunito text-[21px] font-semibold text-ink sm:text-[23px]">
         {t("signUp")}

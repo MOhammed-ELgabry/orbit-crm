@@ -59,3 +59,32 @@ export const assignTeamMemberRole = async (
 
   return response.data.data;
 };
+
+/**
+ * Uploads the caller's own profile picture. `picture` is the already
+ * downscaled image (see prepareAvatarBlob). Resolves to the new picture
+ * reference (`user.avatar`). The API only ever lets a user change their own.
+ */
+export const uploadAvatar = async (
+  userId: string,
+  picture: Blob,
+): Promise<string> => {
+  const body = new FormData();
+  body.append(
+    "avatar",
+    picture,
+    picture.type === "image/webp" ? "avatar.webp" : "avatar.jpg",
+  );
+
+  const response = await api.put<ApiEnvelope<{ avatar: string }>>(
+    `/users/${userId}/avatar`,
+    body,
+  );
+
+  return response.data.data.avatar;
+};
+
+/** Removes the caller's own picture (the UI falls back to initials). */
+export const removeAvatar = async (userId: string): Promise<void> => {
+  await api.delete(`/users/${userId}/avatar`);
+};

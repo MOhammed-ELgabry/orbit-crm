@@ -1,4 +1,4 @@
-import logo from "../../../assets/Subtract.png";
+import OrbitBrand from "../../../Components/ui/OrbitBrand";
 import { useTranslation } from "react-i18next";
 import { LuMail } from "react-icons/lu";
 
@@ -8,11 +8,7 @@ export default function VerificationHeader() {
   return (
     <>
       <div className="flex flex-col items-center mb-5">
-        <img
-          src={logo}
-          alt="logo"
-          className="w-[50px] h-[50px] sm:w-[55px] sm:h-[55px] object-contain"
-        />
+        <OrbitBrand variant="auth" />
 
         <h1 className="font-nunito font-semibold text-[22px] sm:text-[25px] text-ink mt-1 text-center">
           {t("verifyYourEmail")}

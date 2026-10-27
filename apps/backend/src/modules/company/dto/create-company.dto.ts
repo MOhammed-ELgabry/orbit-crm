@@ -11,7 +11,6 @@ import {
   MaxLength,
 } from 'class-validator';
 
-
 export class CreateCompanyDto {
   @ApiProperty({
     example: 'Orbit Technology',

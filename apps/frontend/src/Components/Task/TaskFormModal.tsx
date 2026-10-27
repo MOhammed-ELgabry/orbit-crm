@@ -19,7 +19,7 @@ import type { Contact } from "../../types/contact";
 import type { Lead } from "../../types/lead";
 import type { Deal } from "../../types/deal";
 import { getErrorMessage } from "../../lib/errors";
-import { errorAlert } from "../../lib/swal";
+import { notifyError } from "../../lib/notify";
 import { LuX } from "react-icons/lu";
 
 interface TaskFormModalProps {
@@ -195,7 +195,7 @@ export default function TaskFormModal({
       await onSubmit(cleaned);
       onClose();
     } catch (error) {
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });

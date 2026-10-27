@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { errorAlert } from "../../lib/swal";
+import { notifyError } from "../../lib/notify";
 import { getErrorMessage } from "../../lib/errors";
 import { LuPencil } from "react-icons/lu";
 
@@ -39,7 +39,7 @@ export default function ContactNotesCard({
       await onSave(draft.trim());
       setIsEditing(false);
     } catch (error) {
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });

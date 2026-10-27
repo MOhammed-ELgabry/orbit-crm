@@ -13,7 +13,8 @@ import {
   type RoleSummary,
 } from "../../services/roleService";
 import type { CreateTeamMemberInput, TeamMember } from "../../types/user";
-import { confirmAlert, errorAlert } from "../../lib/swal";
+import { confirmAlert } from "../../lib/swal";
+import { notifyError } from "../../lib/notify";
 import { getErrorMessage } from "../../lib/errors";
 import { trackEvent } from "../../lib/posthog";
 import { LuPlus, LuUserCheck, LuUserX } from "react-icons/lu";
@@ -75,7 +76,7 @@ function AddMemberModal({
       onCreated(created);
       onClose();
     } catch (error) {
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });
@@ -250,7 +251,7 @@ export default function UsersPage() {
       await updateTeamMemberStatus(member.id, !member.isActive);
     } catch (error) {
       setMembers(previous);
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });
@@ -285,7 +286,7 @@ export default function UsersPage() {
       trackEvent("role_changed", { role_name: nextRole?.name ?? null });
     } catch (error) {
       setMembers(previous);
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });

@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -6,8 +7,11 @@ import { useAuth } from "../../context/AuthContext";
 import { confirmAlert } from "../../lib/swal";
 import type { HelperId } from "../../lib/helperRegistry";
 import Hint from "../ui/Hint";
+import UserAvatar from "../ui/UserAvatar";
+import ProfilePhotoModal from "./ProfilePhotoModal";
 import {
   LuBookUser,
+  LuCamera,
   LuCalendarDays,
   LuChartColumn,
   LuHandshake,
@@ -121,6 +125,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     navigate("/login", { replace: true });
   };
 
+  const [isPhotoOpen, setIsPhotoOpen] = useState(false);
+  const photoButtonRef = useRef<HTMLButtonElement>(null);
+
+  const closePhotoModal = () => {
+    setIsPhotoOpen(false);
+    // Hand focus back to the circle that opened the dialog.
+    photoButtonRef.current?.focus();
+  };
+
   const fullName = user ? `${user.firstName} ${user.lastName}`.trim() : "";
   const initials = user
     ? `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase()
@@ -217,12 +230,28 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         <div className="mt-2 flex flex-col gap-1.5">
           <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-2.5 py-2">
-            <div
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-500 text-xs font-semibold text-white ring-2 ring-white"
-              aria-hidden="true"
+            <button
+              ref={photoButtonRef}
+              type="button"
+              onClick={() => setIsPhotoOpen(true)}
+              aria-label={t("profilePhotoChange")}
+              title={t("profilePhotoChange")}
+              className="group relative shrink-0 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
             >
-              {initials || <LuUsers size={16} />}
-            </div>
+              <UserAvatar
+                avatar={user?.avatar}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-500 text-xs font-semibold text-white ring-2 ring-white"
+              >
+                {initials || <LuUsers size={16} />}
+              </UserAvatar>
+
+              <span
+                aria-hidden="true"
+                className="absolute -bottom-0.5 -end-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-slate-500 shadow ring-1 ring-slate-200 transition-colors group-hover:text-brand-600"
+              >
+                <LuCamera size={9} />
+              </span>
+            </button>
 
             <div className="min-w-0">
               <p className="truncate text-[12px] font-semibold text-slate-700">
@@ -247,6 +276,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Hint>
         </div>
       </div>
+
+      {isPhotoOpen && <ProfilePhotoModal onClose={closePhotoModal} />}
     </aside>
   );
 }

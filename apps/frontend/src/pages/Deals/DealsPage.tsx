@@ -19,7 +19,8 @@ import {
   formatDealAmount,
 } from "../../Components/Deal/dealStage";
 import DealFormModal from "../../Components/Deal/DealFormModal";
-import { confirmAlert, errorAlert } from "../../lib/swal";
+import { confirmAlert } from "../../lib/swal";
+import { notifyError } from "../../lib/notify";
 import { getErrorMessage } from "../../lib/errors";
 import { trackEvent } from "../../lib/posthog";
 
@@ -145,7 +146,7 @@ export default function DealsPage() {
       setTotal((prev) => Math.max(0, prev - 1));
     } catch (error) {
       setDeals(previous);
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });

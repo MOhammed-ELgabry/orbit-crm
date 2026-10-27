@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { localAvatarOrNull } from '../user/avatar/avatar.constants';
 
 import { TEAM_CONVERSATION_KEY } from './chat.constants';
 import type {
@@ -232,6 +233,27 @@ export class ChatRepository implements IChatRepository {
         user.id,
         user.role && !user.role.deletedAt ? user.role.name : null,
       );
+    }
+
+    return result;
+  }
+
+  async getAvatars(
+    companyId: string,
+    userIds: string[],
+  ): Promise<Map<string, string | null>> {
+    const result = new Map<string, string | null>();
+    if (userIds.length === 0) return result;
+
+    // companyId in the filter: a sender id is never trusted to belong to the
+    // caller's company, so another company's user can never be resolved here.
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: userIds }, companyId },
+      select: { id: true, avatar: true },
+    });
+
+    for (const user of users) {
+      result.set(user.id, localAvatarOrNull(user.avatar));
     }
 
     return result;

@@ -19,7 +19,8 @@ import {
   leadStatusBadgeClass,
 } from "../../Components/Lead/leadStatus";
 import LeadFormModal from "../../Components/Lead/LeadFormModal";
-import { confirmAlert, errorAlert } from "../../lib/swal";
+import { confirmAlert } from "../../lib/swal";
+import { notifyError } from "../../lib/notify";
 import { getErrorMessage } from "../../lib/errors";
 import { trackEvent } from "../../lib/posthog";
 import { LuPencil, LuPlus, LuSearch, LuTrash2 } from "react-icons/lu";
@@ -129,7 +130,7 @@ export default function LeadsPage() {
       setTotal((prev) => Math.max(0, prev - 1));
     } catch (error) {
       setLeads(previous);
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });

@@ -9,13 +9,21 @@ import {
   Patch,
   Post,
   Query,
+  Put,
   Req,
+  Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 
 import { auditActorFromRequest } from '../audit/audit-actor.util';
 import {
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
@@ -24,7 +32,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
@@ -36,6 +44,11 @@ import { UpdateUserLanguageDto } from './dto/update-user-language.dto';
 import { UpdateUserAppearanceDto } from './dto/update-user-appearance.dto';
 import { UserEntity } from './entities/user.entity';
 import { UserService } from './user.service';
+import { AVATAR_FIELD, AVATAR_MAX_BYTES } from './avatar/avatar.constants';
+import {
+  UserAvatarService,
+  type UploadedAvatarFile,
+} from './avatar/avatar.service';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OwnerGuard } from '../auth/guards/owner.guard';
@@ -51,7 +64,10 @@ type AuthenticatedRequest = Request & {
 @UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly userAvatarService: UserAvatarService,
+  ) {}
 
   @ApiOperation({
     summary: 'Create a new team member',
@@ -151,6 +167,117 @@ export class UserController {
       request.user.sub,
       auditActorFromRequest(request),
     );
+  }
+
+  @ApiOperation({
+    summary: 'Upload or replace own profile picture',
+    description:
+      'Self-service. multipart/form-data with one image file in the ' +
+      '"avatar" field (PNG, JPEG or WebP, at most 512 KB). A caller may ' +
+      'only change their own picture (the :id path parameter must match ' +
+      "the authenticated user's id). The file is identified by its " +
+      'content, not its name or declared type.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: [AVATAR_FIELD],
+      properties: { [AVATAR_FIELD]: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiOkResponse({
+    description: 'Picture saved. Returns the picture reference.',
+  })
+  @ApiForbiddenResponse({
+    description: 'You can only change your own picture.',
+  })
+  @Put(':id/avatar')
+  // Guards run before interceptors, so the CSRF check happens before the
+  // upload body is parsed.
+  @UseGuards(CsrfGuard)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @UseInterceptors(
+    FileInterceptor(AVATAR_FIELD, {
+      limits: { fileSize: AVATAR_MAX_BYTES, files: 1, fields: 0 },
+    }),
+  )
+  async uploadAvatar(
+    @Param('id') id: string,
+    @UploadedFile() file: UploadedAvatarFile | undefined,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.userAvatarService.setOwn(
+      id,
+      request.user.sub,
+      request.user.companyId,
+      file,
+    );
+  }
+
+  @ApiOperation({
+    summary: 'Remove own profile picture',
+    description:
+      "Self-service. Removes the caller's own picture; the UI falls back " +
+      'to initials. The :id path parameter must match the authenticated user.',
+  })
+  @ApiOkResponse({ description: 'Picture removed.' })
+  @ApiForbiddenResponse({
+    description: 'You can only remove your own picture.',
+  })
+  @Delete(':id/avatar')
+  @UseGuards(CsrfGuard)
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  async removeAvatar(
+    @Param('id') id: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    return this.userAvatarService.removeOwn(
+      id,
+      request.user.sub,
+      request.user.companyId,
+    );
+  }
+
+  @ApiOperation({
+    summary: "Get a colleague's profile picture",
+    description:
+      'Returns the picture bytes. Authenticated and tenant-isolated: only ' +
+      "pictures of users in the caller's own company are served; anything " +
+      'else is a 404.',
+  })
+  @ApiOkResponse({ description: 'The image.' })
+  @ApiNotFoundResponse({ description: 'Picture not found.' })
+  @Get(':id/avatar')
+  @Throttle({ default: { limit: 300, ttl: 60_000 } })
+  async getAvatar(
+    @Param('id') id: string,
+    @Req() request: AuthenticatedRequest,
+    // The bytes are sent directly: the global ResponseInterceptor would
+    // otherwise wrap them in the JSON envelope.
+    @Res() res: Response,
+  ) {
+    const avatar = await this.userAvatarService.readForCompany(
+      id,
+      request.user.companyId,
+    );
+
+    const etag = `"${avatar.checksum}"`;
+
+    res.setHeader('ETag', etag);
+    // Private: the picture is for signed-in colleagues, never a shared cache.
+    res.setHeader('Cache-Control', 'private, max-age=3600');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+
+    if (request.headers['if-none-match'] === etag) {
+      res.status(HttpStatus.NOT_MODIFIED).end();
+      return;
+    }
+
+    res.setHeader('Content-Type', avatar.contentType);
+    res.setHeader('Content-Length', avatar.data.length);
+    res.status(HttpStatus.OK).end(avatar.data);
   }
 
   @ApiOperation({

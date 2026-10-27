@@ -56,6 +56,11 @@ export class RegisterDto {
 
   @ApiPropertyOptional({
     example: 'https://cdn.orbitcrm.com/avatar.png',
+    deprecated: true,
+    description:
+      'Deprecated and ignored: external picture URLs are never stored. To ' +
+      'set a profile picture at registration, send multipart/form-data with ' +
+      'an image file in the "avatar" field (PNG, JPEG or WebP, up to 512 KB).',
   })
   @IsOptional()
   @IsUrl()

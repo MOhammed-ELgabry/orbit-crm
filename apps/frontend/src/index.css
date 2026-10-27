@@ -226,6 +226,15 @@ textarea:focus {
   background-color: var(--color-surface-sunken) !important;
 }
 
+/* react-hot-toast (Dashboard only): drop the entrance/exit motion, keep the toast. */
+@media (prefers-reduced-motion: reduce) {
+  .orbit-toaster *,
+  .orbit-toast {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
 /* CountUp: reserve the final figure's width so counting never shifts layout. */
 .orbit-countup {
   display: inline-block;
@@ -237,4 +246,45 @@ textarea:focus {
   height: 0;
   overflow: hidden;
   visibility: hidden;
+}
+
+/* MY ERP header button: a slow green glow that invites a click without
+   shouting. Hover/focus steady it; reduced motion removes the pulse. */
+.orbit-erp-btn {
+  box-shadow: 0 0 0 0 rgb(45 150 94 / 0.45);
+  animation: orbit-erp-glow 2.6s ease-in-out infinite;
+}
+.orbit-erp-btn:hover,
+.orbit-erp-btn:focus-visible {
+  animation-play-state: paused;
+  box-shadow: 0 0 0 4px rgb(45 150 94 / 0.3);
+}
+@keyframes orbit-erp-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgb(45 150 94 / 0.45),
+      0 0 6px rgb(45 150 94 / 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 0 5px rgb(45 150 94 / 0),
+      0 0 16px rgb(45 150 94 / 0.55);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbit-erp-btn {
+    animation: none;
+    box-shadow: 0 0 10px rgb(45 150 94 / 0.35);
+  }
+}
+
+/* MY ERP scene: a twisted-rope look made of a repeating diagonal stripe. */
+.orbit-erp-rope {
+  background-color: var(--color-brand-300);
+  background-image: repeating-linear-gradient(
+    -60deg,
+    transparent 0 4px,
+    rgb(20 61 44 / 0.35) 4px 6px
+  );
 }

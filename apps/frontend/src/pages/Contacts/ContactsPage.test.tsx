@@ -21,8 +21,8 @@ vi.mock("../../services/contactService", () => ({
 }));
 vi.mock("../../lib/swal", () => ({
   confirmAlert: vi.fn(),
-  errorAlert: vi.fn(),
 }));
+vi.mock("../../lib/notify", () => ({ notifyError: vi.fn() }));
 vi.mock("../../lib/posthog", () => ({ trackEvent: vi.fn() }));
 vi.mock("../../context/AuthContext", () => ({
   useAuth: () => ({

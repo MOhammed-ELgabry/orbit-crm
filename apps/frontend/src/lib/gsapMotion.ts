@@ -74,3 +74,76 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>({
 
   return ref;
 }
+
+interface RopeDropOptions {
+  /** How far above its resting place the element starts, in px. */
+  distance?: number;
+  /** Starting tilt in degrees; the element swings back to 0. */
+  swing?: number;
+  /** Distance of the invisible anchor point above the element, in px. */
+  anchor?: number;
+}
+
+/**
+ * Lowers an element into place as if it hung from an invisible rope: it
+ * drops in from above, overshoots its resting spot a touch while the rope
+ * stretches, then settles while a small pendulum swing dies out (the swing
+ * pivots around a point above the element, which is what makes it read as
+ * "hung"). transform/opacity only, so nothing around it moves.
+ *
+ * Skipped for reduced motion (the element is simply there). Built inside
+ * gsap.context() and reverted on unmount, so a navigation mid-drop leaves no
+ * tween behind; once it finishes, inline styles are cleared so CSS hover and
+ * focus styles apply normally. It never blocks clicks or typing.
+ */
+export function useRopeDrop<T extends HTMLElement = HTMLDivElement>({
+  distance = 170,
+  swing = 2.4,
+  anchor = 90,
+}: RopeDropOptions = {}) {
+  const ref = useRef<T>(null);
+
+  useLayoutEffect(() => {
+    const element = ref.current;
+
+    if (!element || prefersReducedMotion()) {
+      return undefined;
+    }
+
+    const context = gsap.context(() => {
+      gsap.set(element, { transformOrigin: `50% -${anchor}px` });
+
+      const timeline = gsap.timeline({
+        onComplete: () => {
+          gsap.set(element, {
+            clearProps: "transform,opacity,transformOrigin",
+          });
+        },
+      });
+
+      timeline
+        .fromTo(
+          element,
+          { y: -distance },
+          { y: 0, duration: 0.85, ease: "back.out(1.3)" },
+          0,
+        )
+        .fromTo(
+          element,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.35, ease: "power1.out" },
+          0,
+        )
+        .fromTo(
+          element,
+          { rotation: swing },
+          { rotation: 0, duration: 1.5, ease: "elastic.out(1, 0.32)" },
+          0.2,
+        );
+    }, element);
+
+    return () => context.revert();
+  }, [distance, swing, anchor]);
+
+  return ref;
+}

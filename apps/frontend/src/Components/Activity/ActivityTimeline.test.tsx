@@ -14,8 +14,8 @@ const svc = vi.hoisted(() => ({
 vi.mock("../../services/activityService", () => svc);
 vi.mock("../../lib/swal", () => ({
   confirmAlert: vi.fn().mockResolvedValue(true),
-  errorAlert: vi.fn(),
 }));
+vi.mock("../../lib/notify", () => ({ notifyError: vi.fn() }));
 
 import "../../i18n";
 import ActivityTimeline from "./ActivityTimeline";

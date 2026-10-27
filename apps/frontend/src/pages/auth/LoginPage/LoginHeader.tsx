@@ -1,4 +1,4 @@
-import logo from "../../../assets/Subtract.png";
+import OrbitBrand from "../../../Components/ui/OrbitBrand";
 import { useTranslation } from "react-i18next";
 
 export default function LoginHeader() {
@@ -6,11 +6,7 @@ export default function LoginHeader() {
 
   return (
     <div className="mb-4 flex flex-col items-center gap-1">
-      <img
-        src={logo}
-        alt="logo"
-        className="h-[50px] w-[50px] object-contain sm:h-[55px] sm:w-[55px]"
-      />
+      <OrbitBrand variant="auth" />
 
       <h1 className="font-nunito text-[22px] font-semibold text-ink sm:text-[25px]">
         {t("login")}

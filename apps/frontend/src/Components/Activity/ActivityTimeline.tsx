@@ -11,7 +11,8 @@ import {
 } from "../../services/activityService";
 import type { Activity, ActivityType } from "../../types/activity";
 import { ACTIVITY_TYPES } from "../../types/activity";
-import { errorAlert, confirmAlert } from "../../lib/swal";
+import { confirmAlert } from "../../lib/swal";
+import { notifyError } from "../../lib/notify";
 import { getErrorMessage } from "../../lib/errors";
 import { NO_DATE, parseDate } from "../../lib/contact360";
 import {
@@ -185,7 +186,7 @@ export default function ActivityTimeline({
       resetForm();
       setIsFormOpen(false);
     } catch (error) {
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });
@@ -213,7 +214,7 @@ export default function ActivityTimeline({
       await deleteActivity(activity.id);
     } catch (error) {
       setActivities(previous);
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });

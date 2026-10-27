@@ -12,7 +12,6 @@ const ar = {
   alreadyHaveAccount: "لديك حساب بالفعل؟",
   signIn: "تسجيل الدخول",
   google: "جوجل",
-  facebook: "فيسبوك",
   microsoft: "مايكروسوفت",
   or: "أو",
 
@@ -56,6 +55,24 @@ const ar = {
   phone: "رقم الهاتف",
   enterPhone: "أدخل رقم هاتفك",
   avatar: "الصورة الشخصية",
+  profilePhotoTitle: "الصورة الشخصية",
+  profilePhotoChange: "تغيير الصورة الشخصية",
+  profilePhotoChoose: "اختيار صورة",
+  profilePhotoChooseAnother: "اختيار صورة أخرى",
+  profilePhotoHint:
+    "PNG أو JPEG أو WebP. تُقصّ الصورة إلى مربع وتُصغَّر تلقائيًا.",
+  profilePhotoSave: "حفظ الصورة",
+  profilePhotoRemove: "حذف الصورة",
+  profilePhotoSaved: "تم تحديث الصورة الشخصية",
+  profilePhotoRemoved: "تم حذف الصورة الشخصية",
+  profilePhotoFailed: "تعذّر حفظ الصورة",
+  profilePhotoRemoveFailed: "تعذّر حذف الصورة",
+  profilePhotoErrorType: "اختر صورة بصيغة PNG أو JPEG أو WebP.",
+  profilePhotoErrorSize: "حجم الصورة كبير جدًا. اختر صورة أقل من 10 ميجابايت.",
+  profilePhotoErrorDecode: "تعذّرت قراءة هذا الملف كصورة.",
+  profilePhotoErrorEmpty: "هذا الملف فارغ.",
+  profilePhotoErrorTooBig:
+    "ما زالت الصورة كبيرة جدًا بعد التصغير. جرّب صورة أخرى.",
   optional: "اختياري",
   createAccount: "إنشاء حساب",
 
@@ -492,6 +509,8 @@ const ar = {
 
   // Team chat
   chatNavLabel: "محادثة الفريق",
+  myErpNavLabel: "MY ERP",
+  myErpBack: "العودة إلى لوحة التحكم",
   chatButtonLabel: "محادثة الفريق",
   chatButtonLabelUnread: "محادثة الفريق، {{count}} غير مقروء",
   chatTitle: "محادثة الفريق",

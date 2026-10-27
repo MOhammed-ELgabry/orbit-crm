@@ -16,7 +16,8 @@ import {
   leadStatusBadgeClass,
 } from "../../Components/Lead/leadStatus";
 import LeadFormModal from "../../Components/Lead/LeadFormModal";
-import { confirmAlert, errorAlert } from "../../lib/swal";
+import { confirmAlert } from "../../lib/swal";
+import { notifyError } from "../../lib/notify";
 import { getErrorMessage } from "../../lib/errors";
 import { trackEvent } from "../../lib/posthog";
 import {
@@ -118,7 +119,7 @@ export default function LeadDetailPage() {
       trackEvent("lead_deleted");
       navigate("/dashboard/leads", { replace: true });
     } catch (error) {
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });

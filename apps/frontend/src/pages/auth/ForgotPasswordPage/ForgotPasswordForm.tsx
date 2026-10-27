@@ -4,7 +4,7 @@ import { inputClass } from "../../../Components/ui/styles";
 import * as Yup from "yup";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import logo from "../../../assets/Subtract.png";
+import OrbitBrand from "../../../Components/ui/OrbitBrand";
 import { forgotPassword } from "../../../services/authService";
 import { successAlert, errorAlert } from "../../../lib/swal";
 import { getErrorMessage } from "../../../lib/errors";
@@ -59,11 +59,7 @@ export default function ForgotPasswordForm() {
       <div className="flex w-full max-w-[420px] flex-col items-center">
         {/* Logo & Title */}
         <div className="mb-5 flex flex-col items-center">
-          <img
-            src={logo}
-            alt="logo"
-            className="h-[50px] w-[50px] object-contain sm:h-[55px] sm:w-[55px]"
-          />
+          <OrbitBrand variant="auth" />
 
           <h1 className="font-nunito mt-1 text-center text-[22px] font-semibold text-ink sm:text-[25px]">
             {t("forgotPasswordTitle")}

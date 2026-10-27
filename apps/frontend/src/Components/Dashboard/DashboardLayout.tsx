@@ -3,12 +3,15 @@ import { Outlet } from "react-router-dom";
 
 import Sidebar from "./Sidebar";
 import DashboardHeader from "./DashboardHeader";
+import OrbitToaster from "../ui/OrbitToaster";
 
 export default function DashboardLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen overflow-hidden bg-[#f6f8f6]">
+      <OrbitToaster />
+
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {isSidebarOpen && (

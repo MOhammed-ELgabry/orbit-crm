@@ -24,7 +24,8 @@ import {
   isTaskOverdue,
 } from "../../Components/Task/taskMeta";
 import TaskFormModal from "../../Components/Task/TaskFormModal";
-import { confirmAlert, errorAlert } from "../../lib/swal";
+import { confirmAlert } from "../../lib/swal";
+import { notifyError } from "../../lib/notify";
 import { getErrorMessage } from "../../lib/errors";
 import { trackEvent } from "../../lib/posthog";
 import {
@@ -181,7 +182,7 @@ export default function TasksPage() {
       );
     } catch (error) {
       setTasks(previous);
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });
@@ -206,7 +207,7 @@ export default function TasksPage() {
       setTotal((prev) => Math.max(0, prev - 1));
     } catch (error) {
       setTasks(previous);
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });

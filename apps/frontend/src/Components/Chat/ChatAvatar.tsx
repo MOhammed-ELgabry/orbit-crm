@@ -1,3 +1,4 @@
+import UserAvatar from "../ui/UserAvatar";
 import { avatarToneOf, initialsOf } from "./chatFormat";
 
 const SIZES = {
@@ -14,12 +15,18 @@ interface ChatAvatarProps {
   online?: boolean;
   /** Team chat: a group glyph instead of initials. */
   group?: boolean;
+  /**
+   * The person's uploaded picture reference, if they have one. Anything else
+   * (no picture, a failed load) falls back to the initials below.
+   */
+  avatar?: string | null;
 }
 
 /**
- * Initials only, on purpose: the stored avatar value is a server-side file
- * reference, and rendering arbitrary remote images in a chat would add a
- * tracking / mixed-content surface for no functional gain.
+ * The person's uploaded picture when they have one, otherwise their initials.
+ * Only pictures stored by Orbit's own API are ever shown (see UserAvatar /
+ * lib/avatar): a remote URL is never loaded into the chat, so a picture can
+ * not become a tracking or mixed-content surface.
  */
 export default function ChatAvatar({
   id,
@@ -27,16 +34,18 @@ export default function ChatAvatar({
   size = "md",
   online,
   group = false,
+  avatar,
 }: ChatAvatarProps) {
   return (
     <span className="relative inline-flex shrink-0" aria-hidden="true">
-      <span
+      <UserAvatar
+        avatar={group ? null : avatar}
         className={`flex items-center justify-center rounded-full font-bold ${SIZES[size]} ${
           group ? "bg-brand-600 text-white" : avatarToneOf(id)
         }`}
       >
         {group ? "#" : initialsOf(name)}
-      </span>
+      </UserAvatar>
 
       {online !== undefined && (
         <span

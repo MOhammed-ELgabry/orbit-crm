@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { directionOf, useAuthLanguage } from "../../lib/authLocale";
-import { useReveal } from "../../lib/gsapMotion";
+import { useRopeDrop } from "../../lib/gsapMotion";
 import AuthLanguageSwitcher from "./AuthLanguageSwitcher";
 
 interface AuthShellProps {
@@ -19,18 +19,19 @@ const WIDTH = { sm: "max-w-[460px]", md: "max-w-[540px]" } as const;
  * horizontally and, whenever it fits, vertically; on a short or small
  * screen it simply scrolls with comfortable padding.
  *
- * The card fades/lifts in once with GSAP (skipped for reduced motion, and
- * it never blocks interaction). Each page mounts its own shell, so the
- * entrance replays when moving between sign-in pages.
+ * The card is lowered into place once with GSAP as if hung from an invisible
+ * rope: a soft drop, a small overshoot and a fading pendulum swing (skipped
+ * for reduced motion, and it never blocks interaction). Each page mounts its
+ * own shell, so the entrance replays when moving between sign-in pages.
  */
 export default function AuthShell({ children, width = "md" }: AuthShellProps) {
   const language = useAuthLanguage();
-  const cardRef = useReveal<HTMLDivElement>({ y: 18, duration: 0.5 });
+  const cardRef = useRopeDrop<HTMLElement>();
 
   return (
     <div
       dir={directionOf(language)}
-      className="relative flex min-h-screen w-full items-center justify-center bg-[radial-gradient(1200px_600px_at_50%_-10%,var(--color-brand-100),transparent_70%)] bg-slate-50 px-4 py-20 sm:px-6"
+      className="relative flex min-h-screen overflow-x-clip w-full items-center justify-center bg-[radial-gradient(1200px_600px_at_50%_-10%,var(--color-brand-100),transparent_70%)] bg-slate-50 px-4 py-20 sm:px-6"
     >
       <div className="absolute end-4 top-4 sm:end-6 sm:top-6">
         <AuthLanguageSwitcher />

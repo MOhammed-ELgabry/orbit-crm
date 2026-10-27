@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
-import { FaFacebook, FaMicrosoft } from "react-icons/fa";
+import { FaMicrosoft } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
@@ -81,20 +81,6 @@ export default function SocialLogin() {
         >
           {loadingProvider === "google" ? <Spinner /> : <FcGoogle size={20} />}
           <span className="text-sm text-ink">{t("google")}</span>
-        </button>
-
-        <button
-          type="button"
-          disabled={loadingProvider !== null}
-          onClick={() => handleSocialLogin("facebook")}
-          className={socialButtonClass}
-        >
-          {loadingProvider === "facebook" ? (
-            <Spinner />
-          ) : (
-            <FaFacebook size={20} className="text-[#385C8E]" />
-          )}
-          <span className="text-sm text-ink">{t("facebook")}</span>
         </button>
 
         <button

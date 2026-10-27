@@ -12,7 +12,6 @@ const en = {
   alreadyHaveAccount: "Already have an account?",
   signIn: "Sign In",
   google: "Google",
-  facebook: "Facebook",
   microsoft: "Microsoft",
   or: "Or",
 
@@ -56,6 +55,24 @@ const en = {
   phone: "Phone",
   enterPhone: "Enter your phone number",
   avatar: "Avatar",
+  profilePhotoTitle: "Profile photo",
+  profilePhotoChange: "Change profile photo",
+  profilePhotoChoose: "Choose a photo",
+  profilePhotoChooseAnother: "Choose another photo",
+  profilePhotoHint:
+    "PNG, JPEG or WebP. The photo is cropped to a square and resized automatically.",
+  profilePhotoSave: "Save photo",
+  profilePhotoRemove: "Remove photo",
+  profilePhotoSaved: "Profile photo updated",
+  profilePhotoRemoved: "Profile photo removed",
+  profilePhotoFailed: "Couldn't save the photo",
+  profilePhotoRemoveFailed: "Couldn't remove the photo",
+  profilePhotoErrorType: "Choose a PNG, JPEG or WebP image.",
+  profilePhotoErrorSize: "That image is too large. Choose one under 10 MB.",
+  profilePhotoErrorDecode: "That file couldn't be read as an image.",
+  profilePhotoErrorEmpty: "That file is empty.",
+  profilePhotoErrorTooBig:
+    "The photo is still too large after resizing. Try a different one.",
   optional: "Optional",
   createAccount: "Create account",
 
@@ -499,6 +516,8 @@ const en = {
 
   // Team chat
   chatNavLabel: "Team chat",
+  myErpNavLabel: "MY ERP",
+  myErpBack: "Back to Dashboard",
   chatButtonLabel: "Team chat",
   chatButtonLabelUnread: "Team chat, {{count}} unread",
   chatTitle: "Team chat",

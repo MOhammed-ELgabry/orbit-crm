@@ -11,3 +11,14 @@ import { afterEach } from "vitest";
 afterEach(() => {
   cleanup();
 });
+
+// jsdom does not implement object URLs, which the profile-picture code uses to
+// show a picked / fetched image. A counter-based stand-in keeps URLs unique.
+if (typeof URL.createObjectURL !== "function") {
+  let counter = 0;
+  URL.createObjectURL = () => `blob:orbit-test/${(counter += 1)}`;
+}
+
+if (typeof URL.revokeObjectURL !== "function") {
+  URL.revokeObjectURL = () => undefined;
+}

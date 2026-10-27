@@ -7,7 +7,6 @@ export interface RegisterData {
   password: string;
   phone: string;
   companyName: string;
-  avatar: string | null;
 }
 
 export interface VerifyEmailData {
@@ -88,8 +87,40 @@ const ERROR_MESSAGE_TYPE = "orbit-social-auth-error";
 
 const SOCIAL_AUTH_TIMEOUT = 5 * 60 * 1000;
 
-export const registerUser = async (data: RegisterData) => {
-  const response = await api.post("/auth/register", data);
+/**
+ * Registers a new account. `picture` is the optional profile picture, already
+ * cropped and downsized (see prepareAvatarBlob). With a picture the request is
+ * multipart/form-data so the API can validate and store the file together with
+ * the account; without one it stays the plain JSON request it always was.
+ * An empty phone is left out rather than sent as "" (the API treats the field
+ * as optional but validates any value it receives).
+ */
+export const registerUser = async (
+  data: RegisterData,
+  picture?: Blob | null,
+) => {
+  const { phone, ...rest } = data;
+  const fields = phone.trim() ? { ...rest, phone } : rest;
+
+  if (!picture) {
+    const response = await api.post("/auth/register", fields);
+
+    return response.data;
+  }
+
+  const body = new FormData();
+
+  for (const [key, value] of Object.entries(fields)) {
+    body.append(key, value);
+  }
+
+  body.append(
+    "avatar",
+    picture,
+    picture.type === "image/webp" ? "avatar.webp" : "avatar.jpg",
+  );
+
+  const response = await api.post("/auth/register", body);
 
   return response.data;
 };

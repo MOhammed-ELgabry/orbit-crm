@@ -23,8 +23,8 @@ const svc = vi.hoisted(() => ({
 }));
 const swal = vi.hoisted(() => ({
   confirmAlert: vi.fn(),
-  errorAlert: vi.fn(),
 }));
+const notify = vi.hoisted(() => ({ notifyError: vi.fn() }));
 const auth = vi.hoisted(() => ({ permissions: new Set<string>() }));
 
 vi.mock("../../services/contactService", () => ({
@@ -45,6 +45,7 @@ vi.mock("../../services/activityService", () => ({
   deleteActivity: svc.deleteActivity,
 }));
 vi.mock("../../lib/swal", () => swal);
+vi.mock("../../lib/notify", () => notify);
 vi.mock("../../lib/posthog", () => ({ trackEvent: vi.fn() }));
 vi.mock("../../context/AuthContext", () => ({
   useAuth: () => ({
@@ -1081,7 +1082,7 @@ describe("ContactDetailPage — notes", () => {
     await user.type(box, "Draft that failed");
     await user.click(screen.getByRole("button", { name: "Save" }));
 
-    await waitFor(() => expect(swal.errorAlert).toHaveBeenCalled());
+    await waitFor(() => expect(notify.notifyError).toHaveBeenCalled());
     expect(screen.getByRole("textbox", { name: "Notes" })).toHaveValue(
       "Draft that failed",
     );

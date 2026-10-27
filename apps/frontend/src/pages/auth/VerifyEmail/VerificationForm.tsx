@@ -1,4 +1,4 @@
-import logo from "../../../assets/Subtract.png";
+import OrbitBrand from "../../../Components/ui/OrbitBrand";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router-dom";
 import { resendVerification, verifyEmail } from "../../../services/authService";
@@ -105,11 +105,7 @@ export default function VerificationForm() {
       <div className="w-full max-w-[500px] flex flex-col items-center">
         {/* Logo & Title */}
         <div className="flex flex-col items-center mb-5">
-          <img
-            src={logo}
-            alt="logo"
-            className="w-[45px] h-[45px] sm:w-[50px] sm:h-[50px] md:w-[55px] md:h-[55px] object-contain"
-          />
+          <OrbitBrand variant="auth" />
 
           <h1 className="font-nunito font-semibold text-[21px] sm:text-[23px] md:text-[25px] text-ink mt-1 text-center">
             {t("verifyYourEmail")}

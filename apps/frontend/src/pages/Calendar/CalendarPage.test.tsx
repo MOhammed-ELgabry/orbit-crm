@@ -27,8 +27,8 @@ const lookups = vi.hoisted(() => ({
 }));
 const swal = vi.hoisted(() => ({
   confirmAlert: vi.fn(),
-  errorAlert: vi.fn(),
 }));
+const notify = vi.hoisted(() => ({ notifyError: vi.fn() }));
 const auth = vi.hoisted(() => ({ permissions: new Set<string>() }));
 
 vi.mock("../../services/calendarService", () => calendar);
@@ -45,6 +45,7 @@ vi.mock("../../services/dealService", () => ({
   listDeals: lookups.listDeals,
 }));
 vi.mock("../../lib/swal", () => swal);
+vi.mock("../../lib/notify", () => notify);
 vi.mock("../../lib/posthog", () => ({ trackEvent: vi.fn() }));
 vi.mock("../../context/AuthContext", () => ({
   useAuth: () => ({
@@ -505,7 +506,7 @@ describe("CalendarPage — row actions keep working on the loaded events", () =>
       screen.getAllByRole("button", { name: "Cancel event" })[0],
     );
 
-    await waitFor(() => expect(swal.errorAlert).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(notify.notifyError).toHaveBeenCalledTimes(1));
     expect(screen.queryAllByText("Cancelled")).toHaveLength(0);
     expect(screen.queryAllByText("Scheduled").length).toBeGreaterThan(0);
   });
@@ -544,7 +545,7 @@ describe("CalendarPage — row actions keep working on the loaded events", () =>
 
     await user.click(screen.getAllByRole("button", { name: "Delete" })[0]);
 
-    await waitFor(() => expect(swal.errorAlert).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(notify.notifyError).toHaveBeenCalledTimes(1));
     expect(seen("October planning")).toBe(true);
   });
 });

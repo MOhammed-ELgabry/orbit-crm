@@ -188,6 +188,8 @@ import { inputClass } from "../../../Components/ui/styles";
 import { Field, ErrorMessage } from "formik";
 import { useTranslation } from "react-i18next";
 
+import AvatarPicker from "./AvatarPicker";
+
 const fileInputClass =
   "h-[42px] w-full cursor-pointer rounded-[10px] border border-transparent bg-surface-muted px-3 text-xs text-gray-500 outline-none transition-all duration-200 file:mr-3 file:cursor-pointer file:rounded-[8px] file:border-0 file:bg-brand-600/10 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-brand-600 hover:file:bg-brand-600/20 focus:border-brand-600 focus:bg-white focus:shadow-[0_0_0_3px_rgba(45,150,94,0.08)]";
 
@@ -325,19 +327,7 @@ export default function RegisterFields() {
             <span className="font-normal text-gray-400">({t("optional")})</span>
           </label>
 
-          <Field
-            id="avatar"
-            name="avatar"
-            type="file"
-            accept="image/*"
-            className={fileInputClass}
-          />
-
-          <ErrorMessage
-            name="avatar"
-            component="div"
-            className="text-xs text-red-500"
-          />
+          <AvatarPicker inputClassName={fileInputClass} />
         </div>
 
         <div className="flex w-full flex-col gap-1">

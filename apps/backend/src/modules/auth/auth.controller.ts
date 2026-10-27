@@ -11,8 +11,11 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { auditRequestMeta } from '../audit/audit-actor.util';
 import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
@@ -31,6 +34,11 @@ import {
 import { AuthService } from './auth.service';
 
 import { RegisterDto } from './dto/register.dto';
+import {
+  AVATAR_FIELD,
+  AVATAR_MAX_BYTES,
+} from '../user/avatar/avatar.constants';
+import type { UploadedAvatarFile } from '../user/avatar/avatar.service';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { LoginDto } from './dto/login.dto';
@@ -121,8 +129,19 @@ export class AuthController {
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
-  async register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+  // Accepts either JSON (no picture) or multipart/form-data with an optional
+  // "avatar" image file. multer only parses multipart bodies, so a plain JSON
+  // request passes through the interceptor untouched.
+  @UseInterceptors(
+    FileInterceptor(AVATAR_FIELD, {
+      limits: { fileSize: AVATAR_MAX_BYTES, files: 1 },
+    }),
+  )
+  async register(
+    @Body() dto: RegisterDto,
+    @UploadedFile() avatar?: UploadedAvatarFile,
+  ) {
+    return this.authService.register(dto, avatar);
   }
 
   @ApiOperation({

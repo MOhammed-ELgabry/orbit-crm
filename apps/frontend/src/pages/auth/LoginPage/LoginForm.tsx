@@ -80,7 +80,7 @@ export default function LoginForm() {
         {/* Header */}
         <LoginHeader />
 
-        {/* Google & Facebook */}
+        {/* Google & Microsoft */}
         <SocialLogin />
 
         {/* Divider */}

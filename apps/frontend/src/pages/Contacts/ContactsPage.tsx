@@ -18,7 +18,8 @@ import {
   contactStatusBadgeClass,
 } from "../../Components/Contact/contactStatus";
 import ContactFormModal from "../../Components/Contact/ContactFormModal";
-import { confirmAlert, errorAlert } from "../../lib/swal";
+import { confirmAlert } from "../../lib/swal";
+import { notifyError } from "../../lib/notify";
 import { getErrorMessage } from "../../lib/errors";
 import { trackEvent } from "../../lib/posthog";
 import { LuPencil, LuPlus, LuSearch, LuTrash2, LuUpload } from "react-icons/lu";
@@ -107,7 +108,7 @@ export default function ContactsPage() {
       setTotal((prev) => Math.max(0, prev - 1));
     } catch (error) {
       setContacts(previous);
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });

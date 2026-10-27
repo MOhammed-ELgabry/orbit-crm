@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import DatePickerComponent from "./DatePicker";
 import NotificationBell from "../Notification/NotificationBell";
 import ChatButton from "../Chat/ChatButton";
+import MyErpButton from "./MyErpButton";
 import { LuMenu } from "react-icons/lu";
 
 export default function DashboardHeader({
@@ -24,6 +25,7 @@ export default function DashboardHeader({
     "/dashboard/reports": "reportsNavLabel",
     "/dashboard/notifications": "notificationsNavLabel",
     "/dashboard/chat": "chatNavLabel",
+    "/dashboard/my-erp": "myErpNavLabel",
     "/dashboard/audit-log": "auditNavLabel",
     "/dashboard/settings": "settingsNavLabel",
   };
@@ -64,6 +66,8 @@ export default function DashboardHeader({
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
+        <MyErpButton />
+
         <NotificationBell />
 
         <ChatButton />

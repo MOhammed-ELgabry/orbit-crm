@@ -31,6 +31,7 @@ import TermsOfServicePage from "./pages/Settings/TermsOfServicePage";
 import PrivacyPolicyPage from "./pages/Settings/PrivacyPolicyPage";
 import NotificationsPage from "./pages/Notifications/NotificationsPage";
 import ChatPage from "./pages/Chat/ChatPage";
+import MyErpPage from "./pages/MyErp/MyErpPage";
 import AuditLogPage from "./pages/AuditLog/AuditLogPage";
 import OwnerRoute from "./Components/Audit/OwnerRoute";
 
@@ -119,6 +120,9 @@ function App() {
                   <Route path="notifications" element={<NotificationsPage />} />
 
                   <Route path="chat" element={<ChatPage />} />
+
+                  {/* Placeholder only: no API, no data. */}
+                  <Route path="my-erp" element={<MyErpPage />} />
 
                   {/* Owner-only. OwnerRoute is UX only; the backend decides. */}
                   <Route

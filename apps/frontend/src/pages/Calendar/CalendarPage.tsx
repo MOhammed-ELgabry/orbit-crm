@@ -33,7 +33,8 @@ import { listDeals } from "../../services/dealService";
 import CalendarEventFormModal from "../../Components/Calendar/CalendarEventFormModal";
 import CalendarMonthGrid from "../../Components/Calendar/CalendarMonthGrid";
 import CalendarAgenda from "../../Components/Calendar/CalendarAgenda";
-import { confirmAlert, errorAlert } from "../../lib/swal";
+import { confirmAlert } from "../../lib/swal";
+import { notifyError } from "../../lib/notify";
 import { getErrorMessage } from "../../lib/errors";
 import { trackEvent } from "../../lib/posthog";
 import {
@@ -289,7 +290,7 @@ export default function CalendarPage() {
       );
     } catch (error) {
       setEvents(previous);
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });
@@ -313,7 +314,7 @@ export default function CalendarPage() {
       trackEvent("calendar_event_deleted");
     } catch (error) {
       setEvents(previous);
-      errorAlert({
+      notifyError({
         title: t("somethingWentWrong"),
         text: getErrorMessage(error, t("somethingWentWrong")),
       });

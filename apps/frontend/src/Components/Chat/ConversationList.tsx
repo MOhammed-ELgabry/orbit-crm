@@ -169,6 +169,7 @@ export default function ConversationList({
                         }
                         name={name}
                         group={isTeam}
+                        avatar={peer?.avatar}
                         online={
                           peer
                             ? selectPresence(state, peer.id, peer).online
@@ -243,6 +244,7 @@ export default function ConversationList({
                     <ChatAvatar
                       id={teammate.id}
                       name={teammate.name}
+                      avatar={teammate.avatar}
                       online={presence.online}
                     />
 
