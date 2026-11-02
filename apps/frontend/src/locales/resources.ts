@@ -2,6 +2,8 @@ import en from "./en/translation";
 import ar from "./ar/translation";
 import enHelpers from "./en/helpers";
 import arHelpers from "./ar/helpers";
+import enChatAttachments from "./en/chatAttachments";
+import arChatAttachments from "./ar/chatAttachments";
 
 /**
  * The single translation bundle, shared by the app's global i18n instance
@@ -9,6 +11,6 @@ import arHelpers from "./ar/helpers";
  * two can never drift apart.
  */
 export const resources = {
-  en: { translation: { ...en, ...enHelpers } },
-  ar: { translation: { ...ar, ...arHelpers } },
+  en: { translation: { ...en, ...enHelpers, ...enChatAttachments } },
+  ar: { translation: { ...ar, ...arHelpers, ...arChatAttachments } },
 };

@@ -143,12 +143,24 @@ export default function ConversationList({
                 const last = conversation.lastMessage;
                 const active = conversation.id === activeId;
 
+                // Text first; an attachment-only message shows what it carries.
+                const lastText = last
+                  ? last.body ||
+                    (last.attachment
+                      ? t(
+                          last.attachment.kind === "PDF"
+                            ? "chatAttachmentPreviewPdf"
+                            : "chatAttachmentPreviewImage",
+                        )
+                      : t("chatAttachmentUnavailable"))
+                  : "";
+
                 const preview = last
                   ? last.senderId === me?.id
-                    ? `${t("chatYou")}: ${last.body}`
+                    ? `${t("chatYou")}: ${lastText}`
                     : isTeam
-                      ? `${last.senderName}: ${last.body}`
-                      : last.body
+                      ? `${last.senderName}: ${lastText}`
+                      : lastText
                   : "";
 
                 return (

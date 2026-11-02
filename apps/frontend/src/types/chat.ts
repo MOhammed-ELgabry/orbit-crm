@@ -11,6 +11,36 @@ export interface ChatReceipt {
   recipientCount: number;
 }
 
+export type ChatAttachmentKind = "IMAGE" | "PDF";
+
+/** Public metadata of an attachment (never a path, a URL or a storage key). */
+export interface ChatAttachment {
+  id: string;
+  kind: ChatAttachmentKind;
+  contentType: string;
+  displayName: string;
+  sizeBytes: number;
+  width: number | null;
+  height: number | null;
+}
+
+/** `GET /chat/attachments/config` - a UI hint; the server enforces it all. */
+export type ChatAttachmentConfig =
+  | { enabled: false }
+  | {
+      enabled: true;
+      imageMaxBytes: number;
+      pdfMaxBytes: number;
+      allowedContentTypes: string[];
+      readyTtlMs: number;
+    };
+
+export interface ChatAttachmentUploadResult {
+  attachment: ChatAttachment;
+  /** ISO time after which an unsent attachment can no longer be sent. */
+  expiresAt: string;
+}
+
 export interface ChatMessage {
   id: string;
   conversationId: string;
@@ -25,6 +55,8 @@ export interface ChatMessage {
   createdAt: string;
   /** Only present on the caller's own messages. */
   receipt: ChatReceipt | null;
+  /** Only present when the message carries an attachment (DIRECT chats). */
+  attachment?: ChatAttachment;
 }
 
 export interface ChatPresence {

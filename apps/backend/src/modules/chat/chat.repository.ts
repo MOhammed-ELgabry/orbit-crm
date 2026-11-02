@@ -5,20 +5,22 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { localAvatarOrNull } from '../user/avatar/avatar.constants';
 
 import { TEAM_CONVERSATION_KEY } from './chat.constants';
-import type {
-  ChatActorRow,
-  ChatConversationRow,
-  ChatMessageRow,
-  ChatPeerRow,
-  ChatUserRow,
-  DirectConversationListRow,
-  IChatRepository,
-  InsertMessageInput,
-  InsertMessageResult,
-  ListMessagesInput,
-  MarkReadResult,
-  TeamStateRow,
+import {
+  AttachmentLinkError,
+  type ChatActorRow,
+  type ChatConversationRow,
+  type ChatMessageRow,
+  type ChatPeerRow,
+  type ChatUserRow,
+  type DirectConversationListRow,
+  type IChatRepository,
+  type InsertMessageInput,
+  type InsertMessageResult,
+  type ListMessagesInput,
+  type MarkReadResult,
+  type TeamStateRow,
 } from './chat.repository.interface';
+import { linkAttachmentToMessage } from './attachments/chat-attachments.repository';
 import { newChatId } from './chat.utils';
 
 /**
@@ -515,6 +517,22 @@ export class ChatRepository implements IChatRepository {
            ${audienceEpoch}, ${UTC_NOW})
         RETURNING "id", "conversationId", "sequence", "senderKey", "senderName",
                   "senderAvatar", "clientMessageId", "body", "audienceEpoch", "createdAt"`;
+
+      // Linking happens in THIS transaction, after the message row exists
+      // and while the conversation row is still locked by the sequence
+      // allocation above (SQL lives in the attachments repository). Nothing
+      // here reads or changes who may see the message.
+      if (input.attachmentId) {
+        const linked = await linkAttachmentToMessage(tx, {
+          attachmentId: input.attachmentId,
+          messageId: rows[0].id,
+          companyId: input.companyId,
+          conversationId: input.conversationId,
+          uploaderKey: input.senderId,
+        });
+
+        if (!linked) throw new AttachmentLinkError();
+      }
 
       return { message: toMessage(rows[0]) };
     });

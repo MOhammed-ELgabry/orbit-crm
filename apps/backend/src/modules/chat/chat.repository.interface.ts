@@ -69,6 +69,24 @@ export interface InsertMessageInput {
   senderAvatar: string | null;
   clientMessageId: string;
   body: string;
+  /**
+   * A READY attachment of the sender in this conversation. It is linked
+   * (READY -> ATTACHED) inside the SAME transaction that inserts the message:
+   * either both are stored or neither is.
+   */
+  attachmentId?: string;
+}
+
+/**
+ * The attachment could not be linked (not READY any more, expired, not the
+ * sender's, or another conversation). The whole send transaction is rolled
+ * back; no sequence number is consumed.
+ */
+export class AttachmentLinkError extends Error {
+  constructor() {
+    super('attachment cannot be linked to this message');
+    this.name = 'AttachmentLinkError';
+  }
 }
 
 export interface InsertMessageResult {

@@ -1,6 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+  ValidateIf,
+} from 'class-validator';
 
 import {
   CLIENT_MESSAGE_ID_PATTERN,
@@ -18,14 +25,38 @@ export class SendMessageDto {
   @Matches(CLIENT_MESSAGE_ID_PATTERN)
   clientMessageId!: string;
 
-  @ApiProperty({ example: 'Hello team', maxLength: MESSAGE_MAX_LENGTH })
+  @ApiProperty({
+    example: 'Hello team',
+    maxLength: MESSAGE_MAX_LENGTH,
+    description:
+      'Required, except for a message that carries an attachment (then it ' +
+      'may be empty or omitted).',
+  })
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? normalizeMessageBody(value) : value,
+  )
+  // Without an attachment the body rules are exactly the original ones. With
+  // one, an empty/missing body is allowed (attachment-only message); a
+  // non-empty body is still fully validated.
+  @ValidateIf(
+    (dto: SendMessageDto) =>
+      dto.attachmentId === undefined ||
+      (dto.body !== undefined && dto.body !== ''),
   )
   @IsString()
   @MinLength(1)
   @MaxLength(MESSAGE_MAX_LENGTH)
   body!: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Id of a READY attachment uploaded by the caller to this conversation ' +
+      '(one per message). Linked atomically with the message.',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Za-z0-9_-]{1,64}$/)
+  attachmentId?: string;
 }
 
 /**

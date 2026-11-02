@@ -8,7 +8,9 @@ import { sleep } from 'k6';
 import { COMMON_THRESHOLDS, LIMITS, intFromEnv } from '../lib/config.js';
 import { authedGet, login, logout } from '../lib/session.js';
 
-const vus = intFromEnv('K6_VUS', 2, { max: LIMITS.readVus });
+const vus = intFromEnv('ORBIT_TEST_VUS', 2, {
+  max: LIMITS.readVus,
+});
 const rounds = intFromEnv('K6_ROUNDS', 8, { max: 40 });
 // Each route has its own 30/min (15/min for /auth/me) bucket per client IP,
 // shared by every VU on the load generator. 15 s between rounds with up to 3

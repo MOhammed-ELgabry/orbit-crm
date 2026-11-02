@@ -143,8 +143,8 @@ describe("scope guard: sign-in pages keep SweetAlert2", () => {
       /<OrbitToaster/.test(readFileSync(file, "utf8")),
     );
 
-   expect(users.map((file) => file.split(/[\\/]/).pop())).toEqual([
-  "DashboardLayout.tsx",
-]);
+    expect(users.map((file) => file.split(/[\\/]/).pop())).toEqual([
+      "DashboardLayout.tsx",
+    ]);
   });
 });

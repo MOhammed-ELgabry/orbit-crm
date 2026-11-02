@@ -50,6 +50,7 @@ model Company {
   chatTeamReadCursors     ChatTeamReadCursor[]
   chatPresenceLeases      ChatPresenceLease[]
   chatUserPresences       ChatUserPresence[]
+  chatAttachments         ChatAttachment[]
 
   // Audit
   createdAt DateTime  @default(now())
@@ -970,6 +971,7 @@ model ChatConversation {
   nextSequence      BigInt               @default(0) @db.BigInt
   participants      ChatParticipant[]
   messages          ChatMessage[]
+  attachments       ChatAttachment[]
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
 
@@ -1010,6 +1012,7 @@ model ChatMessage {
   createdAt       DateTime         @default(now())
 
   directRead DirectMessageRead?
+  attachment ChatAttachment?
 
   @@unique([conversationId, sequence])
   @@unique([conversationId, senderKey, clientMessageId])
@@ -1091,6 +1094,60 @@ model ChatUserPresence {
   updatedAt  DateTime @updatedAt
 
   @@id([companyId, userKey])
+}
+
+// ---------------------------------------------------------------------
+// Chat attachments (metadata only; file bytes live on local disk, never in
+// PostgreSQL). One attachment per message in the MVP, DIRECT conversations
+// only. The link to the message lives here, never on ChatMessage, so
+// persisted messages stay immutable.
+//
+// Not representable in schema.prisma and enforced by the migration
+// 20261030120000_add_chat_attachments (invisible to Prisma): CHECK
+// constraints (kind/contentType, size limits, status shape, storageKey
+// format) and three triggers (insert validation, state machine + ATTACHED
+// protection on update, purge-switch guard on delete of attached rows).
+// uploaderKey is a durable copy of the uploader's user id (no FK).
+// ---------------------------------------------------------------------
+enum ChatAttachmentStatus {
+  UPLOADING
+  READY
+  ATTACHED
+  EXPIRED
+}
+
+enum ChatAttachmentKind {
+  IMAGE
+  PDF
+}
+
+model ChatAttachment {
+  id             String               @id @default(cuid())
+  companyId      String
+  company        Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  conversationId String
+  conversation   ChatConversation     @relation(fields: [conversationId], references: [id], onDelete: Restrict)
+  messageId      String?              @unique
+  message        ChatMessage?         @relation(fields: [messageId], references: [id], onDelete: Restrict)
+  uploaderKey    String
+  status         ChatAttachmentStatus @default(UPLOADING)
+  kind           ChatAttachmentKind
+  contentType    String
+  displayName    String               @db.VarChar(255)
+  sizeBytes      Int
+  sha256         String               @db.VarChar(64)
+  width          Int?
+  height         Int?
+  storageKey     String               @unique
+  createdAt      DateTime             @default(now())
+  readyAt        DateTime?
+  attachedAt     DateTime?
+  expiresAt      DateTime?
+
+  @@index([status, expiresAt])
+  @@index([companyId, status])
+  @@index([uploaderKey, status])
+  @@index([conversationId])
 }
 
 // Append-only audit trail of important business and administrative changes.

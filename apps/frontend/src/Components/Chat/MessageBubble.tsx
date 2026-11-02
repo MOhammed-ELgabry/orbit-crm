@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 
 import type { PendingMessage } from "../../context/chatState";
 import type { ChatMessage } from "../../types/chat";
+import AttachmentView from "./AttachmentView";
 import ChatAvatar from "./ChatAvatar";
 import { formatMessageTime } from "./chatFormat";
 import ReceiptTicks from "./ReceiptTicks";
@@ -32,6 +33,8 @@ export default function MessageBubble(props: MessageBubbleProps) {
   if (!source) return null;
 
   const { body, createdAt } = source;
+  const attachment = source.attachment;
+  const conversationId = source.conversationId;
 
   return (
     <li
@@ -61,10 +64,43 @@ export default function MessageBubble(props: MessageBubbleProps) {
               : "rounded-es-md bg-slate-100 text-slate-900"
           } ${props.pending?.status === "failed" ? "opacity-80 ring-2 ring-rose-300" : ""}`}
         >
+          {attachment &&
+            (props.message ? (
+              <AttachmentView
+                conversationId={conversationId}
+                attachment={attachment}
+                mine={mine}
+              />
+            ) : (
+              // Still being sent: the stored file is not shown yet.
+              <p
+                dir="auto"
+                className="truncate text-xs font-semibold"
+                data-testid="pending-attachment"
+              >
+                {attachment.displayName}
+              </p>
+            ))}
+
           {/* Always rendered as TEXT (never HTML); direction follows the content. */}
-          <p dir="auto" className="whitespace-pre-wrap break-words">
-            {body}
-          </p>
+          {body && (
+            <p
+              dir="auto"
+              className={`whitespace-pre-wrap break-words ${attachment ? "mt-2" : ""}`}
+            >
+              {body}
+            </p>
+          )}
+
+          {/* An empty message whose attachment could not be loaded. */}
+          {!body && !attachment && (
+            <p
+              className="text-xs italic opacity-80"
+              data-testid="attachment-missing"
+            >
+              {t("chatAttachmentUnavailable")}
+            </p>
+          )}
 
           <div
             className={`mt-1 flex items-center justify-end gap-1.5 text-[10px] ${

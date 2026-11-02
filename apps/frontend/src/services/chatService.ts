@@ -3,6 +3,8 @@ import { isAxiosError } from "axios";
 import api from "./api";
 import type { ApiEnvelope } from "../types/api";
 import type {
+  ChatAttachmentConfig,
+  ChatAttachmentUploadResult,
   ChatBootstrap,
   ChatConversation,
   ChatMe,
@@ -93,12 +95,86 @@ export const sendChatMessage = async (
   conversationId: string,
   clientMessageId: string,
   body: string,
+  attachmentId?: string,
 ): Promise<ChatSendResult> => {
   const response = await api.post<ApiEnvelope<ChatSendResult>>(
     `/chat/conversations/${id(conversationId)}/messages`,
-    { clientMessageId, body },
+    // The payload of a text-only message is exactly what it always was.
+    attachmentId === undefined
+      ? { clientMessageId, body }
+      : { clientMessageId, body, attachmentId },
   );
   return response.data.data;
+};
+
+// --- attachments (DIRECT conversations) ----------------------------------
+
+/** Whether attachments are available for this account, and their limits. */
+export const getChatAttachmentConfig =
+  async (): Promise<ChatAttachmentConfig> => {
+    const response = await api.get<ApiEnvelope<ChatAttachmentConfig>>(
+      "/chat/attachments/config",
+    );
+    return response.data.data;
+  };
+
+/**
+ * Uploads ONE file (multipart field "file"). It is stored but not sent: the
+ * returned attachment id goes into `sendChatMessage`. The multipart boundary
+ * is set by the browser/axios, never by hand.
+ */
+export const uploadChatAttachment = async (
+  conversationId: string,
+  file: File,
+  options: {
+    signal?: AbortSignal;
+    onProgress?: (fraction: number) => void;
+  } = {},
+): Promise<ChatAttachmentUploadResult> => {
+  const form = new FormData();
+  form.append("file", file, file.name);
+
+  const response = await api.post<ApiEnvelope<ChatAttachmentUploadResult>>(
+    `/chat/conversations/${id(conversationId)}/attachments`,
+    form,
+    {
+      signal: options.signal,
+      timeout: 120_000,
+      onUploadProgress: (event) => {
+        if (event.total) {
+          options.onProgress?.(Math.min(1, event.loaded / event.total));
+        }
+      },
+    },
+  );
+  return response.data.data;
+};
+
+/** Discards an attachment that was not sent (a sent one cannot be removed). */
+export const cancelChatAttachment = async (
+  conversationId: string,
+  attachmentId: string,
+): Promise<void> => {
+  await api.delete(
+    `/chat/conversations/${id(conversationId)}/attachments/${id(attachmentId)}`,
+  );
+};
+
+/**
+ * The file itself, through the authenticated, conversation-checked endpoint.
+ * There is no public URL: the bytes arrive as a Blob that the caller turns
+ * into a short-lived object URL (and revokes).
+ */
+export const fetchChatAttachmentBlob = async (
+  conversationId: string,
+  attachmentId: string,
+  signal?: AbortSignal,
+): Promise<Blob> => {
+  const response = await api.get<Blob>(
+    `/chat/conversations/${id(conversationId)}/attachments/${id(attachmentId)}`,
+    { responseType: "blob", signal, timeout: 120_000 },
+  );
+  return response.data;
 };
 
 export const markChatRead = async (

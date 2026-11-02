@@ -6,6 +6,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 
 import {
@@ -14,21 +15,28 @@ import {
   TEAMMATES_MAX,
 } from './chat.constants';
 import { localAvatarOrNull } from '../user/avatar/avatar.constants';
-import type {
-  ChatConversationRow,
-  ChatMessageRow,
-  ChatPeerRow,
-  IChatRepository,
+import {
+  AttachmentLinkError,
+  type ChatConversationRow,
+  type ChatMessageRow,
+  type ChatPeerRow,
+  type IChatRepository,
 } from './chat.repository.interface';
 import { orderPair } from './chat.repository';
 import type {
   ChatActor,
+  ChatAttachmentDto,
   ChatConversationDto,
   ChatMeDto,
   ChatMessageDto,
   ChatReceipt,
   ChatTeammateDto,
 } from './chat.types';
+import { ATTACHMENT_ERRORS } from './attachments/chat-attachments.constants';
+import {
+  CHAT_ATTACHMENTS_PORT,
+  type ChatAttachmentsPort,
+} from './attachments/chat-attachments.port';
 import {
   errorName,
   fullName,
@@ -79,6 +87,13 @@ export class ChatService {
     private readonly hub: ChatHub,
     private readonly presence: ChatPresenceService,
     private readonly notifications: NotificationService,
+    /**
+     * Chat attachments (optional): when the feature is not wired or is off,
+     * every code path below behaves exactly as it did without it.
+     */
+    @Optional()
+    @Inject(CHAT_ATTACHMENTS_PORT)
+    private readonly attachments?: ChatAttachmentsPort,
   ) {}
 
   /** Resolves when every notification started so far has finished (or failed). */
@@ -290,7 +305,33 @@ export class ChatService {
     );
 
     if (existing) {
-      return this.duplicateResult(actor, conversation, existing, dto.body);
+      return this.duplicateResult(
+        actor,
+        conversation,
+        existing,
+        dto.body ?? '',
+        dto.attachmentId,
+      );
+    }
+
+    // An attachment may be linked only to a message of the same sender in the
+    // same (already authorised) conversation. Checked AFTER the idempotency
+    // fast path: a retry of a message that already carries it must still
+    // succeed, although the attachment is no longer READY.
+    let attachment: ChatAttachmentDto | undefined;
+
+    if (dto.attachmentId !== undefined) {
+      if (!this.attachments?.enabled) {
+        throw new NotFoundException(ATTACHMENT_ERRORS.disabled);
+      }
+
+      attachment = await this.attachments.requireLinkable(
+        actor,
+        conversation,
+        dto.attachmentId,
+      );
+    } else if (!dto.body) {
+      throw new BadRequestException('A message needs text or an attachment.');
     }
 
     let row: ChatMessageRow | undefined;
@@ -305,7 +346,10 @@ export class ChatService {
           senderName: fullName(actor.firstName, actor.lastName),
           senderAvatar: localAvatarOrNull(actor.avatar),
           clientMessageId: dto.clientMessageId,
-          body: dto.body,
+          body: dto.body ?? '',
+          ...(dto.attachmentId !== undefined && {
+            attachmentId: dto.attachmentId,
+          }),
         });
 
         row = result.message;
@@ -320,7 +364,13 @@ export class ChatService {
           );
 
           if (winner) {
-            return this.duplicateResult(actor, conversation, winner, dto.body);
+            return this.duplicateResult(
+              actor,
+              conversation,
+              winner,
+              dto.body ?? '',
+              dto.attachmentId,
+            );
           }
         }
 
@@ -346,6 +396,12 @@ export class ChatService {
     let message: ChatMessageDto;
     try {
       message = (await this.toMessageDtos(actor, conversation, [row]))[0];
+
+      // The attachment was linked in the transaction that stored the message;
+      // if the metadata lookup hiccuped, the one we validated is the same row.
+      if (attachment && !message.attachment) {
+        message = { ...message, attachment };
+      }
     } catch (error) {
       this.logger.warn(
         `Receipt lookup failed after a send (${errorName(error)})`,
@@ -356,6 +412,7 @@ export class ChatService {
         new Map(),
         new Map([[actor.userId, localAvatarOrNull(actor.avatar)]]),
         { readCount: 0, recipientCount: 0 },
+        attachment ? new Map([[row.id, attachment]]) : undefined,
       );
     }
 
@@ -679,6 +736,7 @@ export class ChatService {
     conversation: ChatConversationRow,
     existing: ChatMessageRow,
     body: string,
+    attachmentId?: string,
   ) {
     if (existing.body !== body) {
       // Same idempotency key, different payload: a client bug or a replay
@@ -686,6 +744,17 @@ export class ChatService {
       throw new ConflictException(
         'This clientMessageId was already used for a different message.',
       );
+    }
+
+    // The attachment is part of the payload too.
+    if (this.attachments?.enabled) {
+      const stored = await this.loadAttachments(actor.companyId, [existing]);
+
+      if ((stored?.get(existing.id)?.id ?? null) !== (attachmentId ?? null)) {
+        throw new ConflictException(
+          'This clientMessageId was already used for a different message.',
+        );
+      }
     }
 
     // Recovery for a send whose notification step did not finish (a crash
@@ -716,6 +785,15 @@ export class ChatService {
       )
     ) {
       return new ForbiddenException('Chat is not available for this account.');
+    }
+
+    // The attachment no longer fits (expired, already used, wrong sender...).
+    // The send transaction was rolled back as a whole.
+    if (
+      error instanceof AttachmentLinkError ||
+      /chat attachment|attachment message|attachment can only/i.test(text)
+    ) {
+      return new ConflictException(ATTACHMENT_ERRORS.notReady);
     }
 
     return error;
@@ -779,8 +857,15 @@ export class ChatService {
       lastSenderIds,
     );
 
+    const lastAttachments = await this.loadAttachments(actor.companyId, [
+      ...lastMessages.values(),
+      ...(lastTeamMessage ? [lastTeamMessage] : []),
+    ]);
+
     const toLast = (row: ChatMessageRow | null | undefined) =>
-      row ? this.toMessageDto(actor, row, roleNames, avatars, null) : null;
+      row
+        ? this.toMessageDto(actor, row, roleNames, avatars, null, lastAttachments)
+        : null;
 
     const result: ChatConversationDto[] = [
       {
@@ -904,6 +989,8 @@ export class ChatService {
       senderIds,
     );
 
+    const attachments = await this.loadAttachments(actor.companyId, rows);
+
     const ownRows = rows.filter((row) => row.senderKey === actor.userId);
     const context = await this.receiptContext(actor, conversation, ownRows);
 
@@ -929,8 +1016,39 @@ export class ChatService {
         );
       }
 
-      return this.toMessageDto(actor, row, roleNames, avatars, receipt);
+      return this.toMessageDto(
+        actor,
+        row,
+        roleNames,
+        avatars,
+        receipt,
+        attachments,
+      );
     });
+  }
+
+  /**
+   * Attachment metadata of a set of messages. Empty (and no database access)
+   * when the feature is off. A failure here must never take the text of a
+   * conversation down with it: it is logged by error name only and the
+   * messages are shown without their attachment cards.
+   */
+  private async loadAttachments(
+    companyId: string,
+    rows: ReadonlyArray<ChatMessageRow | null | undefined>,
+  ): Promise<Map<string, ChatAttachmentDto> | undefined> {
+    if (!this.attachments?.enabled) return undefined;
+
+    const ids = rows.flatMap((row) => (row ? [row.id] : []));
+
+    if (ids.length === 0) return undefined;
+
+    try {
+      return await this.attachments.describeForMessages(companyId, ids);
+    } catch (error) {
+      this.logger.warn(`Attachment lookup failed (${errorName(error)})`);
+      return undefined;
+    }
   }
 
   private toMessageDto(
@@ -939,7 +1057,10 @@ export class ChatService {
     roleNames: Map<string, string | null>,
     avatars: Map<string, string | null>,
     receipt: ChatReceipt | null,
+    attachments?: Map<string, ChatAttachmentDto>,
   ): ChatMessageDto {
+    const attachment = attachments?.get(row.id);
+
     return {
       id: row.id,
       conversationId: row.conversationId,
@@ -958,6 +1079,7 @@ export class ChatService {
       body: row.body,
       createdAt: row.createdAt.toISOString(),
       receipt,
+      ...(attachment && { attachment }),
     };
   }
 

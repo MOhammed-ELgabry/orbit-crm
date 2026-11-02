@@ -8,6 +8,7 @@ import ChatAvatar from "./ChatAvatar";
 import MessageBubble from "./MessageBubble";
 import MessageComposer from "./MessageComposer";
 import PresenceLabel from "./PresenceLabel";
+import type { ChatAttachment } from "../../types/chat";
 import { LuChevronLeft } from "react-icons/lu";
 
 /** Distance from the bottom that still counts as "looking at the latest". */
@@ -84,8 +85,8 @@ export default function MessageThread({
     void store.loadOlder(conversationId);
   };
 
-  const send = (body: string): boolean => {
-    const outcome = store.sendMessage(conversationId, body);
+  const send = (body: string, attachment?: ChatAttachment): boolean => {
+    const outcome = store.sendMessage(conversationId, body, attachment);
 
     if (outcome.ok) {
       // Following your own message is expected, wherever you had scrolled.
@@ -261,7 +262,12 @@ export default function MessageThread({
         </ul>
       </div>
 
-      <MessageComposer disabled={!conversation.canSend} onSend={send} />
+      <MessageComposer
+        disabled={!conversation.canSend}
+        onSend={send}
+        conversationId={conversationId}
+        attachmentsAllowed={!isTeam}
+      />
     </section>
   );
 }

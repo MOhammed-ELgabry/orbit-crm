@@ -1,5 +1,6 @@
 import type { ChatSocketStatus } from "../services/chatSocket";
 import type {
+  ChatAttachment,
   ChatBootstrap,
   ChatConversation,
   ChatMe,
@@ -20,6 +21,8 @@ export interface PendingMessage {
   clientMessageId: string;
   conversationId: string;
   body: string;
+  /** Present when the message carries an (already uploaded) attachment. */
+  attachment?: ChatAttachment;
   createdAt: string;
   status: "sending" | "failed";
   /** Re-sending the same clientMessageId may succeed (network, 5xx, 429). */

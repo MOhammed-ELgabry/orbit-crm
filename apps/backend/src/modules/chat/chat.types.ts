@@ -15,6 +15,21 @@ export interface ChatReceipt {
   recipientCount: number;
 }
 
+/**
+ * Attachment metadata as shown to chat participants. There is deliberately no
+ * storage key, path or URL: a file can only be fetched through the
+ * authenticated, conversation-checked download endpoint.
+ */
+export interface ChatAttachmentDto {
+  id: string;
+  kind: 'IMAGE' | 'PDF';
+  contentType: string;
+  displayName: string;
+  sizeBytes: number;
+  width: number | null;
+  height: number | null;
+}
+
 export interface ChatMessageDto {
   id: string;
   conversationId: string;
@@ -29,6 +44,8 @@ export interface ChatMessageDto {
   createdAt: string;
   /** Present for the caller's own messages only. */
   receipt: ChatReceipt | null;
+  /** Only present when the message carries an attachment. */
+  attachment?: ChatAttachmentDto;
 }
 
 export interface ChatPeerDto {

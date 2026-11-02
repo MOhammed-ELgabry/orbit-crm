@@ -96,7 +96,7 @@ export function credentials() {
 export const LIMITS = {
   healthPerMinute: 25,
   loginPerMinute: 4,
-  readVus: 3,
+  readVus: 10,
 };
 
 export function intFromEnv(name, fallback, { min = 1, max }) {

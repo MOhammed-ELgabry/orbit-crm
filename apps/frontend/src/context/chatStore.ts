@@ -7,6 +7,7 @@ import {
 import {
   CHAT_HISTORY_PAGE_SIZE,
   CHAT_MESSAGE_MAX_LENGTH,
+  type ChatAttachment,
   type ChatConversation,
   type ChatServerEvent,
 } from "../types/chat";
@@ -504,10 +505,15 @@ export class ChatStore {
 
   // --- sending -------------------------------------------------------------
 
-  sendMessage(conversationId: string, rawBody: string): SendOutcome {
+  sendMessage(
+    conversationId: string,
+    rawBody: string,
+    attachment?: ChatAttachment,
+  ): SendOutcome {
     const body = normalizeChatBody(rawBody);
 
-    if (!body) return { ok: false, reason: "empty" };
+    // A message needs text, an attachment, or both.
+    if (!body && !attachment) return { ok: false, reason: "empty" };
     if (body.length > CHAT_MESSAGE_MAX_LENGTH) {
       return { ok: false, reason: "too_long" };
     }
@@ -517,10 +523,16 @@ export class ChatStore {
       return { ok: false, reason: "unavailable" };
     }
 
+    // Attachments exist in direct conversations only (the server insists too).
+    if (attachment && conversation.type !== "DIRECT") {
+      return { ok: false, reason: "unavailable" };
+    }
+
     const pending: PendingMessage = {
       clientMessageId: this.newClientMessageId(),
       conversationId,
       body,
+      ...(attachment && { attachment }),
       createdAt: new Date().toISOString(),
       status: "sending",
       retryable: true,
@@ -563,7 +575,7 @@ export class ChatStore {
   }
 
   private async deliver(pending: PendingMessage): Promise<void> {
-    const { conversationId, clientMessageId, body } = pending;
+    const { conversationId, clientMessageId, body, attachment } = pending;
 
     if (this.inFlightSends.has(clientMessageId)) return;
     this.inFlightSends.add(clientMessageId);
@@ -571,11 +583,15 @@ export class ChatStore {
     const generation = this.generation;
 
     try {
-      const result = await this.api.sendChatMessage(
-        conversationId,
-        clientMessageId,
-        body,
-      );
+      // A text-only message is sent with exactly the arguments it always had.
+      const result = attachment
+        ? await this.api.sendChatMessage(
+            conversationId,
+            clientMessageId,
+            body,
+            attachment.id,
+          )
+        : await this.api.sendChatMessage(conversationId, clientMessageId, body);
       if (!this.isCurrent(generation)) return;
 
       this.dispatch({
