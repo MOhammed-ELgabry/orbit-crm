@@ -45,6 +45,7 @@ import {
   COMPANY_ID_SEGMENT_PATTERN,
   IMAGE_CONTENT_TYPES,
   PDF_CONTENT_TYPE,
+  SPREADSHEET_CONTENT_TYPES,
 } from './chat-attachments.constants';
 import { toAttachmentDto } from './chat-attachments-link.service';
 import type {
@@ -78,6 +79,7 @@ export interface AttachmentClientConfig {
   enabled: boolean;
   imageMaxBytes?: number;
   pdfMaxBytes?: number;
+  spreadsheetMaxBytes?: number;
   allowedContentTypes?: string[];
   readyTtlMs?: number;
 }
@@ -97,6 +99,13 @@ const FAILURE_TO_EXCEPTION: Record<InspectionFailure, () => HttpException> = {
   pdf_encrypted: () => new BadRequestException(ATTACHMENT_ERRORS.pdfEncrypted),
   pdf_active_content: () =>
     new BadRequestException(ATTACHMENT_ERRORS.pdfActiveContent),
+  type_mismatch: () => new BadRequestException(ATTACHMENT_ERRORS.typeMismatch),
+  spreadsheet_macro: () =>
+    new BadRequestException(ATTACHMENT_ERRORS.spreadsheetMacro),
+  spreadsheet_encrypted: () =>
+    new BadRequestException(ATTACHMENT_ERRORS.spreadsheetEncrypted),
+  spreadsheet_active_content: () =>
+    new BadRequestException(ATTACHMENT_ERRORS.spreadsheetActiveContent),
 };
 
 const RESERVE_FAILURE_TO_EXCEPTION: Record<
@@ -166,7 +175,12 @@ export class ChatAttachmentsService {
       enabled: true,
       imageMaxBytes: this.config.imageMaxBytes,
       pdfMaxBytes: this.config.pdfMaxBytes,
-      allowedContentTypes: [...IMAGE_CONTENT_TYPES, PDF_CONTENT_TYPE],
+      spreadsheetMaxBytes: this.config.spreadsheetMaxBytes,
+      allowedContentTypes: [
+        ...IMAGE_CONTENT_TYPES,
+        PDF_CONTENT_TYPE,
+        ...SPREADSHEET_CONTENT_TYPES,
+      ],
       readyTtlMs: this.config.readyTtlMs,
     };
   }
@@ -205,7 +219,11 @@ export class ChatAttachmentsService {
     try {
       await storage.ensureReady();
 
-      const maxBytes = Math.max(config.imageMaxBytes, config.pdfMaxBytes);
+      const maxBytes = Math.max(
+        config.imageMaxBytes,
+        config.pdfMaxBytes,
+        config.spreadsheetMaxBytes,
+      );
 
       const free = await storage.freeBytes();
 
@@ -263,7 +281,10 @@ export class ChatAttachmentsService {
    */
   async completeUpload(
     permit: UploadPermit,
-    file: Partial<StoredTempFile> & { originalname?: string },
+    file: Partial<StoredTempFile> & {
+      originalname?: string;
+      mimetype?: string;
+    },
   ): Promise<UploadedAttachmentResult> {
     const { config, storage } = this.requireReady();
     const { actor, conversation } = permit;
@@ -347,7 +368,10 @@ export class ChatAttachmentsService {
     storage: AttachmentStorage,
     config: EnabledConfig,
     tempPath: string,
-    file: Partial<StoredTempFile>,
+    file: Partial<StoredTempFile> & {
+      originalname?: string;
+      mimetype?: string;
+    },
   ) {
     const opened = await storage.openTempReader(tempPath);
 
@@ -356,12 +380,19 @@ export class ChatAttachmentsService {
         throw new BadRequestException(ATTACHMENT_ERRORS.invalidUpload);
       }
 
-      return await inspectAttachment(opened.reader, {
-        imageMaxBytes: config.imageMaxBytes,
-        pdfMaxBytes: config.pdfMaxBytes,
-        maxImageDimension: config.maxImageDimension,
-        maxImagePixels: config.maxImagePixels,
-      });
+      return await inspectAttachment(
+        opened.reader,
+        {
+          imageMaxBytes: config.imageMaxBytes,
+          pdfMaxBytes: config.pdfMaxBytes,
+          spreadsheetMaxBytes: config.spreadsheetMaxBytes,
+          maxImageDimension: config.maxImageDimension,
+          maxImagePixels: config.maxImagePixels,
+        },
+        // What the client claimed: cross-checked for spreadsheets only, never
+        // used to decide the type (the bytes do).
+        { originalName: file.originalname, declaredMimeType: file.mimetype },
+      );
     } catch (error) {
       if (error instanceof AttachmentRejectedError) {
         throw FAILURE_TO_EXCEPTION[error.failure]();

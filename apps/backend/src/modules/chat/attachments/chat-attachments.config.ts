@@ -1,4 +1,4 @@
-import { isAbsolute, normalize, parse } from 'node:path';
+import { isAbsolute, normalize, parse } from 'node:path/posix';
 
 import {
   ATTACHMENT_DEFAULTS,
@@ -16,6 +16,7 @@ import {
  *                                       exist; the app never creates it).
  *   CHAT_ATTACHMENTS_IMAGE_MAX_BYTES    <= 5 MiB
  *   CHAT_ATTACHMENTS_PDF_MAX_BYTES      <= 10 MiB
+ *   CHAT_ATTACHMENTS_SPREADSHEET_MAX_BYTES  <= 10 MiB (.xlsx / .xls)
  *   CHAT_ATTACHMENTS_MAX_PENDING_PER_USER
  *   CHAT_ATTACHMENTS_MAX_DAILY_PER_USER
  *   CHAT_ATTACHMENTS_COMPANY_QUOTA_BYTES
@@ -36,6 +37,7 @@ import {
 export interface ChatAttachmentsLimits {
   imageMaxBytes: number;
   pdfMaxBytes: number;
+  spreadsheetMaxBytes: number;
   maxPendingPerUser: number;
   maxDailyPerUser: number;
   companyQuotaBytes: number;
@@ -81,6 +83,12 @@ const NUMBER_RULES: readonly NumberRule[] = [
     key: 'pdfMaxBytes',
     min: 1,
     max: DB_CEILINGS.pdfBytes,
+  },
+  {
+    env: 'CHAT_ATTACHMENTS_SPREADSHEET_MAX_BYTES',
+    key: 'spreadsheetMaxBytes',
+    min: 1,
+    max: DB_CEILINGS.spreadsheetBytes,
   },
   {
     env: 'CHAT_ATTACHMENTS_MAX_PENDING_PER_USER',
@@ -240,7 +248,7 @@ export function resolveChatAttachmentsConfig(env: Env): ChatAttachmentsConfig {
 
   return {
     enabled: true,
-    storageDir: storageDir.replace(/\\/g, '/'),
+    storageDir: normalize(storageDir),
     ...(limits as unknown as ChatAttachmentsLimits),
   };
 }

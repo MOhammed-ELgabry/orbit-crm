@@ -1119,6 +1119,7 @@ enum ChatAttachmentStatus {
 enum ChatAttachmentKind {
   IMAGE
   PDF
+  SPREADSHEET
 }
 
 model ChatAttachment {

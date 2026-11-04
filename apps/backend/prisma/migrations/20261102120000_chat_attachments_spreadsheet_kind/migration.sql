@@ -1,0 +1,30 @@
+-- =====================================================================
+-- Chat attachments - Excel spreadsheets (.xlsx / .xls), step 1 of 2
+--
+-- REVIEW DRAFT: written for manual review, NOT executed anywhere by the
+-- author (no database was contacted).
+--
+-- Why a migration is needed at all: "ChatAttachment"."kind" is a
+-- PostgreSQL enum that only knows IMAGE and PDF, and the CHECK constraints
+-- of 20261030120000_add_chat_attachments only accept those two kinds. A
+-- spreadsheet cannot be stored without extending both.
+--
+-- Why two migration files: a new enum value cannot be USED (for example in
+-- a CHECK expression) in the same transaction that adds it ("unsafe use of
+-- new value of enum type"). Prisma applies each migration file in its own
+-- transaction, so:
+--   step 1 (this file)  adds the enum value;
+--   step 2 (next file)  replaces the two CHECK constraints.
+-- Apply them in this order (the folder names sort that way).
+--
+-- Effects: additive only. No row, column, index, trigger or function is
+-- changed. Existing IMAGE / PDF rows are untouched.
+--
+-- Rollback: a PostgreSQL enum value cannot be removed with a simple
+-- statement. Leaving the unused value in place is harmless. To stop
+-- accepting spreadsheets, set the feature code back and restore the two
+-- CHECK constraints from 20261030120000_add_chat_attachments (see step 2).
+-- =====================================================================
+
+-- AlterEnum
+ALTER TYPE "ChatAttachmentKind" ADD VALUE IF NOT EXISTS 'SPREADSHEET';

@@ -150,7 +150,9 @@ export default function ConversationList({
                       ? t(
                           last.attachment.kind === "PDF"
                             ? "chatAttachmentPreviewPdf"
-                            : "chatAttachmentPreviewImage",
+                            : last.attachment.kind === "SPREADSHEET"
+                              ? "chatAttachmentPreviewSpreadsheet"
+                              : "chatAttachmentPreviewImage",
                         )
                       : t("chatAttachmentUnavailable"))
                   : "";

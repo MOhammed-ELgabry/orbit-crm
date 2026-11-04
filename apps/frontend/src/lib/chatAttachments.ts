@@ -9,12 +9,30 @@ import type { ChatAttachmentConfig, ChatAttachmentKind } from "../types/chat";
  * neither the name, nor the MIME type, nor the size reported here.
  */
 
-export const ATTACHMENT_ACCEPT =
-  "image/png,image/jpeg,image/webp,application/pdf";
+export const XLSX_MIME =
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+export const XLS_MIME = "application/vnd.ms-excel";
+
+/**
+ * Picker filter. Only `.xlsx` / `.xls` - never `.xlsm`, `.xlsb`, `.xltx`,
+ * `.csv`... The extensions are listed too because some systems report an
+ * empty or generic MIME type for Excel files.
+ */
+export const ATTACHMENT_ACCEPT = [
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "application/pdf",
+  XLSX_MIME,
+  XLS_MIME,
+  ".xlsx",
+  ".xls",
+].join(",");
 
 const MIB = 1024 * 1024;
 export const FALLBACK_IMAGE_MAX_BYTES = 5 * MIB;
 export const FALLBACK_PDF_MAX_BYTES = 10 * MIB;
+export const FALLBACK_SPREADSHEET_MAX_BYTES = 10 * MIB;
 
 const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp"];
@@ -26,6 +44,21 @@ export function guessAttachmentKind(file: {
 }): ChatAttachmentKind | null {
   const type = file.type.toLowerCase();
   const name = file.name.toLowerCase();
+
+  // Excel: the extension must be exactly .xlsx / .xls (so .xlsm, .xlsb, .csv
+  // are refused) and the declared type, if any, must not contradict it. A
+  // spreadsheet name with an image/PDF type is a mismatch, not an image/PDF.
+  const isXlsx = name.endsWith(".xlsx");
+  const isXls = name.endsWith(".xls");
+
+  if (isXlsx || isXls) {
+    const declaredOk =
+      type === "" ||
+      type === "application/octet-stream" ||
+      (isXlsx ? type === XLSX_MIME : type === XLS_MIME);
+
+    return declaredOk ? "SPREADSHEET" : null;
+  }
 
   if (IMAGE_TYPES.includes(type)) return "IMAGE";
   if (type === "application/pdf") return "PDF";
@@ -55,7 +88,9 @@ export function checkAttachmentFile(
   const max =
     kind === "IMAGE"
       ? (config?.imageMaxBytes ?? FALLBACK_IMAGE_MAX_BYTES)
-      : (config?.pdfMaxBytes ?? FALLBACK_PDF_MAX_BYTES);
+      : kind === "SPREADSHEET"
+        ? (config?.spreadsheetMaxBytes ?? FALLBACK_SPREADSHEET_MAX_BYTES)
+        : (config?.pdfMaxBytes ?? FALLBACK_PDF_MAX_BYTES);
 
   if (file.size > max) return { ok: false, reason: "too_large" };
 
@@ -96,6 +131,10 @@ const SERVER_TOKEN_TO_KEY: Record<string, string> = {
   attachment_dimensions: "chatAttachmentErrDimensions",
   attachment_pdf_encrypted: "chatAttachmentErrPdfEncrypted",
   attachment_pdf_active_content: "chatAttachmentErrPdfActive",
+  attachment_type_mismatch: "chatAttachmentErrTypeMismatch",
+  attachment_spreadsheet_macro: "chatAttachmentErrSheetMacro",
+  attachment_spreadsheet_encrypted: "chatAttachmentErrSheetEncrypted",
+  attachment_spreadsheet_active_content: "chatAttachmentErrSheetActive",
   attachment_quota_pending: "chatAttachmentErrQuotaPending",
   attachment_quota_daily: "chatAttachmentErrQuotaDaily",
   attachment_quota_company: "chatAttachmentErrStorageFull",

@@ -1,6 +1,15 @@
-import type {
-  ChatAttachmentContentType,
-  ChatAttachmentKindName,
+import {
+  detectSpreadsheetContainer,
+  inspectXls,
+  inspectXlsx,
+  isEncryptedOoxmlPackage,
+  SpreadsheetRejectedError,
+} from './attachment-spreadsheet-inspector';
+import {
+  XLS_CONTENT_TYPE,
+  XLSX_CONTENT_TYPE,
+  type ChatAttachmentContentType,
+  type ChatAttachmentKindName,
 } from './chat-attachments.constants';
 
 /**
@@ -11,9 +20,14 @@ import type {
  * memory as a whole: images are walked chunk/segment by chunk/segment and a
  * PDF is scanned in 64 KiB windows.
  *
+ * Excel workbooks (.xlsx / .xls) are validated by
+ * attachment-spreadsheet-inspector.ts (container structure only - nothing is
+ * evaluated or executed) and, unlike images and PDFs, must also AGREE with the
+ * file extension and the declared MIME type.
+ *
  * What this is NOT: an antivirus. Passing these checks means "the file has
- * the structure of a PNG/JPEG/WebP/PDF within the configured limits"; it does
- * not prove the content is harmless. The application never renders a PDF
+ * the structure of a PNG/JPEG/WebP/PDF/workbook within the configured limits";
+ * it does not prove the content is harmless. The application never renders a PDF
  * (download only) and serves every file with `nosniff` and a sandbox CSP.
  *
  * No framework imports on purpose: the module is pure and unit-testable.
@@ -28,6 +42,7 @@ export interface ByteReader {
 export interface InspectionLimits {
   imageMaxBytes: number;
   pdfMaxBytes: number;
+  spreadsheetMaxBytes: number;
   maxImageDimension: number;
   maxImagePixels: number;
 }
@@ -39,6 +54,17 @@ export interface InspectionResult {
   height: number | null;
 }
 
+/**
+ * What the client SAID about the file. Never used to decide the type (the
+ * bytes do); only cross-checked for spreadsheets.
+ */
+export interface InspectionHints {
+  /** `file.originalname` as sent by the client. */
+  originalName?: string;
+  /** `file.mimetype` as sent by the client. */
+  declaredMimeType?: string;
+}
+
 export type InspectionFailure =
   | 'empty'
   | 'unsupported_type'
@@ -46,7 +72,11 @@ export type InspectionFailure =
   | 'too_large'
   | 'dimensions'
   | 'pdf_encrypted'
-  | 'pdf_active_content';
+  | 'pdf_active_content'
+  | 'type_mismatch'
+  | 'spreadsheet_macro'
+  | 'spreadsheet_encrypted'
+  | 'spreadsheet_active_content';
 
 export class AttachmentRejectedError extends Error {
   constructor(readonly failure: InspectionFailure) {
@@ -389,15 +419,148 @@ function checkDimensions(
   }
 }
 
+// --- spreadsheets: extension / MIME agreement ---------------------------
+
+/** Last extension of a client-supplied name (lower case), or ''. */
+export function extensionOf(name: string | undefined): string {
+  if (typeof name !== 'string') return '';
+
+  const last = name.split(/[\\/]/).pop() ?? '';
+  const dot = last.lastIndexOf('.');
+
+  if (dot <= 0 || dot === last.length - 1) return '';
+
+  const extension = last.slice(dot + 1).toLowerCase();
+
+  return /^[a-z0-9]{1,8}$/.test(extension) ? extension : '';
+}
+
+const SUPPORTED_SPREADSHEET_EXTENSIONS = new Set(['xlsx', 'xls']);
+
+/** Excel extensions that carry macros: refused outright. */
+const MACRO_EXTENSIONS = new Set(['xlsm', 'xltm', 'xlam', 'xla', 'xlm']);
+
+/** Other Excel-family formats that are simply not supported. */
+const OTHER_EXCEL_EXTENSIONS = new Set(['xlsb', 'xlt', 'xltx', 'xlw', 'xll']);
+
+/** MIME types browsers use for each supported workbook format. */
+const SPREADSHEET_MIME_TYPES: Record<'xlsx' | 'xls', readonly string[]> = {
+  xlsx: [XLSX_CONTENT_TYPE],
+  xls: [
+    XLS_CONTENT_TYPE,
+    'application/x-msexcel',
+    'application/x-excel',
+    'application/excel',
+  ],
+};
+
+/**
+ * "The browser did not classify it" (common on Windows without Office):
+ * not a disagreement, so it is accepted for a file whose extension AND
+ * content are already a workbook. Anything else that is not the right
+ * workbook type (text/html, image/png, application/pdf, application/zip...)
+ * is a mismatch.
+ */
+const GENERIC_MIME_TYPES = new Set(['', 'application/octet-stream']);
+
+const ALL_SPREADSHEET_MIME_TYPES = new Set([
+  ...SPREADSHEET_MIME_TYPES.xlsx,
+  ...SPREADSHEET_MIME_TYPES.xls,
+]);
+
+function normalizeMime(value: string | undefined): string {
+  return (value ?? '').split(';')[0].trim().toLowerCase();
+}
+
+type Container = 'xlsx' | 'xls' | 'other';
+
+/**
+ * Cross-checks the three claims (extension, MIME type, real content) when a
+ * spreadsheet is involved on ANY of the three sides. Files that involve no
+ * spreadsheet claim at all (the existing image / PDF flow) are not affected.
+ */
+function checkSpreadsheetAgreement(
+  container: Container,
+  hints: InspectionHints,
+): void {
+  const extension = extensionOf(hints.originalName);
+  const mime = normalizeMime(hints.declaredMimeType);
+
+  const claimsSpreadsheet =
+    SUPPORTED_SPREADSHEET_EXTENSIONS.has(extension) ||
+    OTHER_EXCEL_EXTENSIONS.has(extension) ||
+    ALL_SPREADSHEET_MIME_TYPES.has(mime);
+
+  if (container === 'other') {
+    // The unchanged image / PDF path, unless the name or the MIME type claims
+    // Excel while the bytes are something else (a renamed PDF, image, HTML...).
+    return claimsSpreadsheet ? reject('type_mismatch') : undefined;
+  }
+
+  // The bytes are a ZIP / compound file. A plain archive or Office document
+  // that does not even claim to be a workbook is just an unsupported type.
+  if (!claimsSpreadsheet) return reject('unsupported_type');
+
+  // Otherwise the extension must be the matching workbook extension...
+  if (extension !== container) return reject('type_mismatch');
+
+  // ...and the declared MIME type must be that format's, or unclassified.
+  if (
+    !GENERIC_MIME_TYPES.has(mime) &&
+    !SPREADSHEET_MIME_TYPES[container].includes(mime)
+  ) {
+    return reject('type_mismatch');
+  }
+}
+
+/** Macro / unsupported Excel names are refused before any bytes are read. */
+function checkExcelExtension(hints: InspectionHints): void {
+  const extension = extensionOf(hints.originalName);
+
+  if (MACRO_EXTENSIONS.has(extension)) return reject('spreadsheet_macro');
+  if (OTHER_EXCEL_EXTENSIONS.has(extension)) return reject('unsupported_type');
+}
+
+const SPREADSHEET_FAILURE: Record<
+  SpreadsheetRejectedError['failure'],
+  InspectionFailure
+> = {
+  corrupt: 'corrupt',
+  not_spreadsheet: 'type_mismatch',
+  macro: 'spreadsheet_macro',
+  encrypted: 'spreadsheet_encrypted',
+  active_content: 'spreadsheet_active_content',
+};
+
+async function inspectSpreadsheet(
+  reader: ByteReader,
+  container: 'xlsx' | 'xls',
+): Promise<void> {
+  try {
+    if (container === 'xlsx') await inspectXlsx(reader);
+    else await inspectXls(reader);
+  } catch (error) {
+    if (error instanceof SpreadsheetRejectedError) {
+      return reject(SPREADSHEET_FAILURE[error.failure]);
+    }
+
+    throw error;
+  }
+}
+
 export async function inspectAttachment(
   reader: ByteReader,
   limits: InspectionLimits,
+  hints: InspectionHints = {},
 ): Promise<InspectionResult> {
   if (reader.size <= 0) return reject('empty');
 
+  // Macro-enabled and other unsupported Excel names: refused before reading.
+  checkExcelExtension(hints);
+
   const head = await reader.read(0, 12);
 
-  let contentType: ChatAttachmentContentType;
+  let contentType: ChatAttachmentContentType | null = null;
 
   if (head.length >= 8 && head.subarray(0, 8).equals(PNG_SIGNATURE)) {
     contentType = 'image/png';
@@ -416,8 +579,50 @@ export async function inspectAttachment(
     contentType = 'image/webp';
   } else if (head.length >= 5 && head.toString('latin1', 0, 5) === '%PDF-') {
     contentType = 'application/pdf';
-  } else {
+  }
+
+  const container: Container =
+    contentType === null
+      ? (detectSpreadsheetContainer(head) ?? 'other')
+      : 'other';
+
+  if (contentType === null && container === 'other') {
+    // Unknown bytes. A file that CLAIMS to be Excel is a mismatch; anything
+    // else is simply an unsupported type (unchanged behaviour).
+    checkSpreadsheetAgreement('other', hints);
+
     return reject('unsupported_type');
+  }
+
+  if (contentType !== null) {
+    // Image / PDF bytes: refused only when the name or MIME claims Excel.
+    checkSpreadsheetAgreement('other', hints);
+  }
+
+  if (container !== 'other') {
+    // Size first: an oversized file is refused before any structure is read.
+    if (reader.size > limits.spreadsheetMaxBytes) return reject('too_large');
+
+    // A password-protected .xlsx is a compound file named .xlsx: say so
+    // clearly instead of "wrong type".
+    if (
+      container === 'xls' &&
+      extensionOf(hints.originalName) === 'xlsx' &&
+      (await isEncryptedOoxmlPackage(reader))
+    ) {
+      return reject('spreadsheet_encrypted');
+    }
+
+    checkSpreadsheetAgreement(container, hints);
+
+    await inspectSpreadsheet(reader, container);
+
+    return {
+      kind: 'SPREADSHEET',
+      contentType: container === 'xlsx' ? XLSX_CONTENT_TYPE : XLS_CONTENT_TYPE,
+      width: null,
+      height: null,
+    };
   }
 
   if (contentType === 'application/pdf') {
@@ -441,7 +646,7 @@ export async function inspectAttachment(
 
   return {
     kind: 'IMAGE',
-    contentType,
+    contentType: contentType as ChatAttachmentContentType,
     width: dimensions.width,
     height: dimensions.height,
   };

@@ -90,9 +90,14 @@ import { LocalDiskAttachmentStorage } from './attachments/local-disk-attachment.
       inject: [CHAT_ATTACHMENTS_CONFIG],
       // No instance (and so no folder, no write) while the feature is off.
       useFactory: (config: ChatAttachmentsConfig) =>
-        config.enabled ? new LocalDiskAttachmentStorage(config.storageDir) : null,
+        config.enabled
+          ? new LocalDiskAttachmentStorage(config.storageDir)
+          : null,
     },
-    { provide: CHAT_ATTACHMENTS_REPOSITORY, useClass: ChatAttachmentsRepository },
+    {
+      provide: CHAT_ATTACHMENTS_REPOSITORY,
+      useClass: ChatAttachmentsRepository,
+    },
     ChatAttachmentsLinkService,
     { provide: CHAT_ATTACHMENTS_PORT, useExisting: ChatAttachmentsLinkService },
     ChatAttachmentsService,

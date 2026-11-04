@@ -13,6 +13,8 @@ const EXTENSIONS: Record<ChatAttachmentContentType, readonly string[]> = {
   'image/jpeg': ['jpg', 'jpeg'],
   'image/webp': ['webp'],
   'application/pdf': ['pdf'],
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['xlsx'],
+  'application/vnd.ms-excel': ['xls'],
 };
 
 const CANONICAL_EXTENSION: Record<ChatAttachmentContentType, string> = {
@@ -20,6 +22,8 @@ const CANONICAL_EXTENSION: Record<ChatAttachmentContentType, string> = {
   'image/jpeg': 'jpg',
   'image/webp': 'webp',
   'application/pdf': 'pdf',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/vnd.ms-excel': 'xls',
 };
 
 /**

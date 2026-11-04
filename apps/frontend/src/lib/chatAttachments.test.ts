@@ -2,6 +2,10 @@ import { AxiosError } from "axios";
 import { describe, expect, it } from "vitest";
 
 import {
+  ATTACHMENT_ACCEPT,
+  FALLBACK_SPREADSHEET_MAX_BYTES,
+  XLSX_MIME,
+  XLS_MIME,
   checkAttachmentFile,
   describeAttachmentFailure,
   failureOf,
@@ -44,6 +48,114 @@ describe("guessAttachmentKind", () => {
     ["a.heic", "image/heic"],
   ])("rejects %s (%s)", (name, type) => {
     expect(guessAttachmentKind(file(name, type))).toBeNull();
+  });
+});
+
+describe("Excel (.xlsx / .xls only)", () => {
+  it.each([
+    ["book.xlsx", XLSX_MIME],
+    ["BOOK.XLSX", XLSX_MIME],
+    ["old.xls", XLS_MIME],
+    ["book.xlsx", ""],
+    ["old.xls", ""],
+    ["book.xlsx", "application/octet-stream"],
+    ["old.xls", "application/octet-stream"],
+  ])("recognises %s (%p) as a spreadsheet", (name, type) => {
+    expect(guessAttachmentKind(file(name, type))).toBe("SPREADSHEET");
+  });
+
+  it.each([
+    ["macro.xlsm", "application/vnd.ms-excel.sheet.macroEnabled.12"],
+    ["macro.xlsm", ""],
+    ["macro.xlsm", XLSX_MIME],
+    ["bin.xlsb", ""],
+    ["tpl.xltx", ""],
+    ["tpl.xlt", XLS_MIME],
+    ["data.csv", "text/csv"],
+    ["data.csv", XLS_MIME], // Windows reports .csv as vnd.ms-excel
+    ["book.xlsx.exe", ""],
+    ["book.xlsx", "text/html"],
+    ["book.xlsx", "application/pdf"],
+    ["book.xlsx", XLS_MIME], // the declared type contradicts the extension
+    ["old.xls", XLSX_MIME],
+    ["xlsx", XLSX_MIME], // no extension at all
+  ])("rejects %s (%p)", (name, type) => {
+    expect(guessAttachmentKind(file(name, type))).toBeNull();
+  });
+
+  it("does not change how images and PDFs are recognised", () => {
+    expect(guessAttachmentKind(file("a.png", "image/png"))).toBe("IMAGE");
+    expect(guessAttachmentKind(file("a.pdf", "application/pdf"))).toBe("PDF");
+    expect(guessAttachmentKind(file("a.pdf", ""))).toBe("PDF");
+    expect(guessAttachmentKind(file("a.pdf", XLSX_MIME))).toBeNull();
+  });
+
+  it("limits to 10 MiB by default and to what the server reports", () => {
+    expect(FALLBACK_SPREADSHEET_MAX_BYTES).toBe(10 * MIB);
+    expect(
+      checkAttachmentFile(file("a.xlsx", XLSX_MIME, 10 * MIB), null),
+    ).toEqual({
+      ok: true,
+      kind: "SPREADSHEET",
+    });
+    expect(
+      checkAttachmentFile(file("a.xlsx", XLSX_MIME, 10 * MIB + 1), null),
+    ).toEqual({
+      ok: false,
+      reason: "too_large",
+    });
+
+    const config = {
+      enabled: true as const,
+      imageMaxBytes: 1,
+      pdfMaxBytes: 1,
+      spreadsheetMaxBytes: 2000,
+      allowedContentTypes: [],
+      readyTtlMs: 1,
+    };
+
+    expect(checkAttachmentFile(file("a.xls", XLS_MIME, 2000), config).ok).toBe(
+      true,
+    );
+    expect(checkAttachmentFile(file("a.xls", XLS_MIME, 2001), config)).toEqual({
+      ok: false,
+      reason: "too_large",
+    });
+    expect(checkAttachmentFile(file("a.xlsx", XLSX_MIME, 0), null)).toEqual({
+      ok: false,
+      reason: "empty",
+    });
+  });
+
+  it("falls back to 10 MiB when an older backend does not report the limit", () => {
+    const old = {
+      enabled: true as const,
+      imageMaxBytes: 1,
+      pdfMaxBytes: 1,
+      allowedContentTypes: [],
+      readyTtlMs: 1,
+    };
+
+    expect(checkAttachmentFile(file("a.xlsx", XLSX_MIME, MIB), old).ok).toBe(
+      true,
+    );
+  });
+
+  it("offers exactly .xlsx / .xls in the picker (no macro-enabled or other formats)", () => {
+    const entries = ATTACHMENT_ACCEPT.split(",");
+
+    expect(entries).toEqual(
+      expect.arrayContaining([XLSX_MIME, XLS_MIME, ".xlsx", ".xls"]),
+    );
+    expect(entries.some((e) => /xlsm|xlsb|macro|csv|xltx/i.test(e))).toBe(
+      false,
+    );
+    expect(entries.slice(0, 4)).toEqual([
+      "image/png",
+      "image/jpeg",
+      "image/webp",
+      "application/pdf",
+    ]);
   });
 });
 
@@ -140,6 +252,18 @@ describe("describeAttachmentFailure / failureOf", () => {
     ["attachment_corrupt", "chatAttachmentErrCorrupt", false],
     ["attachment_pdf_encrypted", "chatAttachmentErrPdfEncrypted", false],
     ["attachment_pdf_active_content", "chatAttachmentErrPdfActive", false],
+    ["attachment_type_mismatch", "chatAttachmentErrTypeMismatch", false],
+    ["attachment_spreadsheet_macro", "chatAttachmentErrSheetMacro", false],
+    [
+      "attachment_spreadsheet_encrypted",
+      "chatAttachmentErrSheetEncrypted",
+      false,
+    ],
+    [
+      "attachment_spreadsheet_active_content",
+      "chatAttachmentErrSheetActive",
+      false,
+    ],
     ["attachment_quota_pending", "chatAttachmentErrQuotaPending", false],
     ["attachment_quota_daily", "chatAttachmentErrQuotaDaily", false],
     ["attachment_quota_company", "chatAttachmentErrStorageFull", false],

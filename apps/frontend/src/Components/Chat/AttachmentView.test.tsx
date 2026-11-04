@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import i18n from "i18next";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import "../../i18n";
@@ -27,6 +28,19 @@ const PDF: ChatAttachment = {
   contentType: "application/pdf",
   displayName: "report.pdf",
   sizeBytes: 1_500_000,
+  width: null,
+  height: null,
+};
+
+const XLSX_TYPE =
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+const SHEET: ChatAttachment = {
+  id: "att-xl",
+  kind: "SPREADSHEET",
+  contentType: XLSX_TYPE,
+  displayName: "Q3 budget.xlsx",
+  sizeBytes: 250_000,
   width: null,
   height: null,
 };
@@ -167,7 +181,7 @@ describe("AttachmentView", () => {
       );
 
       expect(screen.getByText("report.pdf")).toBeInTheDocument();
-      expect(screen.getByText(/PDF · 1.4 MB/)).toBeInTheDocument();
+      expect(screen.getByText(/PDF · 1\.4 MB/)).toBeInTheDocument();
       expect(
         container.querySelector("iframe, object, embed, img, a[href]"),
       ).toBeNull();
@@ -258,6 +272,118 @@ describe("AttachmentView", () => {
 
       expect(button).toBeDisabled();
       expect(service.fetchChatAttachmentBlob).toHaveBeenCalledTimes(1);
+    });
+  });
+  describe("Excel", () => {
+    it("shows the file name, an Excel label and the size - and never a preview or a link", () => {
+      const { container } = render(
+        <AttachmentView conversationId="c1" attachment={SHEET} mine={false} />,
+      );
+
+      expect(screen.getByTestId("attachment-spreadsheet")).toBeInTheDocument();
+      expect(screen.getByText("Q3 budget.xlsx")).toBeInTheDocument();
+      expect(screen.getByText(/Excel · 244 KB/)).toBeInTheDocument();
+      expect(
+        container.querySelector("iframe, object, embed, img, table, a[href]"),
+      ).toBeNull();
+      expect(service.fetchChatAttachmentBlob).not.toHaveBeenCalled();
+    });
+
+    it("downloads through the authenticated request, keeps the stored type and the safe display name", async () => {
+      service.fetchChatAttachmentBlob.mockResolvedValue(
+        new Blob(["PK"], { type: "" }),
+      );
+      const blobs: Blob[] = [];
+      (
+        URL.createObjectURL as unknown as ReturnType<typeof vi.fn>
+      ).mockImplementation((b: Blob) => {
+        blobs.push(b);
+        return "blob:orbit-test/xl";
+      });
+      const clicked: { href: string; download: string }[] = [];
+      vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+        function (this: HTMLAnchorElement) {
+          clicked.push({ href: this.href, download: this.download });
+        },
+      );
+
+      render(<AttachmentView conversationId="c1" attachment={SHEET} mine />);
+      await userEvent.click(
+        screen.getByRole("button", { name: /Download Q3 budget\.xlsx/ }),
+      );
+
+      await waitFor(() => expect(clicked).toHaveLength(1));
+
+      expect(service.fetchChatAttachmentBlob).toHaveBeenCalledWith(
+        "c1",
+        "att-xl",
+      );
+      expect(clicked[0]).toEqual({
+        href: "blob:orbit-test/xl",
+        download: "Q3 budget.xlsx",
+      });
+      expect(blobs[0].type).toBe(XLSX_TYPE);
+      expect(document.querySelector("a[download]")).toBeNull();
+    });
+
+    it("shows an error and stays usable when the download fails", async () => {
+      service.fetchChatAttachmentBlob.mockRejectedValue(
+        new Error("Network Error"),
+      );
+
+      render(
+        <AttachmentView conversationId="c1" attachment={SHEET} mine={false} />,
+      );
+      await userEvent.click(screen.getByRole("button", { name: /Download/ }));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        /Connection problem/,
+      );
+      expect(screen.getByRole("button", { name: /Download/ })).toBeEnabled();
+    });
+
+    it("blocks a second click while the download runs (loading state)", async () => {
+      service.fetchChatAttachmentBlob.mockReturnValue(
+        new Promise(() => undefined),
+      );
+
+      render(
+        <AttachmentView conversationId="c1" attachment={SHEET} mine={false} />,
+      );
+      const button = screen.getByRole("button", { name: /Download/ });
+
+      await userEvent.click(button);
+      await userEvent.click(button);
+
+      expect(button).toBeDisabled();
+      expect(service.fetchChatAttachmentBlob).toHaveBeenCalledTimes(1);
+    });
+
+    it("renders a hostile file name as text only, in Arabic too", async () => {
+      await i18n.changeLanguage("ar");
+      try {
+        render(
+          <AttachmentView
+            conversationId="c1"
+            attachment={{
+              ...SHEET,
+              displayName: "<img src=x onerror=alert(1)>.xlsx",
+            }}
+            mine={false}
+          />,
+        );
+
+        expect(
+          screen.getByText("<img src=x onerror=alert(1)>.xlsx"),
+        ).toHaveAttribute("dir", "auto");
+        expect(screen.getByText(/Excel · 244 KB/)).toBeInTheDocument();
+        expect(
+          screen.getByRole("button", { name: /^تنزيل / }),
+        ).toBeInTheDocument();
+        expect(document.querySelector("img")).toBeNull();
+      } finally {
+        await i18n.changeLanguage("en");
+      }
     });
   });
 });

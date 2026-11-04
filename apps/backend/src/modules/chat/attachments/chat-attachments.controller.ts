@@ -93,7 +93,12 @@ export class ChatAttachmentsController {
       // body is noticed by the engine's own counter (clear error) instead
       // of being silently truncated by the parser.
       limits: {
-        fileSize: DB_CEILINGS.pdfBytes + 1,
+        fileSize:
+          Math.max(
+            DB_CEILINGS.imageBytes,
+            DB_CEILINGS.pdfBytes,
+            DB_CEILINGS.spreadsheetBytes,
+          ) + 1,
         files: 1,
         fields: 0,
         parts: 2,
@@ -103,8 +108,10 @@ export class ChatAttachmentsController {
   @ApiOperation({
     summary: 'Upload an attachment (not sent yet)',
     description:
-      'Multipart field "file": PNG, JPEG, WebP (up to 5 MiB) or PDF (up to ' +
-      '10 MiB). The type is decided from the content, not the name. The ' +
+      'Multipart field "file": PNG, JPEG, WebP (up to 5 MiB), PDF or Excel ' +
+      '.xlsx / .xls (up to 10 MiB each). The type is decided from the ' +
+      'content, not the name; for Excel the name and MIME type must also ' +
+      'agree with the content. The ' +
       'result is READY for a limited time; send it with `attachmentId` in ' +
       'POST /chat/conversations/:id/messages.',
   })
@@ -123,7 +130,9 @@ export class ChatAttachmentsController {
     @Req() req: AuthenticatedRequest,
     @Param() _params: ConversationIdParamDto,
     @UploadedFile()
-    file: (Partial<StoredTempFile> & { originalname?: string }) | undefined,
+    file:
+      | (Partial<StoredTempFile> & { originalname?: string; mimetype?: string })
+      | undefined,
   ) {
     const permit = getUploadPermit(req);
 
@@ -137,7 +146,8 @@ export class ChatAttachmentsController {
   @ApiOperation({
     summary: 'Download an attachment of a conversation you can access',
     description:
-      'Streams the file. Images are served inline, PDFs only as a download. ' +
+      'Streams the file. Images are served inline; PDFs and spreadsheets only ' +
+      'as a download. ' +
       'Every response carries nosniff and a sandboxing CSP.',
   })
   @ApiResponse({ status: 404, description: 'Not found / not accessible.' })
@@ -170,9 +180,10 @@ export class ChatAttachmentsController {
     res.setHeader('Content-Length', opened.size);
     res.setHeader(
       'Content-Disposition',
-      // A PDF is never displayed by the browser from this endpoint.
+      // Only images are ever displayed by the browser from this endpoint;
+      // PDFs and spreadsheets (and any future kind) are always downloads.
       contentDispositionFor(
-        row.kind === 'PDF' ? 'attachment' : 'inline',
+        row.kind === 'IMAGE' ? 'inline' : 'attachment',
         row.displayName,
       ),
     );

@@ -864,7 +864,14 @@ export class ChatService {
 
     const toLast = (row: ChatMessageRow | null | undefined) =>
       row
-        ? this.toMessageDto(actor, row, roleNames, avatars, null, lastAttachments)
+        ? this.toMessageDto(
+            actor,
+            row,
+            roleNames,
+            avatars,
+            null,
+            lastAttachments,
+          )
         : null;
 
     const result: ChatConversationDto[] = [

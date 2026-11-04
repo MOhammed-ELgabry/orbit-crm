@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { LuDownload, LuFileText, LuImageOff, LuLoader } from "react-icons/lu";
+import {
+  LuDownload,
+  LuFileSpreadsheet,
+  LuFileText,
+  LuImageOff,
+  LuLoader,
+} from "react-icons/lu";
 
 import { useAuthenticatedBlob } from "../../hooks/useAuthenticatedBlob";
 import { failureOf, formatBytes } from "../../lib/chatAttachments";
@@ -49,8 +55,8 @@ function useNearViewport(ref: React.RefObject<HTMLElement | null>) {
  * An attachment inside a message.
  *  - Images: fetched through the authenticated endpoint when they come into
  *    view and shown as a thumbnail (click to enlarge). No public URL.
- *  - PDFs: never previewed or embedded; a download button fetches the file
- *    through the same authenticated endpoint and saves it.
+ *  - PDFs and Excel files: never previewed or embedded; a download button
+ *    fetches the file through the same authenticated endpoint and saves it.
  * Nothing about the file is rendered as HTML.
  */
 export default function AttachmentView({
@@ -65,7 +71,7 @@ export default function AttachmentView({
       mine={mine}
     />
   ) : (
-    <PdfAttachment
+    <FileAttachment
       conversationId={conversationId}
       attachment={attachment}
       mine={mine}
@@ -153,7 +159,7 @@ function ImageAttachment({ conversationId, attachment }: AttachmentViewProps) {
   );
 }
 
-function PdfAttachment({
+function FileAttachment({
   conversationId,
   attachment,
   mine,
@@ -171,9 +177,10 @@ function PdfAttachment({
     try {
       const blob = await fetchChatAttachmentBlob(conversationId, attachment.id);
 
-      // A fresh Blob with the PDF type: the file is saved, never displayed.
+      // A fresh Blob with the type the server stored: the file is saved,
+      // never displayed or opened by the page.
       const url = URL.createObjectURL(
-        new Blob([blob], { type: "application/pdf" }),
+        new Blob([blob], { type: attachment.contentType }),
       );
       const link = document.createElement("a");
 
@@ -192,9 +199,12 @@ function PdfAttachment({
   };
 
   const busy = state.phase === "downloading";
+  const isSpreadsheet = attachment.kind === "SPREADSHEET";
 
   return (
-    <div data-testid="attachment-pdf">
+    <div
+      data-testid={isSpreadsheet ? "attachment-spreadsheet" : "attachment-pdf"}
+    >
       <button
         type="button"
         onClick={() => void download()}
@@ -208,14 +218,23 @@ function PdfAttachment({
             : "border-slate-300 hover:bg-slate-200/60"
         }`}
       >
-        <LuFileText size={22} aria-hidden="true" className="shrink-0" />
+        {isSpreadsheet ? (
+          <LuFileSpreadsheet
+            size={22}
+            aria-hidden="true"
+            className="shrink-0"
+          />
+        ) : (
+          <LuFileText size={22} aria-hidden="true" className="shrink-0" />
+        )}
 
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold" dir="auto">
             {attachment.displayName}
           </span>
           <span className="block text-[11px] opacity-80">
-            PDF · {formatBytes(attachment.sizeBytes)}
+            {isSpreadsheet ? t("chatAttachmentKindExcel") : "PDF"} ·{" "}
+            {formatBytes(attachment.sizeBytes)}
           </span>
         </span>
 

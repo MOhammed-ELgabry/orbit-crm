@@ -17,6 +17,7 @@ import {
 const LIMITS: InspectionLimits = {
   imageMaxBytes: 5 * 1024 * 1024,
   pdfMaxBytes: 10 * 1024 * 1024,
+  spreadsheetMaxBytes: 10 * 1024 * 1024,
   maxImageDimension: 10_000,
   maxImagePixels: 40_000_000,
 };

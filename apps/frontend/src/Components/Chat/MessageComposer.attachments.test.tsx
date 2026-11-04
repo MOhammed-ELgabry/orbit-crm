@@ -22,6 +22,7 @@ const CONFIG = {
   enabled: true,
   imageMaxBytes: 5 * 1024 * 1024,
   pdfMaxBytes: 10 * 1024 * 1024,
+  spreadsheetMaxBytes: 10 * 1024 * 1024,
   allowedContentTypes: [
     "image/png",
     "image/jpeg",
@@ -30,6 +31,22 @@ const CONFIG = {
   ],
   readyTtlMs: 7_200_000,
 };
+
+const XLSX_MIME =
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+const SHEET: ChatAttachment = {
+  id: "att-xl",
+  kind: "SPREADSHEET",
+  contentType: XLSX_MIME,
+  displayName: "budget.xlsx",
+  sizeBytes: 4096,
+  width: null,
+  height: null,
+};
+
+const xlsx = (size = 4096, name = "budget.xlsx", type = XLSX_MIME) =>
+  new File([new Uint8Array(size)], name, { type });
 
 const ATTACHMENT: ChatAttachment = {
   id: "att-1",
@@ -61,7 +78,7 @@ function setup(
 }
 
 const attachButton = () =>
-  screen.queryByRole("button", { name: "Attach an image or PDF" });
+  screen.queryByRole("button", { name: "Attach an image, PDF or Excel file" });
 const sendButton = () => screen.getByRole("button", { name: "Send" });
 const fileInput = () =>
   screen.getByTestId("attachment-input") as HTMLInputElement;
@@ -85,7 +102,9 @@ describe("MessageComposer - attachments", () => {
       await waitFor(() => expect(attachButton()).toBeInTheDocument());
       expect(fileInput()).toHaveAttribute(
         "accept",
-        "image/png,image/jpeg,image/webp,application/pdf",
+        "image/png,image/jpeg,image/webp,application/pdf," +
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet," +
+          "application/vnd.ms-excel,.xlsx,.xls",
       );
       expect(fileInput()).not.toHaveAttribute("multiple");
     });
@@ -289,6 +308,135 @@ describe("MessageComposer - attachments", () => {
     });
   });
 
+  describe("Excel files", () => {
+    it("accepts .xlsx: shows the name, size and spreadsheet icon, uploads, and sends it", async () => {
+      service.uploadChatAttachment.mockResolvedValue({
+        attachment: SHEET,
+        expiresAt: "x",
+      });
+      const { onSend } = setup();
+      await waitFor(() => expect(attachButton()).toBeInTheDocument());
+
+      await userEvent.upload(fileInput(), xlsx());
+      await screen.findByText("Ready to send");
+
+      expect(service.uploadChatAttachment).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId("attachment-chip")).toHaveTextContent(
+        "budget.xlsx",
+      );
+      expect(screen.getByTestId("attachment-chip")).toHaveTextContent("4 KB");
+
+      await userEvent.click(sendButton());
+      expect(onSend).toHaveBeenCalledWith("", SHEET);
+    });
+
+    it("accepts .xls (legacy type) and a browser-reported empty type", async () => {
+      service.uploadChatAttachment.mockResolvedValue({
+        attachment: SHEET,
+        expiresAt: "x",
+      });
+      setup();
+      await waitFor(() => expect(attachButton()).toBeInTheDocument());
+
+      await userEvent.upload(
+        fileInput(),
+        xlsx(10, "old.xls", "application/vnd.ms-excel"),
+      );
+      await screen.findByText("Ready to send");
+      expect(service.uploadChatAttachment).toHaveBeenCalledTimes(1);
+
+      await userEvent.upload(fileInput(), xlsx(10, "again.xlsx", ""));
+      await waitFor(() =>
+        expect(service.uploadChatAttachment).toHaveBeenCalledTimes(2),
+      );
+    });
+
+    it.each([
+      ["macro.xlsm", "application/vnd.ms-excel.sheet.macroEnabled.12"],
+      ["macro.xlsm", ""],
+      ["book.xlsb", "application/vnd.ms-excel.sheet.binary.macroEnabled.12"],
+      ["data.csv", "text/csv"],
+      ["evil.xlsx.exe", "application/octet-stream"],
+      ["page.xlsx", "text/html"],
+    ])(
+      "rejects %s (%s) locally, with no upload and no retry",
+      async (name, type) => {
+        setup();
+        await waitFor(() => expect(attachButton()).toBeInTheDocument());
+
+        await userEvent.upload(fileInput(), xlsx(10, name, type), {
+          applyAccept: false,
+        });
+
+        expect(screen.getByRole("alert")).toHaveTextContent(
+          /Excel files \(\.xlsx, \.xls\)/,
+        );
+        expect(
+          screen.queryByRole("button", { name: "Try uploading again" }),
+        ).toBeNull();
+        expect(service.uploadChatAttachment).not.toHaveBeenCalled();
+        expect(sendButton()).toBeDisabled();
+      },
+    );
+
+    it("rejects an oversized Excel file with the size feedback (limit from the server)", async () => {
+      service.getChatAttachmentConfig.mockResolvedValue({
+        ...CONFIG,
+        spreadsheetMaxBytes: 1000,
+      });
+      setup();
+      await waitFor(() => expect(attachButton()).toBeInTheDocument());
+
+      await userEvent.upload(fileInput(), xlsx(1001));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(/too large/i);
+      expect(service.uploadChatAttachment).not.toHaveBeenCalled();
+    });
+
+    it("shows the server's macro refusal in plain words, and offers no retry", async () => {
+      const refusal = Object.assign(new Error("refused"), {
+        isAxiosError: true,
+        response: {
+          status: 422,
+          data: { message: "attachment_spreadsheet_macro" },
+        },
+      });
+      service.uploadChatAttachment.mockRejectedValue(refusal);
+      setup();
+      await waitFor(() => expect(attachButton()).toBeInTheDocument());
+
+      await userEvent.upload(fileInput(), xlsx());
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        /macros are not accepted/,
+      );
+      expect(
+        screen.queryByRole("button", { name: "Try uploading again" }),
+      ).toBeNull();
+    });
+
+    it("renders the Excel messages in Arabic", async () => {
+      await i18n.changeLanguage("ar");
+      service.uploadChatAttachment.mockResolvedValue({
+        attachment: SHEET,
+        expiresAt: "x",
+      });
+      setup();
+      await screen.findByRole("button", {
+        name: "إرفاق صورة أو ملف PDF أو Excel",
+      });
+
+      await userEvent.upload(fileInput(), xlsx(10, "macro.xlsm", ""), {
+        applyAccept: false,
+      });
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(/ملفات Excel/);
+      expect(screen.getByTestId("attachment-chip")).toHaveTextContent(
+        "macro.xlsm",
+      );
+    });
+  });
+
   describe("languages and direction", () => {
     it("renders Arabic strings and keeps the text box direction automatic (RTL/LTR content)", async () => {
       await i18n.changeLanguage("ar");
@@ -299,7 +447,7 @@ describe("MessageComposer - attachments", () => {
       setup();
 
       const attach = await screen.findByRole("button", {
-        name: "إرفاق صورة أو ملف PDF",
+        name: "إرفاق صورة أو ملف PDF أو Excel",
       });
       expect(attach).toBeInTheDocument();
       expect(screen.getByRole("textbox")).toHaveAttribute("dir", "auto");

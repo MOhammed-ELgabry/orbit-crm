@@ -3,9 +3,14 @@ import { useTranslation } from "react-i18next";
 
 import { useChatAttachmentConfig } from "../../hooks/useChatAttachmentConfig";
 import { useChatAttachmentUpload } from "../../hooks/useChatAttachmentUpload";
-import { ATTACHMENT_ACCEPT, formatBytes } from "../../lib/chatAttachments";
+import {
+  ATTACHMENT_ACCEPT,
+  formatBytes,
+  guessAttachmentKind,
+} from "../../lib/chatAttachments";
 import { CHAT_MESSAGE_MAX_LENGTH, type ChatAttachment } from "../../types/chat";
 import {
+  LuFileSpreadsheet,
   LuFileText,
   LuImage,
   LuLoader,
@@ -223,11 +228,14 @@ function AttachmentChip({ state, onRetry, onRemove }: AttachmentChipProps) {
     state.phase === "ready" ? state.attachment.displayName : state.file.name;
   const size =
     state.phase === "ready" ? state.attachment.sizeBytes : state.file.size;
-  const isPdf =
+  const kind =
     state.phase === "ready"
-      ? state.attachment.kind === "PDF"
-      : state.file.type === "application/pdf" ||
-        state.file.name.toLowerCase().endsWith(".pdf");
+      ? state.attachment.kind
+      : guessAttachmentKind(state.file);
+  const isPdf =
+    kind === "PDF" ||
+    (kind === null && state.file.name.toLowerCase().endsWith(".pdf"));
+  const isSpreadsheet = kind === "SPREADSHEET";
 
   const failed = state.phase === "failed" || state.phase === "expired";
   const canRetry =
@@ -255,7 +263,13 @@ function AttachmentChip({ state, onRetry, onRemove }: AttachmentChipProps) {
       data-testid="attachment-chip"
     >
       <span className="shrink-0" aria-hidden="true">
-        {isPdf ? <LuFileText size={20} /> : <LuImage size={20} />}
+        {isSpreadsheet ? (
+          <LuFileSpreadsheet size={20} />
+        ) : isPdf ? (
+          <LuFileText size={20} />
+        ) : (
+          <LuImage size={20} />
+        )}
       </span>
 
       <div className="min-w-0 flex-1">

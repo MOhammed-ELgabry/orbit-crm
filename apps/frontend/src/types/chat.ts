@@ -11,7 +11,7 @@ export interface ChatReceipt {
   recipientCount: number;
 }
 
-export type ChatAttachmentKind = "IMAGE" | "PDF";
+export type ChatAttachmentKind = "IMAGE" | "PDF" | "SPREADSHEET";
 
 /** Public metadata of an attachment (never a path, a URL or a storage key). */
 export interface ChatAttachment {
@@ -31,6 +31,8 @@ export type ChatAttachmentConfig =
       enabled: true;
       imageMaxBytes: number;
       pdfMaxBytes: number;
+      /** Absent when talking to a backend that predates Excel support. */
+      spreadsheetMaxBytes?: number;
       allowedContentTypes: string[];
       readyTtlMs: number;
     };

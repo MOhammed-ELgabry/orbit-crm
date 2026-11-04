@@ -60,9 +60,7 @@ describe('attachmentTempStorage (multer engine)', () => {
     const { error } = await handle({}, Readable.from([Buffer.from('x')]));
 
     expect((error as Error).message).toBe('upload context missing');
-    expect(
-      await readdir(dir),
-    ).toEqual([]);
+    expect(await readdir(dir)).toEqual([]);
   });
 
   it('aborts at the byte ceiling and leaves no file', async () => {

@@ -22,7 +22,7 @@ export interface ChatReceipt {
  */
 export interface ChatAttachmentDto {
   id: string;
-  kind: 'IMAGE' | 'PDF';
+  kind: 'IMAGE' | 'PDF' | 'SPREADSHEET';
   contentType: string;
   displayName: string;
   sizeBytes: number;
