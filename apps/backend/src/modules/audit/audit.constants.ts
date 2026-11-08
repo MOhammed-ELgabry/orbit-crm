@@ -57,7 +57,7 @@ export const AUDIT_ENTITY_CONFIG: Record<AuditEntityType, AuditEntityConfig> = {
   },
 
   lead: {
-    valueFields: ['status', 'source', 'assignedToId'],
+    valueFields: ['status', 'source', 'assignedToId', 'convertedContactId'],
     maskedFields: [
       'firstName',
       'lastName',

@@ -167,6 +167,10 @@ export default function LeadDetailPage() {
     );
   }
 
+  // A converted lead is the historical record of a conversion: the backend
+  // refuses to edit or delete it, so the actions are not offered either.
+  const isConverted = Boolean(lead.convertedAt);
+
   return (
     <div className="flex flex-col gap-4">
       <button
@@ -185,7 +189,7 @@ export default function LeadDetailPage() {
             {lead.lastName[0]}
           </div>
           <div className="flex gap-1">
-            {canUpdate && (
+            {canUpdate && !isConverted && (
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
@@ -195,7 +199,7 @@ export default function LeadDetailPage() {
                 <LuPencil size={15} />
               </button>
             )}
-            {canDelete && (
+            {canDelete && !isConverted && (
               <button
                 type="button"
                 onClick={handleDelete}
@@ -223,6 +227,23 @@ export default function LeadDetailPage() {
         >
           {t(LEAD_STATUS_LABEL_KEY[lead.status] ?? lead.status)}
         </span>
+
+        {isConverted && (
+          <div className="mt-3 rounded-xl bg-violet-50 px-3 py-2 text-xs text-violet-700">
+            <p>{t("leadConvBannerConverted")}</p>
+            {lead.convertedContactId && (
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(`/dashboard/contacts/${lead.convertedContactId}`)
+                }
+                className="mt-1 font-semibold hover:underline"
+              >
+                {t("leadConvOpenContact")}
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4 text-sm">
           {lead.email && (

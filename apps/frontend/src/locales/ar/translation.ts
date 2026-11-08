@@ -837,6 +837,13 @@ const ar = {
   auditFieldExpectedCloseDate: "تاريخ الإغلاق المتوقع",
   auditFieldContactId: "جهة الاتصال",
   auditFieldLeadId: "العميل المحتمل",
+  auditFieldConvertedContactId: "تم تحويله إلى جهة اتصال",
+  auditMetaConvertedContactId: "تم تحويله إلى جهة اتصال",
+  auditMetaConvertedByDealId: "تم التحويل بواسطة الصفقة",
+  auditMetaConvertedFromLeadId: "أُنشئت من العميل المحتمل",
+  auditMetaOutcome: "النتيجة",
+  auditMetaValueCreated: "تم إنشاء جهة اتصال جديدة",
+  auditMetaValueLinked: "تم الربط بجهة اتصال موجودة",
   auditFieldDealId: "الصفقة",
   auditFieldTaskId: "المهمة",
   auditFieldCalendarEventId: "حدث التقويم",
@@ -873,6 +880,49 @@ const ar = {
   auditMetaValueImport: "استيراد جماعي",
   auditMetaValueSelfService: "غيّرها المستخدم بنفسه",
   auditMetaValueResetToken: "رابط إعادة تعيين كلمة المرور",
+  // تحويل العميل المحتمل إلى جهة اتصال (من صفقة رابحة)
+  leadStatusConverted: "تم تحويله",
+  leadConvAction: "تحويل العميل المحتمل إلى جهة اتصال",
+  leadConvTitle: "تحويل العميل المحتمل إلى جهة اتصال",
+  leadConvIntro:
+    'الصفقة "{{deal}}" رابحة. راجع ما سيحدث ثم أكّد. لن يتغير شيء قبل التأكيد.',
+  leadConvLoading: "جارٍ فحص العميل المحتمل والبحث عن جهات اتصال مكررة...",
+  leadConvIneligibleDealNotWon:
+    "يمكن التحويل فقط من صفقة في مرحلة «مغلقة - ربح».",
+  leadConvIneligibleNoLead: "هذه الصفقة غير مرتبطة بعميل محتمل.",
+  leadConvIneligibleLeadNotFound:
+    "العميل المحتمل الخاص بهذه الصفقة لم يعد موجودًا.",
+  leadConvAlreadyDone:
+    "تم تحويل هذا العميل المحتمل إلى جهة اتصال من قبل. لن يتم إنشاء شيء جديد.",
+  leadConvOpenContact: "فتح جهة الاتصال",
+  leadConvLeadSection: "العميل المحتمل",
+  leadConvOptionCreate: "إنشاء جهة اتصال جديدة من هذا العميل المحتمل",
+  leadConvOptionLink: "ربطه بجهة اتصال موجودة",
+  leadConvDuplicatesTitle: "جهات اتصال موجودة تشبه هذا العميل المحتمل",
+  leadConvMatchDeal: "هي بالفعل جهة اتصال هذه الصفقة",
+  leadConvMatchEmail: "نفس البريد الإلكتروني",
+  leadConvMatchPhone: "نفس رقم الهاتف",
+  leadConvBlockedEmail:
+    "توجد جهة اتصال بنفس البريد الإلكتروني، لذلك لا يمكن إنشاء جهة جديدة. اربط العميل المحتمل بها بدلًا من ذلك.",
+  leadConvBlockedDeal:
+    "هذه الصفقة مرتبطة بجهة اتصال بالفعل. اربط العميل المحتمل بتلك الجهة.",
+  leadConvAckPhone:
+    "توجد جهة اتصال بنفس رقم الهاتف. أنشئ جهة اتصال جديدة رغم ذلك.",
+  leadConvSelectContact: "اختر جهة الاتصال المراد الربط بها",
+  leadConvNoCandidates: "لا توجد جهة اتصال موجودة تطابق هذا العميل المحتمل.",
+  leadConvNoMerge:
+    "الربط لا يغيّر جهة الاتصال الموجودة أبدًا. تُضاف ملاحظات العميل المحتمل إليها كملاحظة.",
+  leadConvKeepsLead:
+    "يبقى العميل المحتمل محفوظًا ويُعلَّم بأنه تم تحويله. وتُربط الصفقة وباقي المهام والأحداث المفتوحة للعميل بجهة الاتصال.",
+  leadConvConfirm: "تحويل",
+  leadConvConfirming: "جارٍ التحويل...",
+  leadConvSuccessCreated: "تم تحويل العميل المحتمل وإنشاء جهة اتصال جديدة.",
+  leadConvSuccessLinked: "تم تحويل العميل المحتمل وربطه بجهة الاتصال الموجودة.",
+  leadConvSuccessAlready:
+    "تم تحويل هذا العميل المحتمل من قبل. لم يتم إنشاء جهة اتصال جديدة.",
+  leadConvBannerConverted:
+    "تم تحويل هذا العميل المحتمل إلى جهة اتصال، لذلك لم يعد قابلًا للتعديل. عدّل جهة الاتصال بدلًا من ذلك.",
+  leadConvDealLeadConverted: "تم تحويل العميل المحتمل",
 };
 
 export default ar;

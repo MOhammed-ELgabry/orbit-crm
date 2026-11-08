@@ -1,6 +1,14 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
-import { LEAD_REPOSITORY } from './constants/lead.constants';
+import {
+  LEAD_CONVERTED_STATUS,
+  LEAD_REPOSITORY,
+} from './constants/lead.constants';
 
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { LeadQueryDto } from './dto/lead-query.dto';
@@ -46,6 +54,21 @@ export class LeadService {
     } catch {
       throw new NotFoundException(
         `assignedToId "${assignedToId}" does not reference a user in this company.`,
+      );
+    }
+  }
+
+  /**
+   * A converted Lead is the historical record of a conversion (it points at
+   * the Contact and at the Deal that triggered it), and the Contact is now
+   * the source of truth for the person. So it can be neither edited nor
+   * deleted — otherwise the Lead would drift away from the Contact it
+   * produced, or the Contact's origin would vanish.
+   */
+  private assertNotConverted(lead: LeadEntity): void {
+    if (lead.convertedAt || lead.status === LEAD_CONVERTED_STATUS) {
+      throw new ConflictException(
+        'This lead has already been converted to a contact and can no longer be edited or deleted. Edit the contact instead.',
       );
     }
   }
@@ -119,6 +142,8 @@ export class LeadService {
       throw new NotFoundException(`Lead with ID "${leadId}" not found.`);
     }
 
+    this.assertNotConverted(existingLead);
+
     if (dto.assignedToId) {
       await this.assertAssignableInCompany(dto.assignedToId, companyId);
     }
@@ -165,6 +190,14 @@ export class LeadService {
     leadId: string,
     audit: AuditActor,
   ): Promise<void> {
+    const existingLead = await this.leadRepository.findById(companyId, leadId);
+
+    if (!existingLead) {
+      throw new NotFoundException(`Lead with ID "${leadId}" not found.`);
+    }
+
+    this.assertNotConverted(existingLead);
+
     const deleted = await this.leadRepository.softDelete(
       companyId,
       leadId,

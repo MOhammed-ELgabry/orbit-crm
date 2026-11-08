@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { CreateLeadInput, Lead } from "../../types/lead";
-import { LEAD_STATUSES } from "../../types/lead";
+import { LEAD_STATUSES, LEAD_STATUS_CONVERTED } from "../../types/lead";
 import { LEAD_STATUS_LABEL_KEY } from "./leadStatus";
 import { listTeamMembers } from "../../services/userService";
 import type { TeamMember } from "../../types/user";
@@ -51,7 +51,9 @@ export default function LeadFormModal({
           organizationName: lead.organizationName ?? "",
           source: lead.source ?? "",
           notes: lead.notes ?? "",
-          status: lead.status,
+          // A converted lead is never edited (the page hides the action and
+          // the backend refuses it); this only keeps the type honest.
+          status: lead.status === LEAD_STATUS_CONVERTED ? "new" : lead.status,
           assignedToId: lead.assignedToId ?? "",
         }
       : emptyForm,

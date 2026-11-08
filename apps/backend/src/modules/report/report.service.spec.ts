@@ -254,6 +254,7 @@ describe('ReportService', () => {
         { status: 'qualified', count: 0 },
         { status: 'unqualified', count: 0 },
         { status: 'lost', count: 3 },
+        { status: 'converted', count: 0 },
       ]);
       expect(report.unrecognizedStatusCount).toBe(1);
       expect(report.leadsWithLinkedDeal).toEqual({

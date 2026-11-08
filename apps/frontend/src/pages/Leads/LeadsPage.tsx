@@ -12,7 +12,7 @@ import {
 } from "../../services/leadService";
 import { listTeamMembers } from "../../services/userService";
 import type { Lead } from "../../types/lead";
-import { LEAD_STATUSES } from "../../types/lead";
+import { LEAD_FILTER_STATUSES } from "../../types/lead";
 import type { CreateLeadInput } from "../../types/lead";
 import {
   LEAD_STATUS_LABEL_KEY,
@@ -162,7 +162,7 @@ export default function LeadsPage() {
             className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-600 outline-none"
           >
             <option value="">{t("allStatuses")}</option>
-            {LEAD_STATUSES.map((s) => (
+            {LEAD_FILTER_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {t(LEAD_STATUS_LABEL_KEY[s])}
               </option>

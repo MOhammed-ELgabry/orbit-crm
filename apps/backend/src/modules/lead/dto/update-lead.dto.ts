@@ -10,7 +10,7 @@ import {
   MaxLength,
 } from 'class-validator';
 
-import { LEAD_STATUSES } from '../constants/lead.constants';
+import { LEAD_WRITABLE_STATUSES } from '../constants/lead.constants';
 
 export class UpdateLeadDto {
   @ApiPropertyOptional({
@@ -76,10 +76,10 @@ export class UpdateLeadDto {
   @ApiPropertyOptional({
     example: 'contacted',
     description: 'Lead lifecycle status',
-    enum: LEAD_STATUSES,
+    enum: LEAD_WRITABLE_STATUSES,
   })
   @IsOptional()
-  @IsIn(LEAD_STATUSES)
+  @IsIn(LEAD_WRITABLE_STATUSES)
   status?: string;
 
   @ApiPropertyOptional({

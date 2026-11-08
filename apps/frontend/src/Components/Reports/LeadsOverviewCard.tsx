@@ -16,6 +16,7 @@ const STATUS_COLOR: Record<string, string> = {
   qualified: "#10B981",
   unqualified: "#94A3B8",
   lost: "#EF4444",
+  converted: "#8B5CF6",
 };
 
 export default function LeadsOverviewCard({

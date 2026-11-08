@@ -6,6 +6,7 @@ export const LEAD_STATUS_LABEL_KEY: Record<string, string> = {
   qualified: "leadStatusQualified",
   unqualified: "leadStatusUnqualified",
   lost: "leadStatusLost",
+  converted: "leadStatusConverted",
 };
 
 const STATUS_STYLES: Record<string, string> = {
@@ -14,6 +15,7 @@ const STATUS_STYLES: Record<string, string> = {
   qualified: "bg-emerald-50 text-emerald-600",
   unqualified: "bg-slate-100 text-slate-500",
   lost: "bg-red-50 text-red-500",
+  converted: "bg-violet-50 text-violet-600",
 };
 
 export function leadStatusBadgeClass(status: string): string {

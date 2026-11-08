@@ -8,17 +8,26 @@ import { listTeamMembers } from "../../services/userService";
 import { getContact } from "../../services/contactService";
 import { getLead } from "../../services/leadService";
 import type { CreateDealInput, Deal } from "../../types/deal";
+import type { Lead } from "../../types/lead";
+import type { ConvertLeadResult } from "../../types/leadConversion";
 import {
   DEAL_STAGE_LABEL_KEY,
   dealStageBadgeClass,
   formatDealAmount,
 } from "../../Components/Deal/dealStage";
 import DealFormModal from "../../Components/Deal/DealFormModal";
+import ConvertLeadModal from "../../Components/LeadConversion/ConvertLeadModal";
 import { confirmAlert } from "../../lib/swal";
-import { notifyError } from "../../lib/notify";
+import { notifyError, notifySuccess } from "../../lib/notify";
 import { getErrorMessage } from "../../lib/errors";
 import { trackEvent } from "../../lib/posthog";
-import { LuArrowLeft, LuHandshake, LuPencil, LuTrash2 } from "react-icons/lu";
+import {
+  LuArrowLeft,
+  LuHandshake,
+  LuPencil,
+  LuTrash2,
+  LuUserCheck,
+} from "react-icons/lu";
 
 export default function DealDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -28,12 +37,19 @@ export default function DealDetailPage() {
 
   const canUpdate = hasPermission("deal:update");
   const canDelete = hasPermission("deal:delete");
+  // Exactly the three permissions the backend requires for the conversion
+  // (the backend remains the authority; this only hides a button that would 403).
+  const canConvert =
+    hasPermission("deal:update") &&
+    hasPermission("lead:update") &&
+    hasPermission("contact:create");
 
   const [deal, setDeal] = useState<Deal | null>(null);
   const [status, setStatus] = useState<
     "loading" | "ready" | "error" | "not-found"
   >("loading");
   const [isEditing, setIsEditing] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
 
   // Only for showing the assignee's name — see DealsPage for the same
   // pattern and why no extra permission is needed for it.
@@ -41,7 +57,8 @@ export default function DealDetailPage() {
     {},
   );
   const [contactName, setContactName] = useState<string | null>(null);
-  const [leadName, setLeadName] = useState<string | null>(null);
+  const [lead, setLead] = useState<Lead | null>(null);
+  const leadName = lead ? `${lead.firstName} ${lead.lastName}`.trim() : null;
 
   useEffect(() => {
     listTeamMembers({ page: 1, limit: 100 })
@@ -108,9 +125,7 @@ export default function DealDetailPage() {
 
     if (deal?.leadId) {
       getLead(deal.leadId)
-        .then((lead) =>
-          setLeadName(`${lead.firstName} ${lead.lastName}`.trim()),
-        )
+        .then((result) => setLead(result))
         .catch(() => {
           // Non-fatal — the section just falls back to "—".
         });
@@ -134,6 +149,23 @@ export default function DealDetailPage() {
       }
     }
     setDeal(updated);
+  };
+
+  const handleConverted = async (result: ConvertLeadResult) => {
+    setIsConverting(false);
+    trackEvent("lead_converted", { outcome: result.outcome });
+    notifySuccess({
+      title: t(
+        result.outcome === "created"
+          ? "leadConvSuccessCreated"
+          : result.outcome === "linked"
+            ? "leadConvSuccessLinked"
+            : "leadConvSuccessAlready",
+      ),
+    });
+    // Reload both: the deal now has a contact, the lead is converted.
+    setLead(null);
+    await load();
   };
 
   const handleDelete = async () => {
@@ -293,6 +325,40 @@ export default function DealDetailPage() {
           </div>
         </div>
 
+        {deal.stage === "closed_won" && deal.leadId && lead && (
+          <div className="mt-4 border-t border-slate-100 pt-4">
+            {lead.convertedAt ? (
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="rounded-full bg-violet-50 px-2.5 py-1 font-medium text-violet-600">
+                  {t("leadConvDealLeadConverted")}
+                </span>
+                {lead.convertedContactId && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate(`/dashboard/contacts/${lead.convertedContactId}`)
+                    }
+                    className="font-semibold text-brand-600 hover:underline"
+                  >
+                    {t("leadConvOpenContact")}
+                  </button>
+                )}
+              </div>
+            ) : (
+              canConvert && (
+                <button
+                  type="button"
+                  onClick={() => setIsConverting(true)}
+                  className="flex items-center gap-1.5 rounded-xl bg-brand-500 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-600"
+                >
+                  <LuUserCheck size={14} />
+                  {t("leadConvAction")}
+                </button>
+              )
+            )}
+          </div>
+        )}
+
         {deal.notes && (
           <div className="mt-4 border-t border-slate-100 pt-4">
             <p className="text-xs font-semibold text-slate-500">{t("notes")}</p>
@@ -302,6 +368,18 @@ export default function DealDetailPage() {
           </div>
         )}
       </div>
+
+      {isConverting && (
+        <ConvertLeadModal
+          dealId={deal.id}
+          dealTitle={deal.title}
+          onClose={() => setIsConverting(false)}
+          onConverted={handleConverted}
+          onOpenContact={(contactId) =>
+            navigate(`/dashboard/contacts/${contactId}`)
+          }
+        />
+      )}
 
       {isEditing && (
         <DealFormModal

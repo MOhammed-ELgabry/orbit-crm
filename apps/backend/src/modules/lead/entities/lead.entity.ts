@@ -20,6 +20,11 @@ export class LeadEntity {
   status: string;
   notes: string | null;
 
+  // Conversion provenance (set only by the lead-conversion module)
+  convertedAt: Date | null;
+  convertedContactId: string | null;
+  convertedByDealId: string | null;
+
   // Ownership / Assignment
   createdById: string;
   assignedToId: string | null;

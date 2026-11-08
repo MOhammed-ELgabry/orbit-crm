@@ -403,6 +403,9 @@ model Contact {
   // Calendar Events
   calendarEvents CalendarEvent[]
 
+  // Leads that were converted into (or linked to) this Contact.
+  convertedFromLeads Lead[] @relation("LeadConvertedContact")
+
   // Audit
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -463,6 +466,23 @@ model Lead {
   // Calendar Events
   calendarEvents CalendarEvent[]
 
+  // Conversion provenance (Lead -> Contact after a Deal is won).
+  // Written ONLY by the lead-conversion module, inside one transaction
+  // (see backend/src/modules/lead-conversion). `convertedAt` is the
+  // idempotency gate: the conversion is a conditional UPDATE guarded by
+  // `convertedAt IS NULL`, so a Lead converts at most once. `status` is set
+  // to "converted" in the same statement. Several Leads may point at the
+  // same Contact (a Lead linked to an existing Contact), which is why the
+  // link lives here and not as a column on Contact. Both FKs are SetNull,
+  // like every other optional link in this schema; Contacts and Deals are
+  // only ever soft-deleted by the application.
+  convertedAt        DateTime?
+  convertedContactId String?
+  convertedContact   Contact?  @relation("LeadConvertedContact", fields: [convertedContactId], references: [id], onDelete: SetNull)
+
+  convertedByDealId String?
+  convertedByDeal   Deal?   @relation("LeadConvertedByDeal", fields: [convertedByDealId], references: [id], onDelete: SetNull)
+
   // Audit
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -474,6 +494,8 @@ model Lead {
   @@index([companyId, phone])
   @@index([companyId, status])
   @@index([companyId, assignedToId])
+  @@index([companyId, convertedContactId])
+  @@index([convertedByDealId])
   @@index([createdById])
   @@index([assignedToId])
   @@index([deletedAt])
@@ -614,6 +636,9 @@ model Deal {
 
   // Calendar Events
   calendarEvents CalendarEvent[]
+
+  // Leads whose conversion into a Contact was triggered by this (won) Deal.
+  convertedLeads Lead[] @relation("LeadConvertedByDeal")
 
   // Audit
   createdAt DateTime  @default(now())

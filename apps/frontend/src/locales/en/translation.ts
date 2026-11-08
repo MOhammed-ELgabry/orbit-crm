@@ -848,6 +848,13 @@ const en = {
   auditFieldExpectedCloseDate: "Expected close date",
   auditFieldContactId: "Contact",
   auditFieldLeadId: "Lead",
+  auditFieldConvertedContactId: "Converted to contact",
+  auditMetaConvertedContactId: "Converted to contact",
+  auditMetaConvertedByDealId: "Converted by deal",
+  auditMetaConvertedFromLeadId: "Created from lead",
+  auditMetaOutcome: "Outcome",
+  auditMetaValueCreated: "New contact created",
+  auditMetaValueLinked: "Linked to existing contact",
   auditFieldDealId: "Deal",
   auditFieldTaskId: "Task",
   auditFieldCalendarEventId: "Calendar event",
@@ -884,6 +891,48 @@ const en = {
   auditMetaValueImport: "Bulk import",
   auditMetaValueSelfService: "Changed by the user themselves",
   auditMetaValueResetToken: "Password reset link",
+  // Lead -> Contact conversion (from a won deal)
+  leadStatusConverted: "Converted",
+  leadConvAction: "Convert lead to contact",
+  leadConvTitle: "Convert lead to contact",
+  leadConvIntro:
+    'Deal "{{deal}}" is won. Review what will happen, then confirm. Nothing changes until you confirm.',
+  leadConvLoading: "Checking the lead and looking for duplicates...",
+  leadConvIneligibleDealNotWon:
+    "Only a deal in the Closed Won stage can convert its lead.",
+  leadConvIneligibleNoLead: "This deal is not linked to a lead.",
+  leadConvIneligibleLeadNotFound: "The lead of this deal no longer exists.",
+  leadConvAlreadyDone:
+    "This lead was already converted to a contact. Nothing will be created again.",
+  leadConvOpenContact: "Open contact",
+  leadConvLeadSection: "Lead",
+  leadConvOptionCreate: "Create a new contact from this lead",
+  leadConvOptionLink: "Link to an existing contact",
+  leadConvDuplicatesTitle: "Existing contacts that look like this lead",
+  leadConvMatchDeal: "Already this deal's contact",
+  leadConvMatchEmail: "Same email",
+  leadConvMatchPhone: "Same phone",
+  leadConvBlockedEmail:
+    "A contact with the same email already exists, so a new one can't be created. Link the lead to it instead.",
+  leadConvBlockedDeal:
+    "This deal already has a contact. Link the lead to that contact.",
+  leadConvAckPhone:
+    "A contact with the same phone number exists. Create a new contact anyway.",
+  leadConvSelectContact: "Choose the contact to link",
+  leadConvNoCandidates: "No existing contact matches this lead.",
+  leadConvNoMerge:
+    "Linking never changes the existing contact. The lead's notes are added to it as a note.",
+  leadConvKeepsLead:
+    "The lead is kept and marked converted. The deal and the lead's other open tasks and events are attached to the contact.",
+  leadConvConfirm: "Convert",
+  leadConvConfirming: "Converting...",
+  leadConvSuccessCreated: "Lead converted. A new contact was created.",
+  leadConvSuccessLinked: "Lead converted and linked to the existing contact.",
+  leadConvSuccessAlready:
+    "This lead was already converted. No new contact was created.",
+  leadConvBannerConverted:
+    "This lead was converted to a contact, so it can no longer be edited. Edit the contact instead.",
+  leadConvDealLeadConverted: "Lead already converted",
 };
 
 export default en;

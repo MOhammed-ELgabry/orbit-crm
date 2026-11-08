@@ -6,7 +6,22 @@ export const LEAD_STATUSES = [
   "lost",
 ] as const;
 
-export type LeadStatus = (typeof LEAD_STATUSES)[number];
+/** Statuses a user may set (create/edit forms). */
+export type WritableLeadStatus = (typeof LEAD_STATUSES)[number];
+
+/**
+ * `converted` is set ONLY by the lead-conversion workflow (a client can never
+ * write it), so it is not part of LEAD_STATUSES: the form never offers it.
+ */
+export const LEAD_STATUS_CONVERTED = "converted" as const;
+
+/** The list filter, however, can show converted leads. */
+export const LEAD_FILTER_STATUSES = [
+  ...LEAD_STATUSES,
+  LEAD_STATUS_CONVERTED,
+] as const;
+
+export type LeadStatus = WritableLeadStatus | typeof LEAD_STATUS_CONVERTED;
 
 export interface Lead {
   id: string;
@@ -24,6 +39,11 @@ export interface Lead {
   status: LeadStatus;
   notes: string | null;
 
+  /** Set only by the lead-conversion workflow. */
+  convertedAt: string | null;
+  convertedContactId: string | null;
+  convertedByDealId: string | null;
+
   createdById: string;
   assignedToId: string | null;
 
@@ -39,7 +59,7 @@ export interface CreateLeadInput {
   phone?: string;
   organizationName?: string;
   source?: string;
-  status?: LeadStatus;
+  status?: WritableLeadStatus;
   notes?: string;
   assignedToId?: string;
 }
