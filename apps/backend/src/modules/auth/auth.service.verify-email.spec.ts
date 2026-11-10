@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- jest mock call tuples are untyped */
 import { BadRequestException } from '@nestjs/common';
 
 import { AuthService } from './auth.service';
@@ -96,8 +97,24 @@ describe('AuthService.verifyEmail — F4: concurrent verification', () => {
     isEmailVerified: false,
   };
 
-  function buildService(txImpl: (cb: (tx: unknown) => unknown) => unknown) {
-    const prisma = { $transaction: jest.fn(txImpl) };
+  function buildService(
+    txImpl: (cb: (tx: unknown) => unknown) => unknown,
+    regional: {
+      pendingHints?: unknown;
+      companyData?: Record<string, unknown>;
+    } = {},
+  ) {
+    const prisma = {
+      $transaction: jest.fn(txImpl),
+      user: {
+        findUnique: jest
+          .fn()
+          .mockResolvedValue({ regionalHints: regional.pendingHints ?? null }),
+      },
+    };
+    const toCompanyData = jest
+      .fn()
+      .mockResolvedValue(regional.companyData ?? {});
     const userRepository = {
       findByEmail: jest.fn().mockResolvedValue(baseUser),
       // Re-read after the transaction commits, for session issuance.
@@ -149,9 +166,15 @@ describe('AuthService.verifyEmail — F4: concurrent verification', () => {
       {} as never, // facebookAuthProvider
       {} as never, // microsoftAuthProvider
       jwtService as never,
+      {
+        capture: jest.fn().mockResolvedValue(null),
+        toCompanyData,
+        timezoneOf: jest.fn().mockReturnValue(null),
+      } as never, // regionalCapture
+      { consume: jest.fn().mockResolvedValue(null) } as never, // regionalHandoff
     );
 
-    return { service, authSessionRepository };
+    return { service, authSessionRepository, prisma, toCompanyData };
   }
 
   it('lets exactly one of two concurrent requests succeed and never creates a second company', async () => {
@@ -255,5 +278,105 @@ describe('AuthService.verifyEmail — F4: concurrent verification', () => {
     // roles seeded inside this same transaction — not a separate,
     // unprotected follow-up call.
     expect(roleAndPermissionMocks.role.upsert).toHaveBeenCalledTimes(4);
+  });
+
+  describe('regional hints (International Foundation)', () => {
+    const storedHints = { v: 1, timezone: 'Africa/Cairo', capturedAt: 'x' };
+    const suggestion = {
+      suggestedCountryCode: 'EG',
+      suggestedTimezone: 'Africa/Cairo',
+      regionalStatus: 'DETECTED',
+    };
+
+    function makeTx(overrides: { companyCreate?: jest.Mock } = {}) {
+      const tx = {
+        user: {
+          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+          update: jest.fn().mockResolvedValue({}),
+        },
+        company: {
+          create:
+            overrides.companyCreate ??
+            jest.fn().mockResolvedValue({ id: 'company-1' }),
+        },
+        emailVerification: { update: jest.fn().mockResolvedValue({}) },
+        ...mockRoleAndPermission(),
+      };
+      return tx;
+    }
+
+    it('transfers the suggestion to the company and clears the temporary hints in the SAME transaction', async () => {
+      const tx = makeTx();
+      const { service, prisma, toCompanyData } = buildService((cb) => cb(tx), {
+        pendingHints: storedHints,
+        companyData: suggestion,
+      });
+
+      await service.verifyEmail({ email, code });
+
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: userId },
+        select: { regionalHints: true },
+      });
+      expect(toCompanyData).toHaveBeenCalledWith(storedHints);
+
+      const createArg = tx.company.create.mock.calls[0][0] as {
+        data: Record<string, unknown>;
+      };
+      expect(createArg.data).toMatchObject(suggestion);
+      // Nothing is confirmed on behalf of the Owner.
+      expect(createArg.data).not.toHaveProperty('countryCode');
+      expect(createArg.data).not.toHaveProperty('baseCurrencyCode');
+      expect(createArg.data).not.toHaveProperty('regionalConfirmedAt');
+
+      const clearing = tx.user.update.mock.calls.find(
+        (c) => 'regionalHints' in (c[0] as { data: object }).data,
+      );
+      expect(clearing).toBeDefined();
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('a failed transaction keeps the hints (the clear is part of the rolled-back transaction)', async () => {
+      const tx = makeTx({
+        companyCreate: jest.fn().mockRejectedValue(new Error('db error')),
+      });
+      const { service } = buildService((cb) => cb(tx), {
+        pendingHints: storedHints,
+        companyData: suggestion,
+      });
+
+      await expect(service.verifyEmail({ email, code })).rejects.toThrow();
+
+      // The clearing update is only issued AFTER company creation, so it
+      // never ran; together with the rollback the hints survive for a retry.
+      const clearing = tx.user.update.mock.calls.find(
+        (c) => 'regionalHints' in (c[0] as { data: object }).data,
+      );
+      expect(clearing).toBeUndefined();
+    });
+
+    it('registration without hints still works: company created with no regional columns', async () => {
+      const tx = makeTx();
+      const { service } = buildService((cb) => cb(tx));
+
+      await service.verifyEmail({ email, code });
+
+      const createArg = tx.company.create.mock.calls[0][0] as {
+        data: Record<string, unknown>;
+      };
+      expect(createArg.data).not.toHaveProperty('suggestedCountryCode');
+      expect(createArg.data).not.toHaveProperty('regionalStatus');
+    });
+
+    it('a failing hint lookup never blocks e-mail verification', async () => {
+      const tx = makeTx();
+      const built = buildService((cb) => cb(tx));
+      built.prisma.user.findUnique.mockRejectedValue(new Error('boom'));
+
+      const result = await built.service.verifyEmail({ email, code });
+
+      expect(result.accessToken).toBe('signed-jwt');
+      expect(tx.company.create).toHaveBeenCalledTimes(1);
+    });
   });
 });

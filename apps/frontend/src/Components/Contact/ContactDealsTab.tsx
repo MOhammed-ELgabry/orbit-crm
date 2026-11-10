@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { useRegionalFormatters } from "../../hooks/useRegionalSettings";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ar, enUS } from "date-fns/locale";
@@ -6,11 +7,7 @@ import { ar, enUS } from "date-fns/locale";
 import type { KeyedResource } from "../../hooks/useKeyedResource";
 import type { DealListResult } from "../../services/dealService";
 import { CONTACT_SECTION_LIMIT, parseDate } from "../../lib/contact360";
-import {
-  DEAL_STAGE_LABEL_KEY,
-  dealStageBadgeClass,
-  formatDealAmount,
-} from "../Deal/dealStage";
+import { DEAL_STAGE_LABEL_KEY, dealStageBadgeClass } from "../Deal/dealStage";
 
 import ContactSectionState from "./ContactSectionState";
 
@@ -20,6 +17,7 @@ export default function ContactDealsTab({
   resource: KeyedResource<DealListResult>;
 }) {
   const { t, i18n } = useTranslation();
+  const { formatMoney } = useRegionalFormatters();
   const locale = i18n.language === "ar" ? ar : enUS;
   const deals = resource.data?.deals ?? [];
   const hasMore = resource.data?.meta.hasNextPage ?? false;
@@ -49,7 +47,7 @@ export default function ContactDealsTab({
                   {deal.title}
                 </Link>
                 <p className="text-xs text-slate-400">
-                  {formatDealAmount(deal.amount)}
+                  {formatMoney(deal.amount)}
                   {closeDate && (
                     <>
                       {" · "}

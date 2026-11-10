@@ -2,7 +2,8 @@
  * Shapes returned by the report endpoints.
  *
  * Money is ALWAYS a decimal string ("1234.50"), never a JS number: Deal.amount
- * is NUMERIC(12,2) and floats would silently drop cents on large sums. No
+ * is NUMERIC(19,4) and floats would silently drop decimals on large sums
+ * (3- and 4-decimal currencies exist). No
  * currency code or symbol is attached because the schema stores none — the
  * frontend must not invent one.
  */

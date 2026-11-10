@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useRegionalFormatters } from "../../hooks/useRegionalSettings";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -13,7 +14,6 @@ import type { ConvertLeadResult } from "../../types/leadConversion";
 import {
   DEAL_STAGE_LABEL_KEY,
   dealStageBadgeClass,
-  formatDealAmount,
 } from "../../Components/Deal/dealStage";
 import DealFormModal from "../../Components/Deal/DealFormModal";
 import ConvertLeadModal from "../../Components/LeadConversion/ConvertLeadModal";
@@ -34,6 +34,7 @@ export default function DealDetailPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { hasPermission } = useAuth();
+  const { formatMoney } = useRegionalFormatters();
 
   const canUpdate = hasPermission("deal:update");
   const canDelete = hasPermission("deal:delete");
@@ -276,9 +277,7 @@ export default function DealDetailPage() {
           {deal.title}
         </h1>
 
-        <p className="text-sm text-slate-500">
-          {formatDealAmount(deal.amount)}
-        </p>
+        <p className="text-sm text-slate-500">{formatMoney(deal.amount)}</p>
 
         <span
           className={`mt-2 inline-block rounded-full px-2.5 py-1 text-xs font-medium ${dealStageBadgeClass(deal.stage)}`}

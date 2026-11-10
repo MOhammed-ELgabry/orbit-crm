@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useRegionalFormatters } from "../../hooks/useRegionalSettings";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { FiPlus, FiSearch, FiTrash2, FiEdit2 } from "react-icons/fi";
@@ -16,7 +17,6 @@ import { DEAL_STAGES } from "../../types/deal";
 import {
   DEAL_STAGE_LABEL_KEY,
   dealStageBadgeClass,
-  formatDealAmount,
 } from "../../Components/Deal/dealStage";
 import DealFormModal from "../../Components/Deal/DealFormModal";
 import { confirmAlert } from "../../lib/swal";
@@ -30,6 +30,7 @@ export default function DealsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { hasPermission } = useAuth();
+  const { formatMoney } = useRegionalFormatters();
 
   const canCreate = hasPermission("deal:create");
   const canUpdate = hasPermission("deal:update");
@@ -264,7 +265,7 @@ export default function DealsPage() {
                       {deal.title}
                     </td>
                     <td className="px-5 py-3 text-slate-500">
-                      {formatDealAmount(deal.amount)}
+                      {formatMoney(deal.amount)}
                     </td>
                     <td className="px-5 py-3 text-slate-500">
                       {deal.expectedCloseDate
@@ -331,7 +332,7 @@ export default function DealsPage() {
                       {deal.title}
                     </p>
                     <p className="truncate text-xs text-slate-400">
-                      {formatDealAmount(deal.amount)}
+                      {formatMoney(deal.amount)}
                     </p>
                   </div>
                   <span

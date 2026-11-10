@@ -17,6 +17,14 @@ export const AUTH_COOKIE_NAMES = {
   csrfToken: 'orbit_csrf_token',
 } as const;
 
+/**
+ * Short-lived, HttpOnly cookie carrying the opaque regional-hints handoff
+ * token across the social-login redirect (see RegionalHandoffService). Path is
+ * "/" because the externally visible API prefix (e.g. Nginx's /api) is not
+ * known here; the value is an unguessable single-use token, not a credential.
+ */
+export const REGIONAL_HANDOFF_COOKIE_NAME = 'orbit_rh';
+
 // The refresh cookie is scoped to /auth so it is never sent on ordinary
 // API calls — only to the auth endpoints that actually need it
 // (refresh, logout). This shrinks its exposure well beyond "HttpOnly".
@@ -108,4 +116,17 @@ export function buildClearCookieOptions(
   }
 
   return { ...base, path: '/' };
+}
+
+export function buildRegionalHandoffCookieOptions(
+  configService: ConfigService,
+  maxAgeMs: number,
+): CookieOptions {
+  return { ...baseOptions(configService), path: '/', maxAge: maxAgeMs };
+}
+
+export function buildRegionalHandoffClearOptions(
+  configService: ConfigService,
+): CookieOptions {
+  return { ...baseOptions(configService), path: '/' };
 }

@@ -45,6 +45,13 @@ export const envValidationSchema = Joi.object({
   // exact host that issued them — the safer default.
   COOKIE_DOMAIN: Joi.string().optional(),
 
+  // Optional: path of the local DB-IP/GeoLite country MMDB, and the header
+  // that carries the client IP behind a CDN (e.g. cf-connecting-ip).
+  GEOIP_COUNTRY_DB_PATH: Joi.string().optional(),
+  CLIENT_IP_HEADER: Joi.string()
+    .pattern(/^[A-Za-z0-9-]{1,64}$/)
+    .optional(),
+
   // Social Authentication — all OPTIONAL so existing deployments without
   // these configured keep booting exactly as before. When present, format
   // is validated; each provider is checked for completeness at request

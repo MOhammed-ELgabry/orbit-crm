@@ -1,3 +1,4 @@
+import { hasAnyHint, type RegionalHintsPayload } from "../lib/regional/hints";
 import api from "./api";
 
 export interface RegisterData {
@@ -98,12 +99,19 @@ const SOCIAL_AUTH_TIMEOUT = 5 * 60 * 1000;
 export const registerUser = async (
   data: RegisterData,
   picture?: Blob | null,
+  regionalHints?: RegionalHintsPayload | null,
 ) => {
   const { phone, ...rest } = data;
   const fields = phone.trim() ? { ...rest, phone } : rest;
+  // Optional: an old/unsupported client simply omits it and registration is
+  // unchanged. The server validates every field and never rejects over it.
+  const withHints =
+    regionalHints && hasAnyHint(regionalHints)
+      ? { ...fields, regionalHints }
+      : fields;
 
   if (!picture) {
-    const response = await api.post("/auth/register", fields);
+    const response = await api.post("/auth/register", withHints);
 
     return response.data;
   }
@@ -112,6 +120,11 @@ export const registerUser = async (
 
   for (const [key, value] of Object.entries(fields)) {
     body.append(key, value);
+  }
+
+  if (withHints !== fields) {
+    // Multipart carries strings only; the backend parses the JSON string.
+    body.append("regionalHints", JSON.stringify(regionalHints));
   }
 
   body.append(
@@ -210,6 +223,12 @@ export interface SocialAuthResult {
 
 export function openSocialAuthPopup(
   provider: SocialProvider,
+  /**
+   * Opaque single-use token from POST /regional/handoff. Never hint data:
+   * the server swaps it for the validated hints inside the sign-up
+   * transaction. Optional — omitting it never affects sign-in.
+   */
+  regionalHandoffToken?: string | null,
 ): Promise<SocialAuthResult> {
   return new Promise((resolve, reject) => {
     const baseURL = api.defaults.baseURL;
@@ -228,7 +247,11 @@ export function openSocialAuthPopup(
       return;
     }
 
-    const popupUrl = `${baseURL}/auth/social/${provider}/start`;
+    const popupUrl =
+      `${baseURL}/auth/social/${provider}/start` +
+      (regionalHandoffToken && /^[A-Za-z0-9_-]{43}$/.test(regionalHandoffToken)
+        ? `?rh=${regionalHandoffToken}`
+        : "");
 
     const popup = window.open(
       popupUrl,

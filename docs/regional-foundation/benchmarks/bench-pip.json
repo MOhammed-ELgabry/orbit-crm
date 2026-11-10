@@ -1,0 +1,88 @@
+{
+  "cityCentres": {
+    "total": 44,
+    "passed": 44,
+    "failures": []
+  },
+  "borderTowns": {
+    "total": 24,
+    "passed": 22,
+    "failures": [
+      {
+        "name": "Gorizia",
+        "expected": "IT",
+        "got": "SI",
+        "ok": false,
+        "flaggedBorderRiskAt20m": true
+      },
+      {
+        "name": "Brownsville",
+        "expected": "US",
+        "got": "MX",
+        "ok": false,
+        "flaggedBorderRiskAt20m": true
+      }
+    ],
+    "flaggedBorderRiskAt20m": 14,
+    "wrongAndNotFlagged": []
+  },
+  "cityCentresFlaggedBorderRiskAt20m": [
+    "Monaco"
+  ],
+  "disputed": [
+    {
+      "name": "Jerusalem",
+      "accepted": "IL|PS",
+      "got": "PS",
+      "ambiguous": false
+    },
+    {
+      "name": "Ramallah",
+      "accepted": "PS",
+      "got": "PS",
+      "ambiguous": false
+    },
+    {
+      "name": "Gaza City",
+      "accepted": "PS",
+      "got": "PS",
+      "ambiguous": false
+    },
+    {
+      "name": "Srinagar",
+      "accepted": "IN|PK",
+      "got": "IN",
+      "ambiguous": false
+    },
+    {
+      "name": "Simferopol",
+      "accepted": "UA|RU",
+      "got": "RU",
+      "ambiguous": false
+    },
+    {
+      "name": "Laayoune",
+      "accepted": "EH|MA",
+      "got": "MA",
+      "ambiguous": false
+    },
+    {
+      "name": "Taipei",
+      "accepted": "TW",
+      "got": "TW",
+      "ambiguous": false
+    },
+    {
+      "name": "Hong Kong",
+      "accepted": "HK|CN",
+      "got": "HK",
+      "ambiguous": false
+    }
+  ],
+  "borderRisk": {
+    "total": 11,
+    "passed": 11,
+    "failures": []
+  },
+  "countriesCovered": 54
+}

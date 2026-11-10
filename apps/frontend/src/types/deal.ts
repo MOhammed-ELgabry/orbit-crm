@@ -36,8 +36,8 @@ export interface Deal {
   // A Prisma.Decimal column serializes to a JSON string, never a
   // number — see DealEntity's own comment on the backend for why (JS
   // numbers lose precision that a Decimal's string form doesn't).
-  // Convert with Number(deal.amount) only for display formatting/math,
-  // never store the converted value back as the source of truth.
+  // Format with lib/regional/format (string based); never convert with
+  // Number() and store the result back as the source of truth.
   amount: string;
 
   stage: DealStage;
@@ -57,7 +57,8 @@ export interface Deal {
 
 export interface CreateDealInput {
   title: string;
-  amount?: number;
+  /** Decimal string ("1234.5"): money is never sent as a JS number. */
+  amount?: string;
   stage?: DealStage;
   notes?: string;
   expectedCloseDate?: string;

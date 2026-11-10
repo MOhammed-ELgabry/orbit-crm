@@ -8,6 +8,9 @@ vi.mock("../../context/AuthContext", () => ({
   useAuth: () => ({ login: vi.fn() }),
 }));
 vi.mock("../../lib/posthog", () => ({ trackEvent: vi.fn() }));
+vi.mock("../../services/regionalService", () => ({
+  createRegionalHandoff: vi.fn(),
+}));
 
 import SocialLogin from "./SocialLogin";
 
@@ -36,5 +39,19 @@ describe("SocialLogin", () => {
     // No leftover icon either.
     expect(container.innerHTML.toLowerCase()).not.toContain("facebook");
     expect(screen.getAllByRole("button")).toHaveLength(2);
+  });
+});
+
+describe("SocialLogin regional handoff", () => {
+  it("does not call the handoff endpoint unless asked to (login page)", async () => {
+    const { createRegionalHandoff } =
+      await import("../../services/regionalService");
+    render(
+      <MemoryRouter>
+        <SocialLogin />
+      </MemoryRouter>,
+    );
+
+    expect(vi.mocked(createRegionalHandoff)).not.toHaveBeenCalled();
   });
 });

@@ -1,0 +1,66 @@
+{
+  "agree": 9,
+  "total": 12,
+  "rows": [
+    {
+      "ip": "8.8.8.8",
+      "expected": "US",
+      "got": "US"
+    },
+    {
+      "ip": "199.7.83.42",
+      "expected": "US",
+      "got": "US"
+    },
+    {
+      "ip": "192.5.5.241",
+      "expected": "US",
+      "got": "US"
+    },
+    {
+      "ip": "193.0.14.129",
+      "expected": "NL",
+      "got": "NL"
+    },
+    {
+      "ip": "81.2.69.142",
+      "expected": "GB",
+      "got": "GB"
+    },
+    {
+      "ip": "2.125.160.216",
+      "expected": "GB",
+      "got": "GB"
+    },
+    {
+      "ip": "89.160.20.112",
+      "expected": "SE",
+      "got": "SE"
+    },
+    {
+      "ip": "202.196.224.0",
+      "expected": "PH",
+      "got": "CN"
+    },
+    {
+      "ip": "67.43.156.0",
+      "expected": "BT",
+      "got": "US"
+    },
+    {
+      "ip": "175.16.199.0",
+      "expected": "CN",
+      "got": "CN"
+    },
+    {
+      "ip": "216.160.83.56",
+      "expected": "US",
+      "got": "US"
+    },
+    {
+      "ip": "2a00:1450:4001:81b::200e",
+      "expected": "IE",
+      "got": "DE"
+    }
+  ]
+}

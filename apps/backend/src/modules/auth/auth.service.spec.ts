@@ -19,6 +19,8 @@ import { GoogleAuthProvider } from './providers/google-auth.provider';
 import { MicrosoftAuthProvider } from './providers/microsoft-auth.provider';
 import { OAuthStateService } from './services/oauth-state.service';
 import { TokenHashService } from './services/token-hash.service';
+import { RegionalCaptureService } from '../regional/regional-capture.service';
+import { RegionalHandoffService } from '../regional/regional-handoff.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -46,6 +48,8 @@ describe('AuthService', () => {
         { provide: FacebookAuthProvider, useValue: {} },
         { provide: MicrosoftAuthProvider, useValue: {} },
         { provide: JwtService, useValue: {} },
+        { provide: RegionalCaptureService, useValue: {} },
+        { provide: RegionalHandoffService, useValue: {} },
       ],
     }).compile();
 

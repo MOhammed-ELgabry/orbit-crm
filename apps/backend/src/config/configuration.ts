@@ -23,6 +23,16 @@ export default () => ({
     domain: process.env.COOKIE_DOMAIN,
   },
 
+  // International foundation — both optional; without them the IP country
+  // signal is simply off and req.ip (trust proxy = 1) is used as-is.
+  regional: {
+    // Local MMDB (DB-IP Lite "IP to Country", CC BY 4.0). Never a remote API.
+    geoipDbPath: process.env.GEOIP_COUNTRY_DB_PATH,
+    // Header carrying the real client IP when a CDN sits in front of Nginx
+    // (e.g. "cf-connecting-ip"). Honoured only from an internal TCP peer.
+    clientIpHeader: process.env.CLIENT_IP_HEADER,
+  },
+
   // Required (see env.validation.ts) — the single source of truth for the
   // CORS allow-list and the OAuth popup's postMessage targetOrigin.
   frontendUrl: process.env.FRONTEND_URL,

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FaMicrosoft } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
@@ -12,6 +12,9 @@ import {
 import { errorAlert } from "../../lib/swal";
 import { trackEvent } from "../../lib/posthog";
 import { getErrorMessage } from "../../lib/errors";
+import { createRegionalHandoff } from "../../services/regionalService";
+import { buildRegionalHints, hasAnyHint } from "../../lib/regional/hints";
+import { useGeoHint } from "../../lib/regional/geoStore";
 
 const socialButtonClass =
   "flex items-center gap-2 rounded-[10px] bg-surface-muted px-4 py-2 sm:px-5 cursor-pointer transition-all duration-200 hover:bg-surface-sunken active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-surface-muted";
@@ -38,7 +41,19 @@ const Spinner = () => (
   </svg>
 );
 
-export default function SocialLogin() {
+interface SocialLoginProps {
+  /**
+   * Register page only: pre-mint an opaque regional-hints token so the new
+   * company can get a country suggestion. It is minted BEFORE the click so
+   * window.open stays synchronous (popup blockers), and a missing token
+   * never blocks sign-in.
+   */
+  captureRegionalHints?: boolean;
+}
+
+export default function SocialLogin({
+  captureRegionalHints = false,
+}: SocialLoginProps) {
   const { t } = useTranslation();
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -47,11 +62,33 @@ export default function SocialLogin() {
     null,
   );
 
+  const geo = useGeoHint();
+  const handoffToken = useRef<string | null>(null);
+
+  const mintToken = useCallback(async () => {
+    handoffToken.current = null;
+    if (!captureRegionalHints) return;
+
+    const hints = buildRegionalHints(geo);
+    if (!hasAnyHint(hints)) return;
+
+    handoffToken.current = await createRegionalHandoff(hints);
+  }, [captureRegionalHints, geo]);
+
+  // Re-minted whenever the consented geo result changes.
+  useEffect(() => {
+    void mintToken();
+  }, [mintToken]);
+
   const handleSocialLogin = async (provider: SocialProvider) => {
     setLoadingProvider(provider);
 
+    // Single-use: take it now, mint a fresh one afterwards.
+    const token = handoffToken.current;
+    handoffToken.current = null;
+
     try {
-      const { user, isNewUser } = await openSocialAuthPopup(provider);
+      const { user, isNewUser } = await openSocialAuthPopup(provider, token);
 
       login(user);
       trackEvent(isNewUser ? "user_registered" : "login", {
@@ -67,6 +104,7 @@ export default function SocialLogin() {
       });
     } finally {
       setLoadingProvider(null);
+      void mintToken();
     }
   };
 

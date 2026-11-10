@@ -233,6 +233,11 @@ const en = {
   editDeal: "Edit Deal",
   dealTitle: "Title",
   dealAmount: "Amount",
+  dealAmountInvalid:
+    "Enter a valid amount, for example 1250.50 (up to 15 digits and 4 decimals).",
+  dealAmountTooManyDecimals:
+    "This currency ({{currency}}) allows at most {{max}} decimal places. The amount was not rounded.",
+  dealAmountCurrencyHint: "Amount in {{currency}}",
   dealStage: "Stage",
   dealExpectedCloseDate: "Expected Close Date",
   dealContact: "Contact",
@@ -361,6 +366,65 @@ const en = {
   ownerOnlyNotice: "Only the account owner can edit these settings.",
   settingsSaved: "Settings saved successfully.",
   saving: "Saving...",
+
+  // Regional — opt-in location
+  regionalLocationTitle: "Help us set up your company region (optional)",
+  regionalLocationHint:
+    "We use your device location once, only to suggest your country. Nothing is stored or sent except the country code, and you can skip this.",
+  regionalLocationButton: "Use my location",
+  regionalLocationChecking: "Checking...",
+  regionalLocationDetected: "Detected: {{country}}",
+  regionalLocationBorder:
+    "You are close to a border, so we will ask you to confirm the country later.",
+  regionalLocationClear: "Don't use it",
+  regionalLocationDenied:
+    "Location permission was declined. That's fine — you can confirm your country in Settings later.",
+  regionalLocationUnavailable:
+    "Your location isn't available right now. You can confirm your country in Settings later.",
+  regionalLocationTimeout:
+    "Locating took too long. You can confirm your country in Settings later.",
+  regionalLocationUnusable:
+    "We couldn't work out a clear country from your location. You can confirm it in Settings later.",
+  regionalLocationUnsupported:
+    "This browser doesn't support location. You can confirm your country in Settings later.",
+
+  // Regional — settings
+  regionalSettingsTitle: "Regional Settings",
+  regionalSettingsIntro:
+    "Country, base currency, timezone and default language for your company. Existing deal amounts are never converted.",
+  regionalCountryLabel: "Company country",
+  regionalCurrencyLabel: "Base currency",
+  regionalTimezoneLabel: "Company timezone",
+  regionalLocaleLabel: "Default locale",
+  regionalSelectPlaceholder: "Select...",
+  regionalStatusLabel: "Status",
+  regionalStatusDETECTED: "Detected",
+  regionalStatusCONFIRMED: "Confirmed",
+  regionalStatusNEEDS_REVIEW: "Needs review",
+  regionalStatusNONE: "Not set",
+  regionalDetectionLabel: "Detection",
+  regionalSourceGEOLOCATION: "Device location",
+  regionalSourceIP: "Network (IP) country",
+  regionalSourceTIMEZONE: "Browser timezone",
+  regionalSourceLOCALE: "Browser language",
+  regionalConfidenceHIGH: "High confidence",
+  regionalConfidenceMEDIUM: "Medium confidence",
+  regionalConfidenceLOW: "Low confidence",
+  regionalConfidenceAMBIGUOUS: "Ambiguous",
+  regionalSuggestionLine:
+    "Suggested: {{country}} · {{currency}} · {{timezone}}",
+  regionalNoSuggestion: "No suggestion was detected for this company.",
+  regionalUseSuggestion: "Use suggestion",
+  regionalNeedsReviewNotice:
+    "Signals disagreed or were weak, so please check the country before confirming.",
+  regionalConfirm: "Confirm settings",
+  regionalSaved: "Regional settings confirmed.",
+  regionalCurrencyChangeTitle: "Change base currency?",
+  regionalCurrencyChangeText:
+    "Existing deal amounts keep their numbers and will be shown in the new currency — nothing is converted.",
+  regionalCurrencyChangeConfirm: "Change currency",
+  regionalIpAttribution: "IP Geolocation by DB-IP",
+  regionalLoadFailed: "Couldn't load regional settings.",
 
   // Settings — Language
   languageSettingsTitle: "Language",

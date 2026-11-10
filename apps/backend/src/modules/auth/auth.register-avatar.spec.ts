@@ -89,6 +89,40 @@ describe('POST /auth/register (HTTP wiring)', () => {
     expect(callArgs()[1]).toBeUndefined();
   });
 
+  it('lets optional regionalHints through the whitelist (JSON body and multipart string) and passes the request IP', async () => {
+    const hints = { timezone: 'Africa/Cairo', locales: ['ar-EG'] };
+
+    const json = await request(server)
+      .post('/auth/register')
+      .send({ ...fields, regionalHints: hints });
+    expect(json.status).toBe(201);
+    expect((register.mock.calls[0] as unknown[])[0]).toMatchObject({
+      regionalHints: hints,
+    });
+    // third argument = req.ip (never a client header)
+    expect(typeof (register.mock.calls[0] as unknown[])[2]).toBe('string');
+
+    const req = request(server).post('/auth/register');
+    for (const [k, v] of Object.entries(fields)) req.field(k, v);
+    req.field('regionalHints', JSON.stringify(hints));
+    const multipart = await req.attach('avatar', png(), {
+      filename: 'me.png',
+      contentType: 'image/png',
+    });
+    expect(multipart.status).toBe(201);
+    expect((register.mock.calls[1] as unknown[])[0]).toMatchObject({
+      regionalHints: JSON.stringify(hints),
+    });
+  });
+
+  it('ignores a spoofed X-Forwarded-For (the service receives the socket-derived ip)', async () => {
+    await request(server)
+      .post('/auth/register')
+      .set('X-Forwarded-For', '8.8.8.8')
+      .send(fields);
+    expect((register.mock.calls[0] as unknown[])[2]).not.toBe('8.8.8.8');
+  });
+
   it('accepts multipart/form-data and hands the picture to the service', async () => {
     const req = request(server).post('/auth/register');
     for (const [k, v] of Object.entries(fields)) req.field(k, v);
@@ -174,6 +208,7 @@ describe('AuthService.register() with a picture', () => {
         Promise.resolve(cb(tx)),
       ),
     };
+    const capture = jest.fn().mockResolvedValue(null);
     const service = new AuthService(
       prisma as never,
       { findByEmail: jest.fn().mockResolvedValue(null) } as never,
@@ -193,8 +228,16 @@ describe('AuthService.register() with a picture', () => {
       {} as never,
       {} as never,
       {} as never,
+      {
+        capture,
+        toCompanyData: jest.fn().mockResolvedValue({}),
+        timezoneOf: jest.fn(
+          (h: { timezone?: string } | null) => h?.timezone ?? null,
+        ),
+      } as never,
+      { consume: jest.fn().mockResolvedValue(null) } as never,
     );
-    return { service, prisma, created };
+    return { service, prisma, created, capture };
   }
 
   const dto = {
@@ -245,5 +288,39 @@ describe('AuthService.register() with a picture', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
 
     expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('stores validated regional hints (+ browser timezone) temporarily on the new user', async () => {
+    const { service, created, capture } = build();
+    const hints = { v: 1, timezone: 'Africa/Cairo', capturedAt: 'x' };
+    capture.mockResolvedValue(hints);
+
+    await service.register(
+      { ...dto, regionalHints: { timezone: 'Africa/Cairo' } },
+      undefined,
+      '41.1.2.3',
+    );
+
+    expect(capture).toHaveBeenCalledWith(
+      { timezone: 'Africa/Cairo' },
+      '41.1.2.3',
+    );
+    const data = (created.user[0] as { data: Record<string, unknown> }).data;
+    expect(data.timezone).toBe('Africa/Cairo');
+    expect(data.regionalHints).toEqual(hints);
+    // the IP itself is never persisted
+    expect(JSON.stringify(data)).not.toContain('41.1.2.3');
+  });
+
+  it('registers normally (no regional columns) when no usable hints arrive', async () => {
+    const { service, created } = build();
+
+    await expect(service.register(dto)).resolves.toMatchObject({
+      success: true,
+    });
+
+    const data = (created.user[0] as { data: Record<string, unknown> }).data;
+    expect(data).not.toHaveProperty('regionalHints');
+    expect(data).not.toHaveProperty('timezone');
   });
 });

@@ -137,7 +137,19 @@ export const AUDIT_ENTITY_CONFIG: Record<AuditEntityType, AuditEntityConfig> = {
   },
 
   company: {
-    valueFields: ['name'],
+    // Regional settings are operational codes (country / currency / IANA zone
+    // / locale / status), not personal data, so old and new values are kept.
+    // Detection results (suggested*, regionalSource/Confidence) are
+    // intentionally NOT listed: they are system-derived and may never carry
+    // GPS or IP information into the immutable log.
+    valueFields: [
+      'name',
+      'countryCode',
+      'baseCurrencyCode',
+      'timezone',
+      'defaultLocale',
+      'regionalStatus',
+    ],
     maskedFields: [
       'contactEmail',
       'phone',

@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from '../user/user.module';
 import { EmailVerificationModule } from '../email-verification/email-verification.module';
 import { MailModule } from '../mail/mail.module';
+import { RegionalCoreModule } from '../regional/regional-core.module';
 
 import {
   AUTH_REPOSITORY,
@@ -35,6 +36,7 @@ import { JwtModule } from '@nestjs/jwt';
     UserModule,
     EmailVerificationModule,
     MailModule,
+    RegionalCoreModule,
 
     JwtModule.registerAsync({
       imports: [ConfigModule],

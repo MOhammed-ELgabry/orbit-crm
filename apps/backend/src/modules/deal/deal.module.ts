@@ -8,6 +8,7 @@ import { ContactModule } from '../contact/contact.module';
 import { LeadModule } from '../lead/lead.module';
 import { ActivityModule } from '../activity/activity.module';
 import { NotificationModule } from '../notification/notification.module';
+import { RegionalCoreModule } from '../regional/regional-core.module';
 import { PermissionsGuard } from '../../common/security/permissions.guard';
 
 import { DEAL_REPOSITORY } from './constants/deal.constants';
@@ -36,6 +37,7 @@ import { DealService } from './deal.service';
     LeadModule,
     ActivityModule,
     NotificationModule,
+    RegionalCoreModule,
   ],
 
   controllers: [DealController],

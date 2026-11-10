@@ -4,15 +4,14 @@ import {
   IsDateString,
   IsIn,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
   Length,
-  Max,
   MaxLength,
-  Min,
 } from 'class-validator';
 
+import { IsMoneyAmount } from '../../regional/money/is-money-amount.decorator';
+import { normalizeMoneyInput } from '../../regional/money/money.util';
 import { DEAL_STAGES } from '../constants/deal.constants';
 
 export class UpdateDealDto {
@@ -30,11 +29,15 @@ export class UpdateDealDto {
     example: 18000,
     description: 'Deal value',
   })
+  // Money is a decimal STRING end to end (never a float). A JSON number from
+  // an older client is converted to its plain decimal string by the Transform;
+  // anything invalid is left untouched so IsMoneyAmount rejects it.
+  @Transform(
+    ({ value }: { value: unknown }) => normalizeMoneyInput(value) ?? value,
+  )
   @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  @Max(9_999_999_999.99)
-  amount?: number;
+  @IsMoneyAmount()
+  amount?: string;
 
   @ApiPropertyOptional({
     example: 'negotiation',

@@ -19,6 +19,7 @@ import { UserService } from '../user/user.service';
 import { NotificationService } from '../notification/notification.service';
 
 import type { AuditActor } from '../audit/audit.types';
+import { RegionalMoneyService } from '../regional/regional-money.service';
 
 @Injectable()
 export class DealService {
@@ -31,6 +32,7 @@ export class DealService {
     private readonly userService: UserService,
     private readonly activityService: ActivityService,
     private readonly notificationService: NotificationService,
+    private readonly regionalMoney: RegionalMoneyService,
   ) {}
 
   /**
@@ -105,6 +107,7 @@ export class DealService {
     audit: AuditActor,
   ): Promise<DealEntity> {
     await this.assertRelations(companyId, dto);
+    await this.regionalMoney.assertAmountAllowed(companyId, dto.amount);
 
     const deal = await this.dealRepository.create(
       companyId,
@@ -172,6 +175,7 @@ export class DealService {
     }
 
     await this.assertRelations(companyId, dto);
+    await this.regionalMoney.assertAmountAllowed(companyId, dto.amount);
 
     const updatedDeal = await this.dealRepository.update(
       companyId,

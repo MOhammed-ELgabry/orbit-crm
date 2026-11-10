@@ -55,6 +55,8 @@ import {
 import { MicrosoftAuthProvider } from './providers/microsoft-auth.provider';
 
 import { LoginDto } from './dto/login.dto';
+import { RegionalCaptureService } from '../regional/regional-capture.service';
+import { RegionalHandoffService } from '../regional/regional-handoff.service';
 import { IJwtPayload } from './interfaces/jwt-payload.interface';
 
 /**
@@ -177,6 +179,10 @@ export class AuthService implements OnModuleInit {
     private readonly microsoftAuthProvider: MicrosoftAuthProvider,
 
     private readonly jwtService: JwtService,
+
+    private readonly regionalCapture: RegionalCaptureService,
+
+    private readonly regionalHandoff: RegionalHandoffService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -188,7 +194,11 @@ export class AuthService implements OnModuleInit {
     );
   }
 
-  async register(dto: RegisterDto, avatarFile?: UploadedAvatarFile) {
+  async register(
+    dto: RegisterDto,
+    avatarFile?: UploadedAvatarFile,
+    clientIp?: string,
+  ) {
     const email = dto.email.trim().toLowerCase();
 
     // The optional profile picture is validated BEFORE anything is written, so
@@ -210,6 +220,14 @@ export class AuthService implements OnModuleInit {
     const verificationExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     const passwordHash = await this.passwordService.hash(dto.password);
+
+    // Optional regional signals. Never throws and never blocks registration:
+    // missing / invalid / tampered hints simply yield null. The IP is used for
+    // a local country lookup only and is not stored.
+    const regionalHints = await this.regionalCapture.capture(
+      dto.regionalHints,
+      clientIp,
+    );
 
     try {
       await this.prisma.$transaction(async (tx) => {
@@ -235,6 +253,14 @@ export class AuthService implements OnModuleInit {
             phone: dto.phone,
             companyId: null,
             pendingCompanyName: dto.companyName,
+            // Temporary: moved to the Company (and cleared) by verifyEmail().
+            ...(regionalHints
+              ? {
+                  timezone: this.regionalCapture.timezoneOf(regionalHints),
+                  regionalHints:
+                    regionalHints as unknown as Prisma.InputJsonValue,
+                }
+              : {}),
           },
           select: { id: true },
         });
@@ -324,6 +350,22 @@ export class AuthService implements OnModuleInit {
       throw new BadRequestException('Email is already verified.');
     }
 
+    // Regional suggestion from the hints captured at registration. Computed
+    // before the transaction; if it cannot be computed the company is simply
+    // created without a suggestion (like a legacy company).
+    let regionalData = {};
+    try {
+      const pending = await this.prisma.user.findUnique({
+        where: { id: user.id },
+        select: { regionalHints: true },
+      });
+      regionalData = await this.regionalCapture.toCompanyData(
+        pending?.regionalHints,
+      );
+    } catch {
+      regionalData = {};
+    }
+
     await this.prisma.$transaction(async (tx) => {
       // 0. Atomically claim the verification. Postgres takes a row lock
       // on this User row for the rest of the transaction; a concurrent
@@ -357,6 +399,7 @@ export class AuthService implements OnModuleInit {
           name: `${user.firstName} ${user.lastName}'s Company`,
           contactEmail: user.email,
           isActive: true,
+          ...regionalData,
         },
       });
 
@@ -375,6 +418,9 @@ export class AuthService implements OnModuleInit {
         data: {
           companyId: company.id,
           isOwner: true,
+          // The temporary hints now live (as a suggestion) on the company.
+          // Cleared in THIS transaction: if it rolls back they are kept.
+          regionalHints: Prisma.DbNull,
         },
       });
 
@@ -939,6 +985,7 @@ export class AuthService implements OnModuleInit {
     provider: SocialProviderName,
     code: string,
     state: string,
+    regionalHandoffToken?: string,
   ): Promise<ISocialCallbackResult> {
     const providerService = this.resolveSocialProvider(provider);
 
@@ -1019,11 +1066,22 @@ export class AuthService implements OnModuleInit {
         // login is not disabled for this user — they can set a password
         // later via "forgot password" if they ever want to.
         const createdUserId = await this.prisma.$transaction(async (tx) => {
+          // Optional regional hints stashed before the OAuth redirect. The
+          // token is claimed inside this transaction: if anything below fails
+          // the claim rolls back and the hints are not lost.
+          const hints = await this.regionalHandoff
+            .consume(tx, regionalHandoffToken)
+            .catch(() => null);
+          const regionalData = hints
+            ? await this.regionalCapture.toCompanyData(hints)
+            : {};
+
           const company = await tx.company.create({
             data: {
               name: `${profile.firstName} ${profile.lastName}'s Company`,
               contactEmail: email,
               isActive: true,
+              ...regionalData,
             },
           });
 
@@ -1046,6 +1104,7 @@ export class AuthService implements OnModuleInit {
               isEmailVerified: true,
               companyId: company.id,
               isOwner: true,
+              timezone: this.regionalCapture.timezoneOf(hints),
             },
           });
 

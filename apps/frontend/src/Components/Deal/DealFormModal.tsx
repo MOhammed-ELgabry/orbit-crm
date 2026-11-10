@@ -13,6 +13,11 @@ import type { Lead } from "../../types/lead";
 import { getErrorMessage } from "../../lib/errors";
 import { notifyError } from "../../lib/notify";
 import { LuX } from "react-icons/lu";
+import { useRegionalFormatters } from "../../hooks/useRegionalSettings";
+import {
+  parseMoneyInput,
+  significantDecimals,
+} from "../../lib/regional/format";
 
 interface DealFormModalProps {
   /** Present for edit, absent for create. */
@@ -54,6 +59,8 @@ export default function DealFormModal({
 }: DealFormModalProps) {
   const { t } = useTranslation();
   const isEdit = Boolean(deal);
+  const { currency } = useRegionalFormatters();
+  const [amountError, setAmountError] = useState<string | null>(null);
 
   const [form, setForm] = useState<DealFormState>(
     deal
@@ -133,7 +140,23 @@ export default function DealFormModal({
       };
 
       if (form.amount.trim().length > 0) {
-        cleaned.amount = Number(form.amount);
+        const parsed = parseMoneyInput(form.amount);
+        if (parsed === null) {
+          setAmountError(t("dealAmountInvalid"));
+          setIsSubmitting(false);
+          return;
+        }
+        if (currency && significantDecimals(parsed) > currency.minorUnit) {
+          setAmountError(
+            t("dealAmountTooManyDecimals", {
+              max: currency.minorUnit,
+              currency: currency.code,
+            }),
+          );
+          setIsSubmitting(false);
+          return;
+        }
+        cleaned.amount = parsed;
       }
       if (form.notes.trim().length > 0) {
         cleaned.notes = form.notes.trim();
@@ -200,13 +223,27 @@ export default function DealFormModal({
             <div className="flex flex-col gap-0.5">
               <label className={labelClass}>{t("dealAmount")}</label>
               <input
-                type="number"
-                min={0}
-                step="0.01"
+                type="text"
+                inputMode="decimal"
+                dir="ltr"
                 value={form.amount}
-                onChange={(e) => set("amount", e.target.value)}
+                aria-invalid={amountError ? true : undefined}
+                onChange={(e) => {
+                  setAmountError(null);
+                  set("amount", e.target.value);
+                }}
                 className={inputClass}
               />
+              {currency && (
+                <p className="text-xs text-gray-400">
+                  {t("dealAmountCurrencyHint", { currency: currency.code })}
+                </p>
+              )}
+              {amountError && (
+                <p role="alert" className="text-xs text-red-600">
+                  {amountError}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-col gap-0.5">

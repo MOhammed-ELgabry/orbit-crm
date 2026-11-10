@@ -20,6 +20,33 @@ model Company {
   taxNumber    String?
   description  String?
 
+  // Regional settings (International Foundation).
+  // The columns below `countryCode`..`defaultLocale` are the Owner-CONFIRMED
+  // decisions; they are only ever written through the Owner-only regional
+  // settings endpoint. NULL on legacy companies (nothing guessed or backfilled).
+  // The `suggested*`/`regional*` columns hold what automatic detection found
+  // at registration (country code / IANA zone / locale only — never GPS
+  // coordinates, never an IP address) so the Owner can review and confirm it.
+  // regionalStatus: DETECTED | CONFIRMED | NEEDS_REVIEW (NULL = legacy/unset).
+  // regionalSource: GEOLOCATION | IP | TIMEZONE | LOCALE (strongest signal used).
+  // regionalConfidence: HIGH | MEDIUM | LOW | AMBIGUOUS.
+  countryCode          String?   @db.VarChar(2)
+  baseCurrencyCode     String?   @db.VarChar(3)
+  timezone             String?   @db.VarChar(64)
+  defaultLocale        String?   @db.VarChar(16)
+  regionalStatus       String?   @db.VarChar(16)
+  suggestedCountryCode String?   @db.VarChar(2)
+  suggestedTimezone    String?   @db.VarChar(64)
+  suggestedLocale      String?   @db.VarChar(16)
+  regionalSource       String?   @db.VarChar(16)
+  regionalConfidence   String?   @db.VarChar(16)
+  regionalDetectedAt   DateTime?
+  regionalConfirmedAt  DateTime?
+
+  country          Country?  @relation("CompanyCountry", fields: [countryCode], references: [code])
+  suggestedCountry Country?  @relation("CompanySuggestedCountry", fields: [suggestedCountryCode], references: [code])
+  baseCurrency     Currency? @relation("CompanyBaseCurrency", fields: [baseCurrencyCode], references: [code])
+
   // Status
   isActive Boolean @default(true)
 
@@ -103,6 +130,16 @@ model User {
   // so it can never drift out of sync with it.
   language        String  @default("en")
   backgroundColor String?
+
+  // timezone: the user's own IANA zone (e.g. "Africa/Cairo"), captured from
+  // the browser at registration. Never an offset. Independent from the
+  // company timezone. NULL = unknown (legacy rows).
+  // regionalHints: TEMPORARY, server-validated detection signals captured at
+  // registration (country codes / zone / locale only — no GPS, no IP). They
+  // are transferred to the Company in the same transaction that creates it
+  // and cleared afterwards; NULL otherwise.
+  timezone      String? @db.VarChar(64)
+  regionalHints Json?
 
   // Status
   isActive Boolean @default(true)
@@ -593,11 +630,14 @@ model Activity {
 // like LEAD_STATUSES/CONTACT_STATUSES — adjusting it never requires a
 // migration.
 //
-// No currency field: nothing else in this schema has a monetary/
-// currency concept yet (no Company-level currency, no conversion
-// logic), so amount is a plain, single-currency Decimal rather than a
-// half-built multi-currency system with no display or conversion logic
-// anywhere to back it.
+// No currency field on the deal itself: there is intentionally no
+// per-deal currency and no conversion logic. Company.baseCurrencyCode (set
+// by the Owner) tells how amounts are displayed; existing deals are NOT
+// back-filled with a currency. amount is Decimal(19,4): 15 integer digits
+// (hyper-inflated currencies such as IRR/VND/LBP/ZWG) and 4 fractional digits
+// (the largest ISO 4217 minor unit among active currencies is 3; 4 leaves
+// room for CLF-style units). The per-currency minorUnit on Currency drives
+// display/validation; widening from the previous Decimal(12,2) is lossless.
 model Deal {
   id String @id @default(cuid())
 
@@ -607,7 +647,7 @@ model Deal {
 
   // Core Information
   title  String
-  amount Decimal @default(0) @db.Decimal(12, 2)
+  amount Decimal @default(0) @db.Decimal(19, 4)
 
   // CRM Information
   stage             String    @default("new")
@@ -1227,4 +1267,64 @@ model AuditLog {
   @@index([companyId, entityType, entityId, occurredAt(sort: Desc)])
   @@index([companyId, actorUserId, occurredAt(sort: Desc)])
   @@index([companyId, correlationId])
+}
+
+// ─── Regional reference data (International Foundation) ───────────────────
+//
+// Active-only: Currency holds the ISO 4217 currencies that are the CURRENT
+// official currency of at least one country; historical currencies (HRK,
+// BGN, ZWL, ...) are deliberately absent. Rows are seeded by the migration
+// and re-synced idempotently by prisma/seed.ts from the same data module.
+// minorUnit is the ISO 4217 exponent (0, 2, 3 ...) used for display and
+// input validation; storage uses one unified scale (Decimal(19,4)).
+model Currency {
+  code      String   @id @db.VarChar(3)
+  nameEn    String
+  nameAr    String
+  symbol    String   @db.VarChar(8)
+  minorUnit Int      @db.SmallInt
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  countries Country[] @relation("CountryDefaultCurrency")
+  companies Company[] @relation("CompanyBaseCurrency")
+}
+
+// ISO 3166-1. defaultCurrency/defaultLocale/defaultTimezone are SUGGESTIONS
+// only — the Owner decides the company's real base currency / zone / locale.
+model Country {
+  code                String   @id @db.VarChar(2)
+  alpha3              String   @unique @db.VarChar(3)
+  numericCode         String   @unique @db.VarChar(3)
+  nameEn              String
+  nameAr              String
+  nativeName          String
+  defaultCurrencyCode String?  @db.VarChar(3)
+  defaultLocale       String?  @db.VarChar(16)
+  defaultTimezone     String?  @db.VarChar(64)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  defaultCurrency    Currency? @relation("CountryDefaultCurrency", fields: [defaultCurrencyCode], references: [code])
+  companies          Company[] @relation("CompanyCountry")
+  suggestedCompanies Company[] @relation("CompanySuggestedCountry")
+
+  @@index([defaultCurrencyCode])
+}
+
+// Short-lived, single-use stash that carries the optional regional hints
+// across the social-login OAuth redirect without putting any data in a URL.
+// The browser only ever holds an opaque random token (HttpOnly cookie); the
+// token is stored hashed. See RegionalHandoffService.
+model RegionalHintHandoff {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  hints      Json
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([expiresAt])
 }

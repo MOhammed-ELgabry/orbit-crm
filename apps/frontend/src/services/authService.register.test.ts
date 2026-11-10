@@ -50,4 +50,36 @@ describe("registerUser", () => {
     expect(file.name).toBe("avatar.webp");
     expect(file.type).toBe("image/webp");
   });
+
+  describe("regional hints", () => {
+    const hints = {
+      timezone: "Africa/Cairo",
+      locales: ["ar-EG"],
+      geo: { country: "EG", accuracyM: 30, borderRisk: false },
+    };
+
+    it("adds regionalHints to the JSON body when there are some", async () => {
+      await registerUser(data, null, hints);
+
+      expect(api.post).toHaveBeenCalledWith("/auth/register", {
+        ...data,
+        regionalHints: hints,
+      });
+    });
+
+    it("sends them as a JSON string in multipart", async () => {
+      const picture = new Blob([new Uint8Array(10)], { type: "image/webp" });
+
+      await registerUser(data, picture, hints);
+
+      const form = api.post.mock.calls[0][1] as FormData;
+      expect(JSON.parse(form.get("regionalHints") as string)).toEqual(hints);
+    });
+
+    it("omits the field entirely when there are no hints (old-client shape)", async () => {
+      await registerUser(data, null, {});
+
+      expect(api.post).toHaveBeenCalledWith("/auth/register", data);
+    });
+  });
 });

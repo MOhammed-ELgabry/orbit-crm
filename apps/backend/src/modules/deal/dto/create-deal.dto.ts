@@ -4,15 +4,14 @@ import {
   IsDateString,
   IsIn,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
   Length,
-  Max,
   MaxLength,
-  Min,
 } from 'class-validator';
 
+import { IsMoneyAmount } from '../../regional/money/is-money-amount.decorator';
+import { normalizeMoneyInput } from '../../regional/money/money.util';
 import { DEAL_STAGES } from '../constants/deal.constants';
 
 export class CreateDealDto {
@@ -26,14 +25,19 @@ export class CreateDealDto {
   title: string;
 
   @ApiPropertyOptional({
-    example: 15000,
-    description: 'Deal value. Defaults to 0 when omitted.',
+    example: '15000.50',
+    description:
+      'Deal value as a decimal string (up to 15 integer and 4 decimal digits; the allowed decimals follow the company base currency). A plain JSON number is still accepted. Defaults to 0 when omitted.',
   })
+  // Money is a decimal STRING end to end (never a float). A JSON number from
+  // an older client is converted to its plain decimal string by the Transform;
+  // anything invalid is left untouched so IsMoneyAmount rejects it.
+  @Transform(
+    ({ value }: { value: unknown }) => normalizeMoneyInput(value) ?? value,
+  )
   @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  @Max(9_999_999_999.99)
-  amount?: number;
+  @IsMoneyAmount()
+  amount?: string;
 
   @ApiPropertyOptional({
     example: 'new',

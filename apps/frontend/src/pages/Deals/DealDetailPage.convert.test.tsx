@@ -94,13 +94,13 @@ describe("DealDetailPage — convert lead action", () => {
 
   it("is offered for a won deal with an unconverted lead and opens the dialog", async () => {
     renderPage();
-   await userEvent.click(
-  await screen.findByRole(
-    "button",
-    { name: actionName },
-    { timeout: 5000 },
-  ),
-);
+    await userEvent.click(
+      await screen.findByRole(
+        "button",
+        { name: actionName },
+        { timeout: 5000 },
+      ),
+    );
     expect(screen.getByTestId("convert-modal")).toBeInTheDocument();
   });
 

@@ -9,12 +9,15 @@ import { registerUser } from "../../../services/authService";
 import RegisterHeader from "./RegisterHeader";
 import RegisterFields from "./RegisterFields";
 import RegisterOptions from "./RegisterOptions";
+import RegionalLocationOptIn from "./RegionalLocationOptIn";
 
 import SocialLogin from "../SocialLogin";
 import AuthDivider from "../AuthDivider";
 import { successAlert, errorAlert } from "../../../lib/swal";
 import { getErrorMessage } from "../../../lib/errors";
 import { trackEvent } from "../../../lib/posthog";
+import { buildRegionalHints } from "../../../lib/regional/hints";
+import { getGeoHint } from "../../../lib/regional/geoStore";
 
 interface RegisterValues {
   firstName: string;
@@ -72,7 +75,11 @@ export default function RegisterForm() {
         companyName: values.companyName,
       };
 
-      const response = await registerUser(data, values.avatar);
+      const response = await registerUser(
+        data,
+        values.avatar,
+        buildRegionalHints(getGeoHint()),
+      );
 
       trackEvent("user_registered", { method: "email" });
 
@@ -108,8 +115,11 @@ export default function RegisterForm() {
         {/* Header */}
         <RegisterHeader />
 
+        {/* Optional, user-triggered location hint for the company region */}
+        <RegionalLocationOptIn />
+
         {/* Google & Microsoft */}
-        <SocialLogin />
+        <SocialLogin captureRegionalHints />
 
         {/* Divider */}
         <AuthDivider />

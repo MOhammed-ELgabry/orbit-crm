@@ -58,9 +58,22 @@ import {
   buildClearCookieOptions,
   buildCsrfTokenCookieOptions,
   buildRefreshTokenCookieOptions,
+  buildRegionalHandoffClearOptions,
+  buildRegionalHandoffCookieOptions,
+  REGIONAL_HANDOFF_COOKIE_NAME,
 } from './utils/cookie-options.util';
+import { resolveClientIp } from '../regional/client-ip.util';
+import { REGIONAL_HANDOFF_TTL_MS } from '../regional/regional.constants';
+import { HANDOFF_TOKEN_PATTERN } from '../regional/regional-handoff.service';
 
 type AuthenticatedRequest = Request & { user: IJwtPayload };
+
+function readRegionalHandoffCookie(req: Request): string | undefined {
+  const value = (req.cookies as Record<string, unknown> | undefined)?.[
+    REGIONAL_HANDOFF_COOKIE_NAME
+  ];
+  return typeof value === 'string' ? value : undefined;
+}
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -102,6 +115,13 @@ export class AuthController {
     );
   }
 
+  private clearRegionalHandoffCookie(res: Response): void {
+    res.clearCookie(
+      REGIONAL_HANDOFF_COOKIE_NAME,
+      buildRegionalHandoffClearOptions(this.configService),
+    );
+  }
+
   private clearSessionCookies(res: Response): void {
     res.clearCookie(
       AUTH_COOKIE_NAMES.accessToken,
@@ -140,8 +160,20 @@ export class AuthController {
   async register(
     @Body() dto: RegisterDto,
     @UploadedFile() avatar?: UploadedAvatarFile,
+    @Req() req?: Request,
   ) {
-    return this.authService.register(dto, avatar);
+    // req.ip honours the single trusted proxy hop set in main.ts; a
+    // client-supplied X-Forwarded-For is never read.
+    return this.authService.register(
+      dto,
+      avatar,
+      req
+        ? (resolveClientIp(
+            req,
+            this.configService.get<string>('regional.clientIpHeader'),
+          ) ?? undefined)
+        : undefined,
+    );
   }
 
   @ApiOperation({
@@ -337,8 +369,30 @@ export class AuthController {
   @ApiExcludeEndpoint()
   @Get('social/:provider/start')
   @Throttle({ default: { limit: 15, ttl: 60_000 } })
-  async socialStart(@Param('provider') provider: string, @Res() res: Response) {
+  async socialStart(
+    @Param('provider') provider: string,
+    @Query('rh') regionalHandoff: string | undefined,
+    @Res() res: Response,
+  ) {
     const validProvider = this.assertValidProvider(provider);
+
+    // Optional opaque handoff token minted by POST /regional/handoff. It is
+    // moved into a first-party HttpOnly cookie so it survives the provider
+    // round trip without ever being carried by the provider URLs. It is only
+    // a reference to server-side data: a malformed value is simply ignored.
+    if (
+      typeof regionalHandoff === 'string' &&
+      HANDOFF_TOKEN_PATTERN.test(regionalHandoff)
+    ) {
+      res.cookie(
+        REGIONAL_HANDOFF_COOKIE_NAME,
+        regionalHandoff,
+        buildRegionalHandoffCookieOptions(
+          this.configService,
+          REGIONAL_HANDOFF_TTL_MS,
+        ),
+      );
+    }
 
     const authorizeUrl =
       await this.authService.getSocialAuthorizeUrl(validProvider);
@@ -354,6 +408,7 @@ export class AuthController {
     @Query('code') code: string | undefined,
     @Query('state') state: string | undefined,
     @Query('error') error: string | undefined,
+    @Req() req: Request,
     @Res() res: Response,
   ) {
     const validProvider = this.assertValidProvider(provider);
@@ -372,13 +427,19 @@ export class AuthController {
       }
 
       const { accessToken, refreshToken, user, isNewUser } =
-        await this.authService.handleSocialCallback(validProvider, code, state);
+        await this.authService.handleSocialCallback(
+          validProvider,
+          code,
+          state,
+          readRegionalHandoffCookie(req),
+        );
 
       // Cookies are set on THIS response — the popup's own top-level
       // navigation to our domain — so they're already present for the
       // whole browser (including the opener tab) before the inline
       // script below even runs.
       this.setSessionCookies(res, accessToken, refreshToken);
+      this.clearRegionalHandoffCookie(res);
 
       return res.send(
         renderSocialAuthCallbackPage(frontendOrigin, {
@@ -389,6 +450,8 @@ export class AuthController {
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Authentication failed.';
+
+      this.clearRegionalHandoffCookie(res);
 
       return res.send(
         renderSocialAuthCallbackPage(frontendOrigin, {

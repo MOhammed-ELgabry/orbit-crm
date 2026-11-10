@@ -21,6 +21,7 @@ import { RoleModule } from '../role/role.module';
 import { PermissionModule } from '../permission/permission.module';
 import { ReportModule } from '../report/report.module';
 import { AuditModule } from '../audit/audit.module';
+import { RegionalModule } from '../regional/regional.module';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -79,6 +80,8 @@ import { AuthModule } from '../auth/auth.module';
     ReportModule,
 
     AuditModule,
+
+    RegionalModule,
   ],
 
   controllers: [AppController],

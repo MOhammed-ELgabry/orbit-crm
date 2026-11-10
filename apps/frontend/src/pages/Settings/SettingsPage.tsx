@@ -12,6 +12,7 @@ import { getErrorMessage } from "../../lib/errors";
 import LanguageSettings from "./LanguageSettings";
 import AppearanceSettings from "./AppearanceSettings";
 import NotificationSettings from "./NotificationSettings";
+import RegionalSettingsSection from "./RegionalSettingsSection";
 import { LuChevronRight } from "react-icons/lu";
 
 const inputClass =
@@ -185,6 +186,7 @@ export default function SettingsPage() {
   return (
     <div className="flex max-w-2xl flex-col gap-4">
       <CompanySettingsSection />
+      <RegionalSettingsSection />
       <LanguageSettings />
       <AppearanceSettings />
       <NotificationSettings />

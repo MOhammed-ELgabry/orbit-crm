@@ -1,4 +1,5 @@
 import type { DealStage } from "../../types/deal";
+import { formatMoneyString } from "../../lib/regional/format";
 
 export const DEAL_STAGE_LABEL_KEY: Record<DealStage, string> = {
   new: "dealStageNew",
@@ -28,13 +29,10 @@ export function dealStageBadgeClass(stage: DealStage): string {
   }
 }
 
-/** Formats a Deal.amount (Decimal-as-string) for display: thousands
- * separators, no currency symbol — see the schema comment on why Deal
- * has no currency field yet. */
+/** Formats a Deal.amount (Decimal-as-string) for display with the legacy
+ * look (grouping, no currency). Components use useRegionalFormatters()
+ * instead, which adds the company base currency. String based: never
+ * converted to a JS number, never rounded. */
 export function formatDealAmount(amount: string): string {
-  const value = Number(amount);
-  if (Number.isNaN(value)) {
-    return amount;
-  }
-  return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  return formatMoneyString(amount);
 }

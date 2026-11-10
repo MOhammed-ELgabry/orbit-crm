@@ -65,4 +65,12 @@ export class RegisterDto {
   @IsOptional()
   @IsUrl()
   avatar?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Optional, best-effort regional signals (browser timezone, languages and, when the user allowed it, a country resolved locally from GPS). Validated field by field on the server; invalid or missing values are ignored and never block registration. May be sent as a JSON string in multipart requests.',
+    example: { timezone: 'Africa/Cairo', locales: ['ar-EG'] },
+  })
+  @IsOptional()
+  regionalHints?: unknown;
 }

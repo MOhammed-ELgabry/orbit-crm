@@ -58,6 +58,10 @@ describe('DealService', () => {
       publish: jest.fn().mockResolvedValue(undefined),
     };
 
+    const regionalMoney = {
+      assertAmountAllowed: jest.fn().mockResolvedValue(undefined),
+    };
+
     const service = new DealService(
       dealRepository as never,
       contactService as never,
@@ -65,6 +69,7 @@ describe('DealService', () => {
       userService as never,
       activityService as never,
       notificationService as never,
+      regionalMoney as never,
     );
 
     return {
@@ -75,6 +80,7 @@ describe('DealService', () => {
       userService,
       activityService,
       notificationService,
+      regionalMoney,
     };
   }
 

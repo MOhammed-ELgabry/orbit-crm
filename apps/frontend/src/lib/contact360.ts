@@ -1,4 +1,5 @@
 import { isTaskOverdue } from "../Components/Task/taskMeta";
+import { sumDecimalStrings } from "./regional/format";
 import { CLOSED_DEAL_STAGES, type Deal } from "../types/deal";
 import { CLOSED_TASK_STATUSES, type Task } from "../types/task";
 
@@ -54,29 +55,15 @@ export const isTaskOpen = (task: Pick<Task, "status">): boolean =>
   !CLOSED_TASK_STATUSES.includes(task.status);
 
 /**
- * Exact sum of Deal.amount values (Decimal(12,2) serialised as strings),
- * computed in integer cents so no floating-point error can creep in.
+ * Exact sum of Deal.amount values (Decimal(19,4) serialised as strings),
+ * computed with BigInt so no floating-point error can creep in.
  * Returns null if any value is not a plain decimal string, so the caller
  * shows nothing rather than a wrong number.
  */
 export function sumDealAmounts(amounts: readonly string[]): string | null {
-  let cents = 0n;
-
-  for (const amount of amounts) {
-    const match = /^(-?)(\d+)(?:\.(\d{1,2}))?$/.exec(amount.trim());
-    if (!match) return null;
-
-    const value =
-      BigInt(match[2]) * 100n + BigInt((match[3] ?? "").padEnd(2, "0") || "0");
-    cents += match[1] ? -value : value;
-  }
-
-  const negative = cents < 0n;
-  const absolute = negative ? -cents : cents;
-  const whole = (absolute / 100n).toString();
-  const fraction = (absolute % 100n).toString().padStart(2, "0");
-
-  return `${negative ? "-" : ""}${whole}.${fraction}`;
+  // Exact BigInt sum on a common scale (2 decimals minimum, more when a
+  // 3/4-decimal currency amount needs them). See lib/regional/format.ts.
+  return sumDecimalStrings(amounts);
 }
 
 export interface OpenDealsSummary {

@@ -13,6 +13,17 @@ import type {
 } from './report.repository.interface';
 
 /**
+ * Money as text without silent rounding. Deal.amount is Decimal(19,4), so a
+ * SUM carries scale 4 ("1200.5000"). Legacy data (and every 0/2-decimal
+ * currency) must keep reading exactly as before ("1200.50"), while 3/4
+ * decimal amounts ("12.345") must NOT be rounded to cents:
+ *   scale after trimming trailing zeros < 2  -> pad/round to exactly 2 (exact)
+ *   otherwise                                -> the trimmed value, untouched
+ */
+const moneyText = (expr: Prisma.Sql): Prisma.Sql =>
+  Prisma.sql`(CASE WHEN scale(trim_scale(${expr})) < 2 THEN ROUND(${expr}, 2) ELSE trim_scale(${expr}) END)::text`;
+
+/**
  * Reports are aggregate-only reads, so they use parameterised raw SQL
  * (Prisma.sql — every value is a bound parameter, nothing is ever
  * concatenated into the statement) instead of loading rows into memory.
@@ -25,8 +36,8 @@ import type {
  *    interval [start, end) by `<local midnight> AT TIME ZONE <zone> AT TIME
  *    ZONE 'UTC'`, so PostgreSQL applies the zone's real rules on each end
  *    (a DST day is 23 or 25 hours long).
- *  - Money: NUMERIC is summed in the database and cast to text, never
- *    through a JS number.
+ *  - Money: NUMERIC is summed in the database and cast to text (see
+ *    moneyText), never through a JS number and never rounded to cents.
  *  - Counts are cast to int (COUNT returns bigint, which JSON cannot carry).
  */
 @Injectable()
@@ -104,12 +115,12 @@ export class ReportRepository implements IReportRepository {
       )
       SELECT s."stage" AS "stage",
              s."cnt" AS "dealCount",
-             s."amt"::numeric(16,2)::text AS "totalValue",
+             ${moneyText(Prisma.sql`s."amt"`)} AS "totalValue",
              CASE WHEN SUM(s."amt") OVER () = 0 THEN NULL
                   ELSE ROUND(s."amt" * 100 / SUM(s."amt") OVER (), 2)::text
              END AS "valueSharePercent",
              SUM(s."cnt") OVER ()::int AS "openDealCount",
-             SUM(s."amt") OVER ()::numeric(16,2)::text AS "openDealValue",
+             ${moneyText(Prisma.sql`SUM(s."amt") OVER ()`)} AS "openDealValue",
              to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS "asOf"
       FROM s
     `);
@@ -135,7 +146,7 @@ export class ReportRepository implements IReportRepository {
             AND d."deletedAt" IS NULL
             AND d."createdAt" >= b."start" AND d."createdAt" < b."end"
         ) AS "createdCount",
-        (SELECT COALESCE(SUM(d."amount"), 0)::numeric(16,2)::text FROM "Deal" AS d CROSS JOIN b
+        (SELECT ${moneyText(Prisma.sql`COALESCE(SUM(d."amount"), 0)`)} FROM "Deal" AS d CROSS JOIN b
           WHERE d."companyId" = ${companyId}
             AND d."deletedAt" IS NULL
             AND d."createdAt" >= b."start" AND d."createdAt" < b."end"

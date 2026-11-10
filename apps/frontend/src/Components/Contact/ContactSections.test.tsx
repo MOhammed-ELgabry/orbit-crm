@@ -21,6 +21,12 @@ import type { TaskListResult } from "../../services/taskService";
 import "../../i18n";
 import i18n from "i18next";
 
+// The money formatter reads the company's regional settings. A legacy
+// company (no confirmed settings) must render exactly as before.
+vi.mock("../../context/AuthContext", () => ({
+  useAuth: () => ({ company: null }),
+}));
+
 import ContactCalendarTab from "./ContactCalendarTab";
 import ContactDealsTab from "./ContactDealsTab";
 import ContactOverviewTab from "./ContactOverviewTab";

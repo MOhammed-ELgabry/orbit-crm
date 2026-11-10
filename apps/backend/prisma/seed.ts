@@ -42,6 +42,7 @@
  * specific to this repo.
  */
 import { PrismaClient } from '@prisma/client';
+import { syncRegionalReference } from '../src/modules/regional/regional-reference.seed';
 
 import { PERMISSION_CATALOG } from '../src/modules/permission/constants/permission.constants';
 import { ensurePermissionsExist } from '../src/modules/permission/utils/ensure-permissions-exist.util';
@@ -69,6 +70,13 @@ async function main() {
   for (const company of companies) {
     await ensureDefaultRolesForCompany(prisma, company.id);
   }
+
+  const regional = await syncRegionalReference(prisma);
+
+  // eslint-disable-next-line no-console
+  console.log(
+    `Synced regional reference data: ${regional.currencies} active currencies, ${regional.countries} countries.`,
+  );
 
   // eslint-disable-next-line no-console
   console.log(

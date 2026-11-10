@@ -1,0 +1,175 @@
+{
+  "timezoneTable": {
+    "zonesTotal": 549,
+    "zonesMappingToExactlyOneCountry": 510,
+    "countriesWithAnyZone": 248,
+    "countriesWhoseEveryZoneIsExclusive": 114,
+    "countriesWithDefaultZone": 239,
+    "defaultZoneUniqueToCountry": 207,
+    "gulfSharedZones": [
+      {
+        "code": "SA",
+        "zone": "Asia/Riyadh",
+        "sharedWith": [
+          "AQ",
+          "KW",
+          "YE"
+        ]
+      },
+      {
+        "code": "KW",
+        "zone": "Asia/Kuwait",
+        "sharedWith": []
+      },
+      {
+        "code": "BH",
+        "zone": "Asia/Bahrain",
+        "sharedWith": []
+      },
+      {
+        "code": "QA",
+        "zone": "Asia/Qatar",
+        "sharedWith": [
+          "BH"
+        ]
+      },
+      {
+        "code": "AE",
+        "zone": "Asia/Dubai",
+        "sharedWith": [
+          "OM",
+          "RE",
+          "SC",
+          "TF"
+        ]
+      },
+      {
+        "code": "OM",
+        "zone": "Asia/Muscat",
+        "sharedWith": []
+      },
+      {
+        "code": "YE",
+        "zone": "Asia/Aden",
+        "sharedWith": []
+      }
+    ]
+  },
+  "engineCountries": [
+    "EG",
+    "SA",
+    "AE",
+    "KW",
+    "QA",
+    "BH",
+    "OM",
+    "JO",
+    "LB",
+    "IQ",
+    "YE",
+    "MA",
+    "GB",
+    "US",
+    "FR",
+    "DE",
+    "ES",
+    "IT",
+    "NL",
+    "BE",
+    "PT",
+    "IE",
+    "AT",
+    "PL",
+    "SE",
+    "GR",
+    "TR",
+    "CH",
+    "SG",
+    "JP",
+    "IN",
+    "CN",
+    "BR",
+    "AR",
+    "MX",
+    "CA",
+    "AU",
+    "ZA",
+    "NG",
+    "KE"
+  ],
+  "engineScenarios": {
+    "S1 GPS + IP + timezone + locale (all correct)": {
+      "n": 40,
+      "correct": 40,
+      "no_country": 0,
+      "wrong": [],
+      "confidence": {
+        "HIGH": 40
+      },
+      "needsReview": 0
+    },
+    "S2 GPS denied: IP + timezone + locale": {
+      "n": 40,
+      "correct": 40,
+      "no_country": 0,
+      "wrong": [],
+      "confidence": {
+        "HIGH": 40
+      },
+      "needsReview": 0
+    },
+    "S3 GPS denied, no IP database: timezone + locale only": {
+      "n": 40,
+      "correct": 27,
+      "no_country": 13,
+      "wrong": [],
+      "confidence": {
+        "MEDIUM": 27,
+        "AMBIGUOUS": 13
+      },
+      "needsReview": 13
+    },
+    "S4 GPS only": {
+      "n": 40,
+      "correct": 40,
+      "no_country": 0,
+      "wrong": [],
+      "confidence": {
+        "MEDIUM": 40
+      },
+      "needsReview": 0
+    },
+    "S5 VPN: IP in another country, own timezone + locale, GPS denied": {
+      "n": 40,
+      "correct": 0,
+      "no_country": 40,
+      "wrong": [],
+      "confidence": {
+        "AMBIGUOUS": 40
+      },
+      "needsReview": 40
+    },
+    "S6 VPN + GPS allowed (GPS truthful)": {
+      "n": 40,
+      "correct": 40,
+      "no_country": 0,
+      "wrong": [],
+      "confidence": {
+        "MEDIUM": 40
+      },
+      "needsReview": 40
+    },
+    "S7 GPS fix inside border-risk radius + timezone + locale": {
+      "n": 40,
+      "correct": 27,
+      "no_country": 13,
+      "wrong": [],
+      "confidence": {
+        "MEDIUM": 27,
+        "AMBIGUOUS": 13
+      },
+      "needsReview": 13
+    }
+  },
+  "wrongTotalIncludingVpnScenarios": 0
+}

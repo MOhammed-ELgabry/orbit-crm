@@ -231,6 +231,11 @@ const ar = {
   editDeal: "تعديل صفقة",
   dealTitle: "العنوان",
   dealAmount: "القيمة",
+  dealAmountInvalid:
+    "أدخل مبلغًا صحيحًا، مثل 1250.50 (حتى 15 رقمًا و4 خانات عشرية).",
+  dealAmountTooManyDecimals:
+    "هذه العملة ({{currency}}) تسمح بحد أقصى {{max}} خانات عشرية. لم يتم تقريب المبلغ.",
+  dealAmountCurrencyHint: "المبلغ بعملة {{currency}}",
   dealStage: "المرحلة",
   dealExpectedCloseDate: "تاريخ الإغلاق المتوقع",
   dealContact: "جهة الاتصال",
@@ -359,6 +364,64 @@ const ar = {
   ownerOnlyNotice: "يمكن لمالك الحساب فقط تعديل هذه الإعدادات.",
   settingsSaved: "تم حفظ الإعدادات بنجاح.",
   saving: "جارٍ الحفظ...",
+
+  // Regional — opt-in location
+  regionalLocationTitle: "ساعدنا في ضبط منطقة شركتك (اختياري)",
+  regionalLocationHint:
+    "نستخدم موقع جهازك مرة واحدة فقط لاقتراح دولتك. لا نخزّن ولا نرسل سوى رمز الدولة، ويمكنك تخطي هذه الخطوة.",
+  regionalLocationButton: "استخدم موقعي",
+  regionalLocationChecking: "جاري التحديد...",
+  regionalLocationDetected: "تم التعرف على: {{country}}",
+  regionalLocationBorder:
+    "أنت قريب من الحدود، لذا سنطلب منك تأكيد الدولة لاحقًا.",
+  regionalLocationClear: "عدم الاستخدام",
+  regionalLocationDenied:
+    "تم رفض إذن الموقع. لا مشكلة — يمكنك تأكيد دولتك من الإعدادات لاحقًا.",
+  regionalLocationUnavailable:
+    "الموقع غير متاح حاليًا. يمكنك تأكيد دولتك من الإعدادات لاحقًا.",
+  regionalLocationTimeout:
+    "استغرق تحديد الموقع وقتًا طويلًا. يمكنك تأكيد دولتك من الإعدادات لاحقًا.",
+  regionalLocationUnusable:
+    "تعذّر تحديد دولة واضحة من موقعك. يمكنك تأكيدها من الإعدادات لاحقًا.",
+  regionalLocationUnsupported:
+    "هذا المتصفح لا يدعم تحديد الموقع. يمكنك تأكيد دولتك من الإعدادات لاحقًا.",
+
+  // Regional — settings
+  regionalSettingsTitle: "الإعدادات الإقليمية",
+  regionalSettingsIntro:
+    "دولة الشركة والعملة الأساسية والمنطقة الزمنية واللغة الافتراضية. مبالغ الصفقات الحالية لا يتم تحويلها أبدًا.",
+  regionalCountryLabel: "دولة الشركة",
+  regionalCurrencyLabel: "العملة الأساسية",
+  regionalTimezoneLabel: "المنطقة الزمنية للشركة",
+  regionalLocaleLabel: "اللغة الافتراضية",
+  regionalSelectPlaceholder: "اختر...",
+  regionalStatusLabel: "الحالة",
+  regionalStatusDETECTED: "تم الاكتشاف",
+  regionalStatusCONFIRMED: "مؤكَّدة",
+  regionalStatusNEEDS_REVIEW: "تحتاج مراجعة",
+  regionalStatusNONE: "غير محددة",
+  regionalDetectionLabel: "الاكتشاف",
+  regionalSourceGEOLOCATION: "موقع الجهاز",
+  regionalSourceIP: "دولة الشبكة (IP)",
+  regionalSourceTIMEZONE: "المنطقة الزمنية للمتصفح",
+  regionalSourceLOCALE: "لغة المتصفح",
+  regionalConfidenceHIGH: "ثقة عالية",
+  regionalConfidenceMEDIUM: "ثقة متوسطة",
+  regionalConfidenceLOW: "ثقة منخفضة",
+  regionalConfidenceAMBIGUOUS: "غير حاسمة",
+  regionalSuggestionLine: "المقترح: {{country}} · {{currency}} · {{timezone}}",
+  regionalNoSuggestion: "لم يتم اكتشاف اقتراح لشركتك.",
+  regionalUseSuggestion: "استخدم الاقتراح",
+  regionalNeedsReviewNotice:
+    "كانت الإشارات متعارضة أو ضعيفة، يرجى مراجعة الدولة قبل التأكيد.",
+  regionalConfirm: "تأكيد الإعدادات",
+  regionalSaved: "تم تأكيد الإعدادات الإقليمية.",
+  regionalCurrencyChangeTitle: "تغيير العملة الأساسية؟",
+  regionalCurrencyChangeText:
+    "ستبقى مبالغ الصفقات الحالية بأرقامها وستُعرض بالعملة الجديدة — لا يتم تحويل أي شيء.",
+  regionalCurrencyChangeConfirm: "تغيير العملة",
+  regionalIpAttribution: "IP Geolocation by DB-IP",
+  regionalLoadFailed: "تعذر تحميل الإعدادات الإقليمية.",
 
   // الإعدادات — اللغة
   languageSettingsTitle: "اللغة",

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useRegionalFormatters } from "../../hooks/useRegionalSettings";
 import { useTranslation } from "react-i18next";
 import { format, formatDistanceToNow } from "date-fns";
 import { ar, enUS } from "date-fns/locale";
@@ -17,7 +18,6 @@ import {
   summarizeOpenDeals,
   summarizeOpenTasks,
 } from "../../lib/contact360";
-import { formatDealAmount } from "../Deal/dealStage";
 
 export type ContactTab =
   "overview" | "timeline" | "deals" | "tasks" | "calendar";
@@ -102,6 +102,7 @@ export default function ContactOverviewTab({
   onOpenTab,
 }: ContactOverviewTabProps) {
   const { t, i18n } = useTranslation();
+  const { formatMoney } = useRegionalFormatters();
   const locale = i18n.language === "ar" ? ar : enUS;
 
   const dealsSummary = deals.data
@@ -158,7 +159,7 @@ export default function ContactOverviewTab({
             {dealsSummary?.totalValue && (
               <span className="text-xs text-slate-500">
                 {t("contact360OpenValue", {
-                  amount: formatDealAmount(dealsSummary.totalValue),
+                  amount: formatMoney(dealsSummary.totalValue),
                 })}
               </span>
             )}

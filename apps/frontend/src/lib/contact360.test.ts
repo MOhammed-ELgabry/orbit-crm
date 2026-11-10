@@ -69,9 +69,17 @@ describe("sumDealAmounts", () => {
 
   it("returns null, never a wrong number, when any value is not a plain decimal", () => {
     expect(sumDealAmounts(["1.00", "abc"])).toBeNull();
-    expect(sumDealAmounts(["1.005"])).toBeNull();
     expect(sumDealAmounts(["1e3"])).toBeNull();
     expect(sumDealAmounts([""])).toBeNull();
+  });
+});
+
+describe("sumDealAmounts with 3/4-decimal currencies", () => {
+  it("keeps every digit instead of rejecting or rounding (KWD, CLF)", () => {
+    expect(sumDealAmounts(["1.005"])).toBe("1.005");
+    expect(sumDealAmounts(["1.500", "0.250"])).toBe("1.750");
+    expect(sumDealAmounts(["0.0001", "0.0002"])).toBe("0.0003");
+    expect(sumDealAmounts(["-0.001", "0.0005"])).toBe("-0.0005");
   });
 });
 
